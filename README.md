@@ -1,44 +1,81 @@
 # Smash Diary
 
-Mobile-first badminton diary for recording standalone 21-point games.
+Smash Diary is a mobile-first badminton journal for logging singles and doubles matches, tracking recent results, and surfacing lightweight player metrics.
 
 ## Stack
 
 - Next.js 16 App Router
 - React 19
 - TypeScript
-- Postgres persistence via Drizzle ORM
+- Postgres with Drizzle ORM
+- Jest + ts-jest for unit tests
 
-## Run
+## Features
+
+- Record singles and doubles matches
+- Create players on demand from match entry
+- Browse recent match history
+- View dashboard and stats by selected player
+- Persist games and players in Postgres
+
+## Getting Started
+
+1. Install dependencies:
 
 ```bash
 npm install
-npm run dev
 ```
 
-Open `http://localhost:3000`.
+2. Create a local env file and set your database connection:
 
-## Database setup
+```bash
+cp .env.example .env
+```
 
-1. Copy `.env.example` to `.env.local` and set `DATABASE_URL`.
-   - Optional: set `LOG_LEVEL` to `debug`, `info`, `warn`, or `error`. Default is `info`.
-2. Run migrations:
+Required:
+- `DATABASE_URL`
+
+Optional:
+- `LOG_LEVEL=debug|info|warn|error` (defaults to `info`)
+
+3. Run database migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-## Current behavior
+4. Start the dev server:
 
-- Tracks singles and doubles as standalone game records
-- Supports create, recent history, and basic stats
-- Persists data in Postgres via `DATABASE_URL`
+```bash
+npm run dev
+```
 
-## Design direction
+Open `http://localhost:3000`.
 
-Visual system is based on `docs/DESIGN.md` and implemented with:
+## Scripts
 
-- `Space Grotesk` for display hierarchy
-- `Lexend` for operational UI copy
-- dark tonal surfaces, neon lime primary actions, electric blue accents
-- no hard border-based card grids
+- `npm run dev` starts the local Next.js server
+- `npm run build` creates a production build
+- `npm run start` serves the production build
+- `npm run lint` runs ESLint
+- `npm run test` runs Jest once
+- `npm run test:watch` runs Jest in watch mode
+- `npm run db:generate` creates Drizzle migration files
+- `npm run db:migrate` applies migrations
+- `npm run db:studio` opens Drizzle Studio
+
+## Project Layout
+
+- `src/app` routes, server actions, and UI components
+- `src/lib` shared logic, DB access, validation, metrics, and utilities
+- `src/data` local seed and reference data
+- `drizzle` SQL migrations and metadata
+- `docs` design references and notes
+
+## Design Notes
+
+The visual system follows [docs/DESIGN.md](docs/DESIGN.md): `Space Grotesk` for display typography, `Lexend` for UI copy, dark tonal surfaces, neon lime primary actions, and electric blue accents. Avoid rigid card grids and hard divider lines when extending the UI.
+
+## Testing
+
+Tests live beside source files as `*.test.ts` under `src/`. Run `npm run test` before submitting changes, especially for validation, metrics, and store logic.
