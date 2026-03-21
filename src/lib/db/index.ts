@@ -19,16 +19,26 @@ type DatabaseCache = {
 const globalCache = globalThis as typeof globalThis & { __smashDiaryDb?: DatabaseCache };
 const cache = globalCache.__smashDiaryDb ?? {};
 
-if (!cache.client) {
-  cache.client = postgres(getDatabaseUrl(), { prepare: false });
+function ensureDatabase() {
+  if (!cache.client) {
+    cache.client = postgres(getDatabaseUrl(), { prepare: false });
+  }
+
+  if (!cache.db) {
+    cache.db = drizzle(cache.client, { schema });
+  }
+
+  globalCache.__smashDiaryDb = cache;
+
+  return cache;
 }
 
-if (!cache.db) {
-  cache.db = drizzle(cache.client, { schema });
+export function getSqlClient() {
+  return ensureDatabase().client!;
 }
 
-globalCache.__smashDiaryDb = cache;
+export function getDb() {
+  return ensureDatabase().db!;
+}
 
-export const sqlClient = cache.client;
-export const db = cache.db;
 export { schema };

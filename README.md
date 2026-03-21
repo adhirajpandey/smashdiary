@@ -7,7 +7,7 @@ Mobile-first badminton diary for recording standalone 21-point games.
 - Next.js 16 App Router
 - React 19
 - TypeScript
-- Supabase Postgres persistence via Drizzle ORM
+- Postgres persistence via Drizzle ORM
 
 ## Run
 
@@ -21,7 +21,7 @@ Open `http://localhost:3000`.
 ## Database setup
 
 1. Copy `.env.example` to `.env.local` and set `DATABASE_URL`.
-   - Optional: set `SMASHDIARY_LOGS=1` to enable server/import logs.
+   - Optional: set `LOG_LEVEL` to `debug`, `info`, `warn`, or `error`. Default is `info`.
 2. Run migrations:
 
 ```bash

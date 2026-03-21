@@ -5,6 +5,8 @@ import { SelectedPlayerProvider } from "@/app/_components/selected-player-provid
 import "./globals.css";
 import { listPlayers } from "@/lib/store";
 
+export const dynamic = "force-dynamic";
+
 const lexend = Lexend({
   subsets: ["latin"],
   variable: "--font-body",

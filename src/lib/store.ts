@@ -1,22 +1,12 @@
 import { desc, eq, sql } from "drizzle-orm";
 
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { games, players } from "@/lib/db/schema";
+import { logger } from "@/lib/logger";
 import type { DiaryStore, Game, Player, ResolvedGame } from "@/lib/types";
 
-const isStoreLoggingEnabled = process.env.SMASHDIARY_LOGS === "1";
-
 function logStoreEvent(event: string, payload?: Record<string, unknown>) {
-  if (!isStoreLoggingEnabled) {
-    return;
-  }
-
-  if (payload) {
-    console.info(`[store] ${event}`, payload);
-    return;
-  }
-
-  console.info(`[store] ${event}`);
+  logger.info("store", event, payload);
 }
 
 function makeId(prefix: string) {
@@ -48,6 +38,7 @@ function resolveGames(store: DiaryStore): ResolvedGame[] {
 }
 
 async function readStore(): Promise<DiaryStore> {
+  const db = getDb();
   const [playerRows, gameRows] = await Promise.all([
     db.select().from(players),
     db.select().from(games).orderBy(desc(games.playedAt)),
@@ -75,7 +66,8 @@ async function readStore(): Promise<DiaryStore> {
   };
 }
 
-type WriteClient = Pick<typeof db, "select" | "insert">;
+type WriteDatabase = ReturnType<typeof getDb>;
+type WriteClient = Pick<WriteDatabase, "select" | "insert">;
 
 async function upsertPlayers(names: string[], client: WriteClient) {
   const ids: string[] = [];
@@ -156,6 +148,7 @@ export async function listGames() {
 }
 
 export async function getGameById(id: string) {
+  const db = getDb();
   const [gameRow, playerRows] = await Promise.all([
     db
       .select()
@@ -207,6 +200,7 @@ type SaveGameInput = {
 };
 
 export async function saveGame(input: SaveGameInput) {
+  const db = getDb();
   logStoreEvent("saveGame:start", {
     mode: input.id ? "update" : "create",
     format: input.format,
@@ -266,6 +260,7 @@ export async function saveGame(input: SaveGameInput) {
 }
 
 export async function deleteGame(id: string) {
+  const db = getDb();
   logStoreEvent("deleteGame:start", { id });
   const deleted = await db.delete(games).where(eq(games.id, id)).returning({ id: games.id });
 

@@ -1,23 +1,13 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { games, players } from "@/lib/db/schema";
+import { logger } from "@/lib/logger";
 import type { DiaryStore } from "@/lib/types";
 
-const isImportLoggingEnabled = process.env.SMASHDIARY_LOGS === "1";
-
 function logImportEvent(event: string, payload?: Record<string, unknown>) {
-  if (!isImportLoggingEnabled) {
-    return;
-  }
-
-  if (payload) {
-    console.info(`[import-diary] ${event}`, payload);
-    return;
-  }
-
-  console.info(`[import-diary] ${event}`);
+  logger.info("import-diary", event, payload);
 }
 
 function toIsoDateTime(dateTime: string) {
@@ -30,6 +20,7 @@ function toIsoDateTime(dateTime: string) {
 }
 
 async function run() {
+  const db = getDb();
   const dataPath = path.join(process.cwd(), "src", "data", "diary.json");
   logImportEvent("start", { dataPath });
   const raw = await readFile(dataPath, "utf8");
@@ -76,6 +67,10 @@ async function run() {
 }
 
 run().catch((error) => {
-  console.error(error);
+  if (error instanceof Error) {
+    logger.error("import-diary", error.message, { stack: error.stack });
+  } else {
+    logger.error("import-diary", "unknown_error", { error });
+  }
   process.exit(1);
 });
