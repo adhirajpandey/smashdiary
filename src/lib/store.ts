@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import seedStore from "@/data/seed.json";
-import type { DiaryStore, Game, Player, ResolvedGame, StatsSummary } from "@/lib/types";
+import type { DiaryStore, Game, Player, ResolvedGame } from "@/lib/types";
 
 const dataFilePath = path.join(process.cwd(), "src", "data", "diary.json");
 
@@ -81,23 +81,6 @@ export async function listGames() {
 export async function getGameById(id: string) {
   const store = await readStore();
   return resolveGames(store).find((game) => game.id === id) ?? null;
-}
-
-export async function getStats(): Promise<StatsSummary> {
-  const games = await listGames();
-
-  const wins = games.filter((game) => game.winnerSide === "A").length;
-  const losses = games.length - wins;
-  const recentForm = games.slice(0, 6).map((game) => (game.winnerSide === "A" ? "W" : "L"));
-
-  return {
-    totalGames: games.length,
-    wins,
-    losses,
-    recentForm,
-    singlesGames: games.filter((game) => game.format === "singles").length,
-    doublesGames: games.filter((game) => game.format === "doubles").length,
-  };
 }
 
 type SaveGameInput = {

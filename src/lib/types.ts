@@ -32,8 +32,10 @@ export type ResolvedGame = Game & {
   sideBPlayers: Player[];
 };
 
-export type StatsSummary = {
-  totalGames: number;
+export type PlayerStatsSummary = {
+  playerId: string;
+  playerName: string;
+  totalMatches: number;
   wins: number;
   losses: number;
   recentForm: Array<"W" | "L">;

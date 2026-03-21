@@ -1,17 +1,21 @@
 import Link from "next/link";
 
+import { AppShell } from "@/app/_components/app-shell";
+import { StatusView } from "@/app/_components/status-view";
+
 export default function NotFound() {
   return (
-    <main className="shell">
-      <div className="section-block glass page-stack">
-        <p className="eyebrow">404</p>
-        <h1 className="display" style={{ margin: 0, fontSize: "2rem" }}>
-          This court is empty.
-        </h1>
-        <Link className="primary-button" href="/">
-          Back to home
-        </Link>
-      </div>
-    </main>
+    <AppShell activePath="">
+      <StatusView
+        eyebrow="404"
+        title="This court is empty"
+        description="That page does not exist or the match record could not be found."
+        action={
+          <Link className="primary-button" href="/">
+            Back to dashboard
+          </Link>
+        }
+      />
+    </AppShell>
   );
 }

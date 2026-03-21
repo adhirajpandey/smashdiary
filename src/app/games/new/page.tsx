@@ -1,13 +1,5 @@
-import { AppShell } from "@/app/_components/app-shell";
-import { GameForm } from "@/app/_components/game-form";
-import { listPlayers } from "@/lib/store";
+import { redirect } from "next/navigation";
 
 export default async function NewGamePage() {
-  const players = await listPlayers();
-
-  return (
-    <AppShell activePath="">
-      <GameForm playerSuggestions={players.map((player) => player.name)} />
-    </AppShell>
-  );
+  redirect("/matches/new");
 }

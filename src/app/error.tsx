@@ -1,5 +1,8 @@
 "use client";
 
+import { AppShell } from "@/app/_components/app-shell";
+import { StatusView } from "@/app/_components/status-view";
+
 export default function Error({
   error,
   reset,
@@ -8,17 +11,17 @@ export default function Error({
   reset: () => void;
 }>) {
   return (
-    <main className="shell">
-      <div className="section-block glass page-stack">
-        <p className="eyebrow">System fault</p>
-        <h1 className="display" style={{ margin: 0, fontSize: "2rem" }}>
-          Could not load your diary.
-        </h1>
-        <p style={{ margin: 0, color: "var(--text-secondary)" }}>{error.message}</p>
-        <button className="primary-button" onClick={reset} type="button">
-          Retry
-        </button>
-      </div>
-    </main>
+    <AppShell activePath="">
+      <StatusView
+        eyebrow="System fault"
+        title="Could not load your diary"
+        description={error.message}
+        action={
+          <button className="primary-button" onClick={reset} type="button">
+            Retry
+          </button>
+        }
+      />
+    </AppShell>
   );
 }

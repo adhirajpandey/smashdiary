@@ -1,4 +1,10 @@
-import type { StatsSummary } from "@/lib/types";
+"use client";
+
+import { useMemo } from "react";
+
+import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import { getPlayerStatsSummary } from "@/lib/diary-metrics";
+import type { Player, ResolvedGame } from "@/lib/types";
 
 function StatTile({
   label,
@@ -27,7 +33,30 @@ function StatTile({
   );
 }
 
-export function StatsPanel({ stats }: Readonly<{ stats: StatsSummary }>) {
+export function StatsPanel({
+  games,
+  players,
+}: Readonly<{
+  games: ResolvedGame[];
+  players: Player[];
+}>) {
+  const { selectedPlayerId } = useSelectedPlayer();
+  const stats = useMemo(
+    () => (selectedPlayerId ? getPlayerStatsSummary(games, players, selectedPlayerId) : null),
+    [games, players, selectedPlayerId],
+  );
+
+  if (!stats) {
+    return (
+      <section className="section-block page-stack">
+        <p className="eyebrow" style={{ margin: 0 }}>
+          Stats
+        </p>
+        <p style={{ margin: 0, color: "var(--text-secondary)" }}>Choose a player to load match stats.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="page-stack">
       <div className="section-block glass page-stack">
@@ -36,12 +65,12 @@ export function StatsPanel({ stats }: Readonly<{ stats: StatsSummary }>) {
             Form line
           </p>
           <h2 className="display" style={{ margin: "0.25rem 0 0", fontSize: "2.2rem" }}>
-            Your court pulse.
+            {stats.playerName}&apos;s court pulse.
           </h2>
         </div>
 
         <div style={{ display: "grid", gap: "0.85rem", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}>
-          <StatTile label="Total matches" value={stats.totalGames} />
+          <StatTile label="Total matches" value={stats.totalMatches} />
           <StatTile label="Wins" value={stats.wins} accent="var(--primary-deep)" />
           <StatTile label="Losses" value={stats.losses} accent="var(--secondary)" />
           <StatTile label="Singles" value={stats.singlesGames} />

@@ -40,7 +40,6 @@ export async function upsertGameAction(formData: FormData) {
   revalidatePath("/matches/new");
   revalidatePath("/stats");
   if (id) {
-    revalidatePath(`/games/${id}`);
     revalidatePath(`/matches/${id}`);
   }
   redirect("/");

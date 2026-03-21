@@ -45,10 +45,28 @@ export const gameFormSchema = z
     }
 
     const topScore = Math.max(value.sideAScore, value.sideBScore);
+    const bottomScore = Math.min(value.sideAScore, value.sideBScore);
+
     if (topScore < 21) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "The winning side must reach at least 21.",
+        path: ["sideAScore"],
+      });
+    }
+
+    if (topScore > 21 && bottomScore < 20) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Extra points only make sense after both sides reach at least 20.",
+        path: ["sideAScore"],
+      });
+    }
+
+    if (topScore === 30 && bottomScore < 20) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A 30-point finish must come from an extended game, not a runaway score.",
         path: ["sideAScore"],
       });
     }
