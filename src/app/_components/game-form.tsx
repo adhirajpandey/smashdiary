@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 
+import { initialUpsertGameActionState } from "@/app/action-state";
 import { upsertGameAction } from "@/app/actions";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import type { GameFormat, ResolvedGame } from "@/lib/types";
@@ -132,6 +134,16 @@ function FormatCard({
   );
 }
 
+function SaveButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button className="match-save-button" disabled={pending} type="submit">
+      {pending ? "Saving..." : "Save Match"}
+    </button>
+  );
+}
+
 export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
   const { players, selectedPlayerId } = useSelectedPlayer();
   const [format, setFormat] = useState<GameFormat>(game?.format ?? "singles");
@@ -145,6 +157,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
   const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? [];
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
+  const [state, formAction] = useActionState(upsertGameAction, initialUpsertGameActionState);
+  const lastScoreTapRef = useRef(0);
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
   const primaryPlayerName = game ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
@@ -168,11 +182,21 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
     return Math.max(0, Math.min(30, value));
   }
 
+  function canAdjustScore() {
+    const now = Date.now();
+    if (now - lastScoreTapRef.current < 120) {
+      return false;
+    }
+    lastScoreTapRef.current = now;
+    return true;
+  }
+
   return (
-    <form action={upsertGameAction} className="match-form">
+    <form action={formAction} className="match-form">
       <input name="id" type="hidden" defaultValue={game?.id ?? ""} />
       <input name="format" type="hidden" value={format} />
       <input name="sideAPlayers" type="hidden" value={primaryPlayerName} />
+      {state.formError ? <p className="match-form__banner">{state.formError}</p> : null}
 
       <section className="match-form__section">
         <p className="eyebrow" style={{ margin: 0 }}>
@@ -270,7 +294,12 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               <button
                 aria-label="Decrease your score"
                 className="score-stepper__button"
-                onClick={() => setSideAScore((current) => clampScore(current - 1))}
+                onClick={() => {
+                  if (!canAdjustScore()) {
+                    return;
+                  }
+                  setSideAScore((current) => clampScore(current - 1));
+                }}
                 type="button"
               >
                 -
@@ -288,7 +317,12 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               <button
                 aria-label="Increase your score"
                 className="score-stepper__button"
-                onClick={() => setSideAScore((current) => clampScore(current + 1))}
+                onClick={() => {
+                  if (!canAdjustScore()) {
+                    return;
+                  }
+                  setSideAScore((current) => clampScore(current + 1));
+                }}
                 type="button"
               >
                 +
@@ -306,7 +340,12 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               <button
                 aria-label="Decrease opponent score"
                 className="score-stepper__button"
-                onClick={() => setSideBScore((current) => clampScore(current - 1))}
+                onClick={() => {
+                  if (!canAdjustScore()) {
+                    return;
+                  }
+                  setSideBScore((current) => clampScore(current - 1));
+                }}
                 type="button"
               >
                 -
@@ -324,7 +363,12 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               <button
                 aria-label="Increase opponent score"
                 className="score-stepper__button"
-                onClick={() => setSideBScore((current) => clampScore(current + 1))}
+                onClick={() => {
+                  if (!canAdjustScore()) {
+                    return;
+                  }
+                  setSideBScore((current) => clampScore(current + 1));
+                }}
                 type="button"
               >
                 +
@@ -334,9 +378,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
         </div>
       </section>
 
-      <button className="match-save-button" type="submit">
-        Save Match
-      </button>
+      <SaveButton />
     </form>
   );
 }

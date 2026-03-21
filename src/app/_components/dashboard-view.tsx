@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { MatchFeed } from "@/app/_components/match-feed";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import { getDashboardMetrics, getTopPerformers } from "@/lib/diary-metrics";
+import { buildMatchReaction } from "@/lib/reaction-text";
 import type { Player, ResolvedGame } from "@/lib/types";
 
 function StatTile({
@@ -33,22 +35,40 @@ export function DashboardView({
   players: Player[];
 }>) {
   const { selectedPlayerId } = useSelectedPlayer();
+  const searchParams = useSearchParams();
+  const [dismissedSavedGameId, setDismissedSavedGameId] = useState<string | null>(null);
+  const savedGameId = searchParams.get("savedGameId");
   const metrics = useMemo(
     () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
     [games, players, selectedPlayerId],
   );
   const topPerformers = useMemo(() => getTopPerformers(games, players), [games, players]);
+  const savedGame = useMemo(() => games.find((game) => game.id === savedGameId) ?? null, [games, savedGameId]);
+  const reaction = useMemo(() => {
+    if (!savedGame || savedGame.id === dismissedSavedGameId) {
+      return null;
+    }
+    return buildMatchReaction(savedGame, selectedPlayerId);
+  }, [dismissedSavedGameId, savedGame, selectedPlayerId]);
 
   if (!metrics) {
-    return (
-      <section className="section-block">
-        <p style={{ margin: 0, color: "var(--text-secondary)" }}>Choose a player to load the dashboard.</p>
-      </section>
-    );
+    return null;
   }
 
   return (
     <>
+      {reaction ? (
+        <section className={`reaction-card reaction-card--${reaction.tone}`}>
+          <div>
+            <p className="reaction-card__eyebrow">Post-match</p>
+            <p className="reaction-card__text">{reaction.text}</p>
+          </div>
+          <button className="reaction-card__dismiss" onClick={() => setDismissedSavedGameId(savedGame?.id ?? null)} type="button">
+            Dismiss
+          </button>
+        </section>
+      ) : null}
+
       <Link className="quick-log" href="/matches/new">
         <span className="quick-log__icon">+</span>
         <span>Add a Match</span>
