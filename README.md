@@ -28,18 +28,11 @@ Open `http://localhost:3000`.
 npm run db:migrate
 ```
 
-3. (Optional) Import existing local JSON diary data once:
-
-```bash
-npm run db:import:diary
-```
-
 ## Current behavior
 
 - Tracks singles and doubles as standalone game records
-- Supports create, edit, delete, recent history, and basic stats
+- Supports create, recent history, and basic stats
 - Persists data in Postgres via `DATABASE_URL`
-- `src/data/diary.json` can be imported with `npm run db:import:diary`
 
 ## Design direction
 

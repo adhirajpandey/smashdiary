@@ -258,16 +258,3 @@ export async function saveGame(input: SaveGameInput) {
     return id;
   });
 }
-
-export async function deleteGame(id: string) {
-  const db = getDb();
-  logStoreEvent("deleteGame:start", { id });
-  const deleted = await db.delete(games).where(eq(games.id, id)).returning({ id: games.id });
-
-  if (!deleted[0]) {
-    logStoreEvent("deleteGame:missing_game", { id });
-    throw new Error("Game not found.");
-  }
-
-  logStoreEvent("deleteGame:deleted", { id: deleted[0].id });
-}

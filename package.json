@@ -11,8 +11,7 @@
     "test:watch": "jest --watch",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio",
-    "db:import:diary": "tsx scripts/import-diary.ts"
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -33,7 +32,6 @@
     "eslint-config-next": "^16.2.1",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.6",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

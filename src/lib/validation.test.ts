@@ -30,6 +30,16 @@ describe("gameFormSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts a 30-29 finish", () => {
+    const parsed = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      sideAScore: 30,
+      sideBScore: 29,
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
   it("rejects ties", () => {
     const parsed = gameFormSchema.safeParse({
       ...validSinglesInput(),
@@ -50,21 +60,43 @@ describe("gameFormSchema", () => {
     expect(parsed.success).toBe(false);
   });
 
-  it("rejects runaway extra-point scores", () => {
+  it("rejects one-point leads in extended games", () => {
     const parsed = gameFormSchema.safeParse({
       ...validSinglesInput(),
-      sideAScore: 23,
-      sideBScore: 18,
+      sideAScore: 22,
+      sideBScore: 21,
     });
 
     expect(parsed.success).toBe(false);
   });
 
-  it("rejects 30-point finishes when opponent is below 20", () => {
+  it("rejects 30-point finishes unless the score is 30-29", () => {
     const parsed = gameFormSchema.safeParse({
       ...validSinglesInput(),
       sideAScore: 30,
-      sideBScore: 19,
+      sideBScore: 20,
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects the same player on both sides", () => {
+    const parsed = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      sideBPlayers: ["Aman"],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
+  it("rejects duplicate players on the same side", () => {
+    const parsed = gameFormSchema.safeParse({
+      playedAt: "2026-03-21T10:00",
+      format: "doubles",
+      sideAScore: 22,
+      sideBScore: 20,
+      sideAPlayers: ["Aman", "aman"],
+      sideBPlayers: ["Riya", "Neha"],
     });
 
     expect(parsed.success).toBe(false);

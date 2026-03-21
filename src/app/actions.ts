@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { deleteGame, saveGame } from "@/lib/store";
+import { saveGame } from "@/lib/store";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 
 function collectPlayers(formData: FormData, key: string) {
@@ -42,18 +42,5 @@ export async function upsertGameAction(formData: FormData) {
   if (id) {
     revalidatePath(`/matches/${id}`);
   }
-  redirect("/");
-}
-
-export async function deleteGameAction(formData: FormData) {
-  const id = String(formData.get("id") ?? "");
-  if (!id) {
-    throw new Error("Missing game id.");
-  }
-
-  await deleteGame(id);
-  revalidatePath("/");
-  revalidatePath("/matches");
-  revalidatePath("/stats");
   redirect("/");
 }
