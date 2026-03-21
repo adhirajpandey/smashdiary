@@ -13,7 +13,9 @@ export function AppShell({
     <main className="shell">
       <div className="mobile-frame">
         <MobileHeader />
-        <div className="page-stack">{children}</div>
+        <div className="app-content">
+          <div className="page-stack">{children}</div>
+        </div>
         <BottomNav activePath={activePath} />
         <IdentityPicker />
       </div>
