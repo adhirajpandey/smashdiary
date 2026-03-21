@@ -70,7 +70,17 @@ async function upsertPlayers(names: string[], store: DiaryStore) {
 
 export async function listPlayers() {
   const store = await readStore();
-  return store.players.slice().sort((a, b) => a.name.localeCompare(b.name));
+  return store.players.slice().sort((a, b) => {
+    const aIsSagar = a.name.toLowerCase() === "sagar";
+    const bIsSagar = b.name.toLowerCase() === "sagar";
+    if (aIsSagar && !bIsSagar) {
+      return -1;
+    }
+    if (!aIsSagar && bIsSagar) {
+      return 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 export async function listGames() {
