@@ -3,6 +3,8 @@ import { desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { games, players } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
+import { isTestMode } from "@/lib/runtime-mode";
+import { getGameByIdSqlite, listGamesSqlite, listPlayersSqlite, saveGameSqlite } from "@/lib/store-sqlite";
 import type { DiaryStore, Game, Player, ResolvedGame } from "@/lib/types";
 
 function logStoreEvent(event: string, payload?: Record<string, unknown>) {
@@ -128,6 +130,10 @@ async function upsertPlayers(names: string[], client: WriteClient) {
 }
 
 export async function listPlayers() {
+  if (isTestMode()) {
+    return listPlayersSqlite();
+  }
+
   const store = await readStore();
   return store.players.slice().sort((a, b) => {
     const aIsSagar = a.name.toLowerCase() === "sagar";
@@ -143,11 +149,19 @@ export async function listPlayers() {
 }
 
 export async function listGames() {
+  if (isTestMode()) {
+    return listGamesSqlite();
+  }
+
   const store = await readStore();
   return resolveGames(store);
 }
 
 export async function getGameById(id: string) {
+  if (isTestMode()) {
+    return getGameByIdSqlite(id);
+  }
+
   const db = getDb();
   const [gameRow, playerRows] = await Promise.all([
     db
@@ -200,6 +214,10 @@ type SaveGameInput = {
 };
 
 export async function saveGame(input: SaveGameInput) {
+  if (isTestMode()) {
+    return saveGameSqlite(input);
+  }
+
   const db = getDb();
   logStoreEvent("saveGame:start", {
     mode: input.id ? "update" : "create",

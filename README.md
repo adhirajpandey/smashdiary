@@ -37,6 +37,7 @@ Required:
 
 Optional:
 - `LOG_LEVEL=debug|info|warn|error` (defaults to `info`)
+- `APP_MODE=test` (uses local SQLite test mode with dummy data)
 
 3. Run database migrations:
 
@@ -51,6 +52,19 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+### Test Mode (SQLite Dummy Data)
+
+Set `APP_MODE=test` to run the app against a local SQLite file seeded from `src/data/diary.json`:
+
+```bash
+APP_MODE=test npm run dev
+```
+
+In this mode:
+- `DATABASE_URL` is not required
+- data resets to the dummy seed on each server start
+- create/update flows still work for end-to-end testing
 
 ## Scripts
 
