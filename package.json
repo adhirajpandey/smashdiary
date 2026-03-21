@@ -6,22 +6,35 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:import:diary": "tsx scripts/import-diary.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.3",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.1",
     "next": "^16.2.1",
+    "postgres": "^3.4.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.2.1",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

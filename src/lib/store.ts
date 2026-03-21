@@ -1,27 +1,22 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { desc, eq, sql } from "drizzle-orm";
 
-import seedStore from "@/data/seed.json";
+import { db } from "@/lib/db";
+import { games, players } from "@/lib/db/schema";
 import type { DiaryStore, Game, Player, ResolvedGame } from "@/lib/types";
 
-const dataFilePath = path.join(process.cwd(), "src", "data", "diary.json");
+const isStoreLoggingEnabled = process.env.SMASHDIARY_LOGS === "1";
 
-async function ensureStoreFile() {
-  try {
-    await fs.access(dataFilePath);
-  } catch {
-    await fs.writeFile(dataFilePath, JSON.stringify(seedStore, null, 2));
+function logStoreEvent(event: string, payload?: Record<string, unknown>) {
+  if (!isStoreLoggingEnabled) {
+    return;
   }
-}
 
-async function readStore(): Promise<DiaryStore> {
-  await ensureStoreFile();
-  const raw = await fs.readFile(dataFilePath, "utf8");
-  return JSON.parse(raw) as DiaryStore;
-}
+  if (payload) {
+    console.info(`[store] ${event}`, payload);
+    return;
+  }
 
-async function writeStore(store: DiaryStore) {
-  await fs.writeFile(dataFilePath, JSON.stringify(store, null, 2));
+  console.info(`[store] ${event}`);
 }
 
 function makeId(prefix: string) {
@@ -30,6 +25,15 @@ function makeId(prefix: string) {
 
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, " ");
+}
+
+function toIsoDateTime(dateTime: string) {
+  const parsed = new Date(dateTime);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Invalid match date.");
+  }
+
+  return parsed.toISOString();
 }
 
 function resolveGames(store: DiaryStore): ResolvedGame[] {
@@ -43,26 +47,89 @@ function resolveGames(store: DiaryStore): ResolvedGame[] {
     }));
 }
 
-async function upsertPlayers(names: string[], store: DiaryStore) {
+async function readStore(): Promise<DiaryStore> {
+  const [playerRows, gameRows] = await Promise.all([
+    db.select().from(players),
+    db.select().from(games).orderBy(desc(games.playedAt)),
+  ]);
+
+  return {
+    players: playerRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    })),
+    games: gameRows.map((row) => ({
+      id: row.id,
+      playedAt: row.playedAt,
+      format: row.format as Game["format"],
+      sideAPlayerIds: row.sideAPlayerIds,
+      sideBPlayerIds: row.sideBPlayerIds,
+      sideAScore: row.sideAScore,
+      sideBScore: row.sideBScore,
+      winnerSide: row.winnerSide as Game["winnerSide"],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    })),
+  };
+}
+
+type WriteClient = Pick<typeof db, "select" | "insert">;
+
+async function upsertPlayers(names: string[], client: WriteClient) {
   const ids: string[] = [];
+  const knownByLowerName = new Map<string, string>();
 
   for (const rawName of names) {
     const name = normalizeName(rawName);
-    const existing = store.players.find((player) => player.name.toLowerCase() === name.toLowerCase());
+    const lowerName = name.toLowerCase();
+
+    const cachedId = knownByLowerName.get(lowerName);
+    if (cachedId) {
+      ids.push(cachedId);
+      continue;
+    }
+
+    const [existing] = await client
+      .select({ id: players.id })
+      .from(players)
+      .where(sql`lower(${players.name}) = ${lowerName}`)
+      .limit(1);
+
     if (existing) {
+      knownByLowerName.set(lowerName, existing.id);
       ids.push(existing.id);
       continue;
     }
 
     const timestamp = new Date().toISOString();
-    const player: Player = {
-      id: makeId("p"),
-      name,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    store.players.push(player);
-    ids.push(player.id);
+    const id = makeId("p");
+
+    try {
+      await client.insert(players).values({
+        id,
+        name,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+      knownByLowerName.set(lowerName, id);
+      ids.push(id);
+      continue;
+    } catch {
+      const [concurrent] = await client
+        .select({ id: players.id })
+        .from(players)
+        .where(sql`lower(${players.name}) = ${lowerName}`)
+        .limit(1);
+
+      if (!concurrent) {
+        throw new Error("Could not save player.");
+      }
+
+      knownByLowerName.set(lowerName, concurrent.id);
+      ids.push(concurrent.id);
+    }
   }
 
   return ids;
@@ -89,8 +156,43 @@ export async function listGames() {
 }
 
 export async function getGameById(id: string) {
-  const store = await readStore();
-  return resolveGames(store).find((game) => game.id === id) ?? null;
+  const [gameRow, playerRows] = await Promise.all([
+    db
+      .select()
+      .from(games)
+      .where(eq(games.id, id))
+      .limit(1),
+    db.select().from(players),
+  ]);
+
+  if (!gameRow[0]) {
+    return null;
+  }
+
+  const store: DiaryStore = {
+    players: playerRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    })),
+    games: [
+      {
+        id: gameRow[0].id,
+        playedAt: gameRow[0].playedAt,
+        format: gameRow[0].format as Game["format"],
+        sideAPlayerIds: gameRow[0].sideAPlayerIds,
+        sideBPlayerIds: gameRow[0].sideBPlayerIds,
+        sideAScore: gameRow[0].sideAScore,
+        sideBScore: gameRow[0].sideBScore,
+        winnerSide: gameRow[0].winnerSide as Game["winnerSide"],
+        createdAt: gameRow[0].createdAt,
+        updatedAt: gameRow[0].updatedAt,
+      },
+    ],
+  };
+
+  return resolveGames(store)[0] ?? null;
 }
 
 type SaveGameInput = {
@@ -105,55 +207,72 @@ type SaveGameInput = {
 };
 
 export async function saveGame(input: SaveGameInput) {
-  const store = await readStore();
-  const timestamp = new Date().toISOString();
-  const sideAPlayerIds = await upsertPlayers(input.sideAPlayers, store);
-  const sideBPlayerIds = await upsertPlayers(input.sideBPlayers, store);
+  logStoreEvent("saveGame:start", {
+    mode: input.id ? "update" : "create",
+    format: input.format,
+    sideAPlayers: input.sideAPlayers.length,
+    sideBPlayers: input.sideBPlayers.length,
+  });
 
-  if (input.id) {
-    const existing = store.games.find((game) => game.id === input.id);
-    if (!existing) {
-      throw new Error("Game not found.");
+  return db.transaction(async (tx) => {
+    const timestamp = new Date().toISOString();
+    const sideAPlayerIds = await upsertPlayers(input.sideAPlayers, tx);
+    const sideBPlayerIds = await upsertPlayers(input.sideBPlayers, tx);
+    const playedAt = toIsoDateTime(input.playedAt);
+
+    if (input.id) {
+      const updated = await tx
+        .update(games)
+        .set({
+          playedAt,
+          format: input.format,
+          sideAPlayerIds,
+          sideBPlayerIds,
+          sideAScore: input.sideAScore,
+          sideBScore: input.sideBScore,
+          winnerSide: input.winnerSide,
+          updatedAt: timestamp,
+        })
+        .where(eq(games.id, input.id))
+        .returning({ id: games.id });
+
+      if (!updated[0]) {
+        logStoreEvent("saveGame:missing_game", { id: input.id });
+        throw new Error("Game not found.");
+      }
+
+      logStoreEvent("saveGame:updated", { id: updated[0].id });
+      return updated[0].id;
     }
 
-    existing.playedAt = input.playedAt;
-    existing.format = input.format;
-    existing.sideAPlayerIds = sideAPlayerIds;
-    existing.sideBPlayerIds = sideBPlayerIds;
-    existing.sideAScore = input.sideAScore;
-    existing.sideBScore = input.sideBScore;
-    existing.winnerSide = input.winnerSide;
-    existing.updatedAt = timestamp;
-    await writeStore(store);
-    return existing.id;
-  }
+    const id = makeId("g");
 
-  const game: Game = {
-    id: makeId("g"),
-    playedAt: input.playedAt,
-    format: input.format,
-    sideAPlayerIds,
-    sideBPlayerIds,
-    sideAScore: input.sideAScore,
-    sideBScore: input.sideBScore,
-    winnerSide: input.winnerSide,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
+    await tx.insert(games).values({
+      id,
+      playedAt,
+      format: input.format,
+      sideAPlayerIds,
+      sideBPlayerIds,
+      sideAScore: input.sideAScore,
+      sideBScore: input.sideBScore,
+      winnerSide: input.winnerSide,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
 
-  store.games.push(game);
-  await writeStore(store);
-  return game.id;
+    logStoreEvent("saveGame:created", { id });
+    return id;
+  });
 }
 
 export async function deleteGame(id: string) {
-  const store = await readStore();
-  const nextGames = store.games.filter((game) => game.id !== id);
+  logStoreEvent("deleteGame:start", { id });
+  const deleted = await db.delete(games).where(eq(games.id, id)).returning({ id: games.id });
 
-  if (nextGames.length === store.games.length) {
+  if (!deleted[0]) {
+    logStoreEvent("deleteGame:missing_game", { id });
     throw new Error("Game not found.");
   }
 
-  store.games = nextGames;
-  await writeStore(store);
+  logStoreEvent("deleteGame:deleted", { id: deleted[0].id });
 }

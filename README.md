@@ -7,7 +7,7 @@ Mobile-first badminton diary for recording standalone 21-point games.
 - Next.js 16 App Router
 - React 19
 - TypeScript
-- File-backed JSON persistence with a Supabase-ready client stub
+- Supabase Postgres persistence via Drizzle ORM
 
 ## Run
 
@@ -18,12 +18,28 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Database setup
+
+1. Copy `.env.example` to `.env.local` and set `DATABASE_URL`.
+   - Optional: set `SMASHDIARY_LOGS=1` to enable server/import logs.
+2. Run migrations:
+
+```bash
+npm run db:migrate
+```
+
+3. (Optional) Import existing local JSON diary data once:
+
+```bash
+npm run db:import:diary
+```
+
 ## Current behavior
 
 - Tracks singles and doubles as standalone game records
 - Supports create, edit, delete, recent history, and basic stats
-- Uses `src/data/diary.json` for local persistence during development
-- Includes `.env.example` for future Supabase wiring
+- Persists data in Postgres via `DATABASE_URL`
+- `src/data/diary.json` can be imported with `npm run db:import:diary`
 
 ## Design direction
 
