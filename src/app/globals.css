@@ -29,6 +29,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   font-family: var(--font-body), sans-serif;
@@ -109,7 +110,8 @@ img {
   position: relative;
   width: min(100vw, var(--page-max));
   min-height: 100vh;
-  padding: 0.85rem 0.9rem 6.2rem;
+  min-height: 100dvh;
+  padding: 0.85rem 0.9rem calc(6.2rem + env(safe-area-inset-bottom));
   background:
     linear-gradient(180deg, rgb(22 22 22 / 0.99), rgb(10 10 10 / 1)),
     var(--surface);
@@ -1027,6 +1029,7 @@ img {
 
   .mobile-frame {
     min-height: calc(100vh - 2.5rem);
+    min-height: calc(100dvh - 2.5rem);
     border-radius: 1.25rem;
     box-shadow: 0 0 0 1px rgb(72 72 71 / 0.18), 0 34px 80px rgb(0 0 0 / 0.4);
   }
