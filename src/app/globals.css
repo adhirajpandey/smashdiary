@@ -11,7 +11,6 @@
   --on-primary: #4d6300;
   --secondary: #7d98ff;
   --danger: #ff7d93;
-  --page-max: 24rem;
 }
 
 * {
@@ -31,7 +30,6 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
-  justify-content: center;
   font-family: var(--font-body), sans-serif;
   color: var(--text-primary);
   background:
@@ -105,13 +103,12 @@ img {
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
-  justify-content: center;
   overflow: hidden;
 }
 
 .mobile-frame {
   position: relative;
-  width: min(100vw, var(--page-max));
+  width: 100%;
   height: 100vh;
   height: 100dvh;
   display: grid;
@@ -1073,16 +1070,8 @@ img {
 
 @media (min-width: 760px) {
   body {
-    padding: 1.25rem 0;
-  }
-
-  .mobile-frame {
-    height: calc(100vh - 2.5rem);
-    height: calc(100dvh - 2.5rem);
-    border-radius: 1.25rem;
-    box-shadow: 0 0 0 1px rgb(72 72 71 / 0.18), 0 34px 80px rgb(0 0 0 / 0.4);
+    padding: 0;
   }
 }
-
 
 
