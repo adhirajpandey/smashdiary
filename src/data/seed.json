@@ -1,0 +1,54 @@
+{
+  "players": [
+    {
+      "id": "p1",
+      "name": "Aman",
+      "createdAt": "2026-03-01T09:00:00.000Z",
+      "updatedAt": "2026-03-01T09:00:00.000Z"
+    },
+    {
+      "id": "p2",
+      "name": "Riya",
+      "createdAt": "2026-03-01T09:00:00.000Z",
+      "updatedAt": "2026-03-01T09:00:00.000Z"
+    },
+    {
+      "id": "p3",
+      "name": "Kabir",
+      "createdAt": "2026-03-01T09:00:00.000Z",
+      "updatedAt": "2026-03-01T09:00:00.000Z"
+    },
+    {
+      "id": "p4",
+      "name": "Neha",
+      "createdAt": "2026-03-01T09:00:00.000Z",
+      "updatedAt": "2026-03-01T09:00:00.000Z"
+    }
+  ],
+  "games": [
+    {
+      "id": "g1",
+      "playedAt": "2026-03-19T18:30:00.000Z",
+      "format": "singles",
+      "sideAPlayerIds": ["p1"],
+      "sideBPlayerIds": ["p2"],
+      "sideAScore": 21,
+      "sideBScore": 17,
+      "winnerSide": "A",
+      "createdAt": "2026-03-19T18:45:00.000Z",
+      "updatedAt": "2026-03-19T18:45:00.000Z"
+    },
+    {
+      "id": "g2",
+      "playedAt": "2026-03-20T19:10:00.000Z",
+      "format": "doubles",
+      "sideAPlayerIds": ["p1", "p3"],
+      "sideBPlayerIds": ["p2", "p4"],
+      "sideAScore": 18,
+      "sideBScore": 21,
+      "winnerSide": "B",
+      "createdAt": "2026-03-20T19:22:00.000Z",
+      "updatedAt": "2026-03-20T19:22:00.000Z"
+    }
+  ]
+}

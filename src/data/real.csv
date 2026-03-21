@@ -1,0 +1,41 @@
+id,date,team1,team2,team1_score,team2_score,winner
+1,2026-03-03,Sanidhya,Adhiraj,21,18,Sanidhya
+2,2026-03-03,Sanidhya,Adhiraj,10,21,Adhiraj
+3,2026-03-03,Sanidhya,Adhiraj,23,25,Adhiraj
+4,2026-03-03,Sanidhya,Adhiraj,15,21,Adhiraj
+5,2026-03-03,Sanidhya,Adhiraj,19,21,Adhiraj
+6,2026-03-03,Sanidhya,Adhiraj,20,22,Adhiraj
+7,2026-03-04,PalamGuy A,Adhiraj,8,21,Adhiraj
+8,2026-03-04,PalamGuy A,Adhiraj,20,22,Adhiraj
+9,2026-03-05,Sanidhya,Adhiraj,25,27,Adhiraj
+10,2026-03-05,Sanidhya,Adhiraj,21,12,Sanidhya
+11,2026-03-05,Sanidhya,Adhiraj,4,11,Adhiraj
+12,2026-03-06,Sanidhya,Adhiraj,19,21,Adhiraj
+13,2026-03-08,Adhiraj,Abhishek,21,16,Adhiraj
+14,2026-03-08,Adhiraj+Sachi,EASGuy A+Abhilasha,21,12,Adhiraj+Sachi
+15,2026-03-08,Sanidhya,Adhiraj,21,14,Sanidhya
+16,2026-03-08,Sanidhya,Adhiraj,21,19,Sanidhya
+17,2026-03-12,Adhiraj,Jinu,21,19,Adhiraj
+18,2026-03-12,Adhiraj,Jinu,21,12,Adhiraj
+19,2026-03-12,Adhiraj,Jinu,21,16,Adhiraj
+20,2026-03-12,Adhiraj,Jinu,21,14,Adhiraj
+21,2026-03-12,Adhiraj,Sanidhya,21,5,Adhiraj
+22,2026-03-12,Adhiraj,Sanidhya,11,6,Adhiraj
+23,2026-03-13,Adhiraj,Sanidhya,19,21,Sanidhya
+24,2026-03-18,Sankalp+Sagar,Adhiraj+Amar,21,14,Sankalp+Sagar
+25,2026-03-18,Sankalp+Sagar,Adhiraj+Amar,18,21,Adhiraj+Amar
+26,2026-03-18,Sankalp+Sagar,Adhiraj+Amar,21,17,Sankalp+Sagar
+27,2026-03-18,Sankalp+Sagar,Adhiraj+Sachi,21,11,Sankalp+Sagar
+28,2026-03-18,Sankalp+Sagar,Adhiraj+Sachi,15,21,Adhiraj+Sachi
+29,2026-03-18,Amar+Sagar,Adhiraj+Sachi,17,21,Adhiraj+Sachi
+30,2026-03-19,Adhiraj,Sanidhya,21,17,Adhiraj
+31,2026-03-20,Adhiraj+Sachi,Sankalp+Nivedita,15,21,Sankalp+Nivedita
+32,2026-03-20,Adhiraj+Sachi,Sankalp+Nivedita,21,15,Adhiraj+Sachi
+33,2026-03-20,Adhiraj+Sachi,Sankalp+Nivedita,21,12,Adhiraj+Sachi
+34,2026-03-20,Adhiraj+Sachi,Sankalp+Nivedita,22,24,Sankalp+Nivedita
+35,2026-03-20,Adhiraj+Amar,Sagar+Sankalp,22,20,Adhiraj+Amar
+36,2026-03-20,Adhiraj+Amar,Sagar+Abhishek,22,20,Adhiraj+Amar
+37,2026-03-20,Amar+Sanidhya,Sagar+Abhishek,20,15,Amar+Sanidhya
+38,2026-03-20,Adhiraj+Sanidhya,Abhishek+Sankalp,21,9,Adhiraj+Sanidhya
+39,2026-03-20,Sanidhya+Shelly,Sagar+Amar,19,21,Sagar+Amar
+40,2026-03-20,Sagar+Amar,Abhishek+Sachi,23,21,Sagar+Amar
