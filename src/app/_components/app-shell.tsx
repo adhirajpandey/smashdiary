@@ -13,10 +13,12 @@ export function AppShell({
     <main className="shell">
       <div className="mobile-frame">
         <MobileHeader />
-        <div className="app-content">
+        <div className="app-content" role="presentation">
           <div className="page-stack">{children}</div>
         </div>
-        <BottomNav activePath={activePath} />
+        <div className="shell-nav">
+          <BottomNav activePath={activePath} />
+        </div>
         <IdentityPicker />
       </div>
     </main>
