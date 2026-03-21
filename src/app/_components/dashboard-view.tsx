@@ -11,17 +11,48 @@ import { buildMatchReaction } from "@/lib/reaction-text";
 import type { Player, ResolvedGame } from "@/lib/types";
 
 function StatTile({
+  id,
   label,
   value,
   accent,
+  description,
+  bubbleAlign,
+  isOpen,
+  onToggle,
 }: Readonly<{
+  id: string;
   label: string;
   value: string;
   accent: "lime" | "blue";
+  description: string;
+  bubbleAlign: "start" | "end";
+  isOpen: boolean;
+  onToggle: (id: string) => void;
 }>) {
+  const descriptionId = `${id}-description`;
+
   return (
     <div className="dashboard-tile">
-      <p className="dashboard-tile__label">{label}</p>
+      <div className="dashboard-tile__header">
+        <p className="dashboard-tile__label">{label}</p>
+        <div className="dashboard-tile__info-wrap">
+          <button
+            aria-controls={descriptionId}
+            aria-expanded={isOpen}
+            aria-label={`Explain ${label}`}
+            className={`dashboard-tile__info ${isOpen ? "is-active" : ""}`}
+            onClick={() => onToggle(id)}
+            type="button"
+          >
+            i
+          </button>
+          {isOpen ? (
+            <p className={`dashboard-tile__bubble dashboard-tile__bubble--${bubbleAlign}`} id={descriptionId} role="tooltip">
+              {description}
+            </p>
+          ) : null}
+        </div>
+      </div>
       <p className={`display dashboard-tile__value dashboard-tile__value--${accent}`}>{value}</p>
     </div>
   );
@@ -37,6 +68,7 @@ export function DashboardView({
   const { selectedPlayerId } = useSelectedPlayer();
   const searchParams = useSearchParams();
   const [dismissedSavedGameId, setDismissedSavedGameId] = useState<string | null>(null);
+  const [openMetricId, setOpenMetricId] = useState<string | null>(null);
   const savedGameId = searchParams.get("savedGameId");
   const metrics = useMemo(
     () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
@@ -50,6 +82,10 @@ export function DashboardView({
     }
     return buildMatchReaction(savedGame, selectedPlayerId);
   }, [dismissedSavedGameId, savedGame, selectedPlayerId]);
+
+  const handleToggleMetric = (metricId: string) => {
+    setOpenMetricId((current) => (current === metricId ? null : metricId));
+  };
 
   if (!metrics) {
     return null;
@@ -75,8 +111,26 @@ export function DashboardView({
       </Link>
 
       <section className="dashboard-grid">
-        <StatTile accent="lime" label="Win Score" value={metrics.winScore.toFixed(1)} />
-        <StatTile accent="blue" label="Player Rating" value={metrics.playerRating.toFixed(1)} />
+        <StatTile
+          accent="lime"
+          bubbleAlign="start"
+          description="Shows your win rate on a 10-point scale."
+          id="win-rating"
+          isOpen={openMetricId === "win-rating"}
+          label="Win Rate"
+          onToggle={handleToggleMetric}
+          value={metrics.winScore.toFixed(1)}
+        />
+        <StatTile
+          accent="blue"
+          bubbleAlign="end"
+          description="Based on your win rate, with a boost for positive average point difference, capped at 10."
+          id="player-rating"
+          isOpen={openMetricId === "player-rating"}
+          label="Player Rating"
+          onToggle={handleToggleMetric}
+          value={metrics.playerRating.toFixed(1)}
+        />
       </section>
 
       <section className="dashboard-section">
