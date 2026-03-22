@@ -68,6 +68,15 @@ Behavior:
 
 Test mode is useful for UI and workflow validation when a Postgres instance is not available.
 
+## Player Context
+
+The app shell includes a persistent identity picker. Several screens intentionally depend on the selected player:
+
+- the dashboard only renders personal metrics when a player is selected
+- match history filters to the selected player's matches
+- stats render the selected player's record breakdown, while still showing the shared leaderboard when no player is selected
+- the new-match form treats the selected player as the "You" side and pre-fills that roster slot
+
 ## Commands
 
 ### App lifecycle

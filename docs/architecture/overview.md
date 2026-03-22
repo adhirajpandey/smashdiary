@@ -13,6 +13,7 @@ Current route surfaces:
 - `/`: dashboard view
 - `/matches`: match history
 - `/matches/new`: new match form
+- shared shell controls: mobile header, bottom navigation, and persistent identity picker
 - `/matches/[id]`: match detail
 - `/stats`: player stats
 - `/rankings`: redirects to `/stats`
@@ -24,7 +25,7 @@ Current route surfaces:
 `src/app` owns page composition and user-facing components.
 
 - Route files call query helpers from `src/lib/queries/page-data.ts`
-- UI components such as dashboard, history, stats, and forms live under `src/app/_components`
+- UI components such as dashboard, history, stats, forms, and shell controls live under `src/app/_components`
 - The server action in `src/app/actions.ts` handles form submission for create and update flows
 
 ### Query layer
@@ -82,15 +83,15 @@ The normal read path is:
 
 Examples:
 
-- The dashboard page loads matches and players, then uses selector functions such as `getDashboardMetrics()` and `getTopPerformers()`.
-- The match history page loads matches and players, then filters matches for the selected player.
+- The dashboard page loads matches and players, then uses selector functions such as `getDashboardMetrics()` and `getTopPerformers()`. Selected-player state from the shell decides whether personal dashboard content renders.
+- The match history page loads matches and players, then filters matches for the selected player. Without a selected player, the route shows an empty state instead of a mixed global feed.
 - The match detail page loads a single resolved match and renders a read-only score and side breakdown.
 
 ## Write Flow
 
 The normal write path is:
 
-1. The form posts to `upsertGameAction` in `src/app/actions.ts`.
+1. The form posts to `upsertGameAction` in `src/app/actions.ts`. The selected player from shell context is treated as the fixed "You" side in the form UI.
 2. The action parses form data and validates it with `gameFormSchema`.
 3. The action derives `winnerSide`.
 4. The action calls the `saveMatch()` command.

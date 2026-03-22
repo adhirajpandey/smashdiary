@@ -8,8 +8,9 @@ The app is built for quick local iteration: in normal mode it uses Postgres thro
 
 - Record singles and doubles matches
 - Create players during match entry
-- Browse match history
-- View dashboard and stats for the selected player
+- Switch player context from the persistent identity picker in the app shell
+- Browse player-focused match history
+- View dashboard and stats for the selected player while keeping a global leaderboard view
 - Inspect a dedicated match detail screen
 
 User-facing docs use the term "match". Some internal code still uses `game` in names and types.
@@ -46,6 +47,8 @@ APP_MODE=test npm run dev
 - `DATABASE_URL`: required in default mode and for Drizzle migration commands
 - `LOG_LEVEL`: optional logger level such as `debug`, `info`, `warn`, or `error`
 - `APP_MODE`: set to `test` to use the local SQLite test repository
+
+The app shell always includes a player picker. Dashboard, match history, and player-specific stats content depend on that selected player context.
 
 ## Runtime Modes
 
