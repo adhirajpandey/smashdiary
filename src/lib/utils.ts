@@ -48,3 +48,16 @@ export function parseNumericId(value: string) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
+
+export function formatPlayerName(name: string): string;
+export function formatPlayerName(name: string, variant: "full"): string;
+export function formatPlayerName(name: string, variant: "stacked"): string[];
+export function formatPlayerName(name: string, variant: "full" | "stacked" = "full") {
+  const normalized = normalizePlayerName(name);
+
+  if (variant === "full") {
+    return normalized;
+  }
+
+  return normalized.split(" ").filter(Boolean);
+}

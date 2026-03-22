@@ -2,13 +2,8 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { SectionHeading } from "@/app/_components/section-heading";
-import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
 import { getMatchDetailPageData } from "@/lib/queries/page-data";
-import { formatGameDate, parseNumericId } from "@/lib/utils";
-
-function joinNames(names: string[]) {
-  return names.join(" / ");
-}
+import { formatGameDate, formatPlayerName, parseNumericId } from "@/lib/utils";
 
 function getFormatTitle(format: "singles" | "doubles") {
   return format === "singles" ? "Singles match" : "Doubles match";
@@ -30,10 +25,14 @@ export default async function MatchDetailPage({
     notFound();
   }
 
-  const winnerLabel = game.winnerSide === "A" ? "Side A" : "Side B";
-
-  const sideA = joinNames(game.sideAPlayers.map((player) => player.name));
-  const sideB = joinNames(game.sideBPlayers.map((player) => player.name));
+  const sideA = game.sideAPlayers.map((player) => ({
+    full: formatPlayerName(player.name),
+    stacked: formatPlayerName(player.name, "stacked"),
+  }));
+  const sideB = game.sideBPlayers.map((player) => ({
+    full: formatPlayerName(player.name),
+    stacked: formatPlayerName(player.name, "stacked"),
+  }));
 
   return (
     <AppShell activePath="">
@@ -47,39 +46,61 @@ export default async function MatchDetailPage({
           />
         </div>
 
-        <section className="detail-page__summary">
-          <div className="detail-page__score-tile">
-            <span className="detail-page__summary-label">Final score</span>
-            <strong className="display detail-page__score-value">
-              {game.sideAScore}-{game.sideBScore}
-            </strong>
-          </div>
-          <SummaryStatTile label="Winner" value={winnerLabel} accent="primary" />
-        </section>
-
-        <section className="detail-page__breakdown">
-          <div className="dashboard-section__row">
-            <h2 className="dashboard-section__title">Side breakdown</h2>
-            <p className="stats-results__meta">{game.format}</p>
-          </div>
-
-          <div className="detail-page__side-list">
-            <section className={`detail-page__side ${game.winnerSide === "A" ? "is-winner" : ""}`}>
-              <div className="detail-page__side-meta">
-                <span className="detail-page__side-label">Side A</span>
-                <span className="detail-page__side-status">{game.winnerSide === "A" ? "Winner" : "Played"}</span>
+        <section className="detail-stage">
+          <div className="detail-stage__top">
+            <div className="detail-stage__score-block">
+              <span className="detail-stage__kicker">Final score</span>
+              <div className="detail-stage__scoreline">
+                <span className="display detail-stage__score-number">{game.sideAScore}</span>
+                <span className="detail-stage__score-separator" aria-hidden="true">
+                  /
+                </span>
+                <span className="display detail-stage__score-number detail-stage__score-number--muted">{game.sideBScore}</span>
               </div>
-              <p className="detail-page__side-names">{sideA}</p>
-              <p className="detail-page__side-score">Score {game.sideAScore}</p>
+            </div>
+          </div>
+
+          <div className="detail-stage__versus" aria-hidden="true">
+            versus
+          </div>
+
+          <div className="detail-stage__sides">
+            <section className={`detail-stage__side ${game.winnerSide === "A" ? "is-winner" : ""}`}>
+              <div className="detail-stage__side-top">
+                <span className="detail-stage__side-label">Side A</span>
+                {game.winnerSide === "A" ? <span className="detail-stage__side-badge">Winner</span> : null}
+              </div>
+              <div className="detail-stage__roster" role="list">
+                {sideA.map((player) => (
+                  <p className="detail-stage__player" key={`side-a-${player.full}`} role="listitem">
+                    {player.stacked.map((part, index) => (
+                      <span className="detail-stage__player-line" key={`${player.full}-${part}-${index}`}>
+                        {part}
+                      </span>
+                    ))}
+                  </p>
+                ))}
+              </div>
+              <p className="display detail-stage__side-score">{game.sideAScore}</p>
             </section>
 
-            <section className={`detail-page__side ${game.winnerSide === "B" ? "is-winner" : ""}`}>
-              <div className="detail-page__side-meta">
-                <span className="detail-page__side-label">Side B</span>
-                <span className="detail-page__side-status">{game.winnerSide === "B" ? "Winner" : "Played"}</span>
+            <section className={`detail-stage__side ${game.winnerSide === "B" ? "is-winner" : ""}`}>
+              <div className="detail-stage__side-top">
+                <span className="detail-stage__side-label">Side B</span>
+                {game.winnerSide === "B" ? <span className="detail-stage__side-badge">Winner</span> : null}
               </div>
-              <p className="detail-page__side-names">{sideB}</p>
-              <p className="detail-page__side-score">Score {game.sideBScore}</p>
+              <div className="detail-stage__roster" role="list">
+                {sideB.map((player) => (
+                  <p className="detail-stage__player" key={`side-b-${player.full}`} role="listitem">
+                    {player.stacked.map((part, index) => (
+                      <span className="detail-stage__player-line" key={`${player.full}-${part}-${index}`}>
+                        {part}
+                      </span>
+                    ))}
+                  </p>
+                ))}
+              </div>
+              <p className="display detail-stage__side-score">{game.sideBScore}</p>
             </section>
           </div>
         </section>

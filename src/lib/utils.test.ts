@@ -1,4 +1,4 @@
-import { cn, ensureArray, fromInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
+import { cn, ensureArray, formatPlayerName, fromInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
 
 describe("utils", () => {
   it("wraps non-array values and preserves arrays", () => {
@@ -17,5 +17,11 @@ describe("utils", () => {
     expect(iso).toContain("T");
     expect(iso.endsWith("Z")).toBe(true);
     expect(toInputDateTimeValue(iso)).toBe(input);
+  });
+
+  it("formats player names for full and stacked display", () => {
+    expect(formatPlayerName("  Adhiraj   Pandey  ")).toBe("Adhiraj Pandey");
+    expect(formatPlayerName("Adhiraj Pandey", "stacked")).toEqual(["Adhiraj", "Pandey"]);
+    expect(formatPlayerName("Mary Jane Watson", "stacked")).toEqual(["Mary", "Jane", "Watson"]);
   });
 });
