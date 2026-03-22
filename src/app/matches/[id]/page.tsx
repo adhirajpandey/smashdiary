@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
-import { formatGameDate } from "@/lib/utils";
 import { getGameById } from "@/lib/store";
+import { formatGameDate, parseNumericId } from "@/lib/utils";
 
 function joinNames(names: string[]) {
   return names.join(" / ");
@@ -14,7 +14,11 @@ export default async function MatchDetailPage({
   params: Promise<{ id: string }>;
 }>) {
   const { id } = await params;
-  const game = await getGameById(id);
+  const gameId = parseNumericId(id);
+  if (!gameId) {
+    notFound();
+  }
+  const game = await getGameById(gameId);
 
   if (!game) {
     notFound();

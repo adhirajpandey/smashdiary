@@ -6,8 +6,8 @@ import type { Player } from "@/lib/types";
 
 type SelectedPlayerContextValue = {
   players: Player[];
-  selectedPlayerId: string | null;
-  setSelectedPlayerId: (value: string) => void;
+  selectedPlayerId: number | null;
+  setSelectedPlayerId: (value: number) => void;
   isPickerOpen: boolean;
   openPicker: () => void;
   closePicker: () => void;
@@ -24,13 +24,14 @@ export function SelectedPlayerProvider({
   children: React.ReactNode;
   players: Player[];
 }>) {
-  const [selectedPlayerId, setSelectedPlayerIdState] = useState<string | null>(null);
+  const [selectedPlayerId, setSelectedPlayerIdState] = useState<number | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const isValid = stored && players.some((player) => player.id === stored);
+    const storedValue = window.localStorage.getItem(STORAGE_KEY);
+    const stored = storedValue ? Number(storedValue) : null;
+    const isValid = stored !== null && Number.isInteger(stored) && players.some((player) => player.id === stored);
     const timeoutId = window.setTimeout(() => {
       setSelectedPlayerIdState(isValid ? stored : null);
       setIsPickerOpen(!isValid);
@@ -40,9 +41,9 @@ export function SelectedPlayerProvider({
     return () => window.clearTimeout(timeoutId);
   }, [players]);
 
-  function setSelectedPlayerId(value: string) {
+  function setSelectedPlayerId(value: number) {
     setSelectedPlayerIdState(value);
-    window.localStorage.setItem(STORAGE_KEY, value);
+    window.localStorage.setItem(STORAGE_KEY, String(value));
   }
 
   const contextValue = useMemo(

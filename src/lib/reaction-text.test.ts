@@ -2,25 +2,23 @@ import { buildMatchReaction } from "@/lib/reaction-text";
 import type { Player, ResolvedGame } from "@/lib/types";
 
 const PLAYER_A: Player = {
-  id: "p_a",
+  id: 1,
   name: "Sanidhya",
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
 const PLAYER_B: Player = {
-  id: "p_b",
+  id: 2,
   name: "Amar",
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
 const GAME: ResolvedGame = {
-  id: "g_123",
+  id: 123,
   playedAt: "2026-01-01T00:00:00.000Z",
   format: "singles",
-  sideAPlayerIds: [PLAYER_A.id],
-  sideBPlayerIds: [PLAYER_B.id],
   sideAScore: 21,
   sideBScore: 18,
   winnerSide: "A",

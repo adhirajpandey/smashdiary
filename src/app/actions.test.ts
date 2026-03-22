@@ -51,11 +51,11 @@ describe("upsertGameAction", () => {
   });
 
   it("redirects with savedGameId on success", async () => {
-    (saveGame as jest.Mock).mockResolvedValue("g_new");
+    (saveGame as jest.Mock).mockResolvedValue(101);
     const formData = buildValidFormData();
 
     await expect(upsertGameAction(initialUpsertGameActionState, formData)).rejects.toThrow("NEXT_REDIRECT");
     expect(revalidatePath).toHaveBeenCalledTimes(4);
-    expect(redirect).toHaveBeenCalledWith("/?savedGameId=g_new");
+    expect(redirect).toHaveBeenCalledWith("/?savedGameId=101");
   });
 });

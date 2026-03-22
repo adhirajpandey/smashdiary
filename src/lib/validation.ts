@@ -1,16 +1,13 @@
 import { z } from "zod";
 
 import type { GameFormat, WinnerSide } from "@/lib/types";
+import { normalizePlayerNameKey } from "@/lib/utils";
 
 const playerNameSchema = z
   .string()
   .trim()
   .min(1, "Player name is required.")
   .max(32, "Player name must be 32 characters or fewer.");
-
-function normalizePlayerName(name: string) {
-  return name.trim().replace(/\s+/g, " ").toLowerCase();
-}
 
 export const gameFormSchema = z
   .object({
@@ -23,8 +20,8 @@ export const gameFormSchema = z
   })
   .superRefine((value, ctx) => {
     const requiredCount = value.format === "singles" ? 1 : 2;
-    const normalizedSideAPlayers = value.sideAPlayers.map(normalizePlayerName);
-    const normalizedSideBPlayers = value.sideBPlayers.map(normalizePlayerName);
+    const normalizedSideAPlayers = value.sideAPlayers.map(normalizePlayerNameKey);
+    const normalizedSideBPlayers = value.sideBPlayers.map(normalizePlayerNameKey);
     const uniqueSideAPlayers = new Set(normalizedSideAPlayers);
     const uniqueSideBPlayers = new Set(normalizedSideBPlayers);
 

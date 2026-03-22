@@ -9,6 +9,7 @@ import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import { getDashboardMetrics, getTopPerformers } from "@/lib/diary-metrics";
 import { buildMatchReaction } from "@/lib/reaction-text";
 import type { Player, ResolvedGame } from "@/lib/types";
+import { parseNumericId } from "@/lib/utils";
 
 function StatTile({
   id,
@@ -67,9 +68,9 @@ export function DashboardView({
 }>) {
   const { selectedPlayerId } = useSelectedPlayer();
   const searchParams = useSearchParams();
-  const [dismissedSavedGameId, setDismissedSavedGameId] = useState<string | null>(null);
+  const [dismissedSavedGameId, setDismissedSavedGameId] = useState<number | null>(null);
   const [openMetricId, setOpenMetricId] = useState<string | null>(null);
-  const savedGameId = searchParams.get("savedGameId");
+  const savedGameId = parseNumericId(searchParams.get("savedGameId") ?? "");
   const metrics = useMemo(
     () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
     [games, players, selectedPlayerId],

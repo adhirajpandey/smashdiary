@@ -1,22 +1,15 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 
+import { gameParticipants, games, players } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
-import { games, players } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import { isTestMode } from "@/lib/runtime-mode";
 import { getGameByIdSqlite, listGamesSqlite, listPlayersSqlite, saveGameSqlite } from "@/lib/store-sqlite";
-import type { DiaryStore, Game, Player, ResolvedGame } from "@/lib/types";
+import type { Game, GameParticipant, Player, ResolvedGame } from "@/lib/types";
+import { normalizePlayerName, normalizePlayerNameKey } from "@/lib/utils";
 
 function logStoreEvent(event: string, payload?: Record<string, unknown>) {
   logger.info("store", event, payload);
-}
-
-function makeId(prefix: string) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function normalizeName(name: string) {
-  return name.trim().replace(/\s+/g, " ");
 }
 
 function toIsoDateTime(dateTime: string) {
@@ -28,105 +21,166 @@ function toIsoDateTime(dateTime: string) {
   return parsed.toISOString();
 }
 
-function resolveGames(store: DiaryStore): ResolvedGame[] {
-  return store.games
-    .slice()
-    .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
-    .map((game) => ({
-      ...game,
-      sideAPlayers: game.sideAPlayerIds.map((id) => store.players.find((player) => player.id === id)).filter(Boolean) as Player[],
-      sideBPlayers: game.sideBPlayerIds.map((id) => store.players.find((player) => player.id === id)).filter(Boolean) as Player[],
-    }));
+type GameRow = {
+  gameId: number;
+  playedAt: string;
+  format: Game["format"];
+  sideAScore: number;
+  sideBScore: number;
+  winnerSide: Game["winnerSide"];
+  gameCreatedAt: string;
+  gameUpdatedAt: string;
+  participantId: number | null;
+  side: GameParticipant["side"] | null;
+  slot: number | null;
+  playerId: number | null;
+  playerName: string | null;
+  playerCreatedAt: string | null;
+  playerUpdatedAt: string | null;
+};
+
+function resolveGames(rows: GameRow[]) {
+  const resolvedById = new Map<number, ResolvedGame>();
+
+  for (const row of rows) {
+    let game = resolvedById.get(row.gameId);
+    if (!game) {
+      game = {
+        id: row.gameId,
+        playedAt: row.playedAt,
+        format: row.format,
+        sideAScore: row.sideAScore,
+        sideBScore: row.sideBScore,
+        winnerSide: row.winnerSide,
+        createdAt: row.gameCreatedAt,
+        updatedAt: row.gameUpdatedAt,
+        sideAPlayers: [],
+        sideBPlayers: [],
+      };
+      resolvedById.set(row.gameId, game);
+    }
+
+    if (!row.playerId || !row.playerName || !row.playerCreatedAt || !row.playerUpdatedAt || !row.side) {
+      continue;
+    }
+
+    const player: Player = {
+      id: row.playerId,
+      name: row.playerName,
+      createdAt: row.playerCreatedAt,
+      updatedAt: row.playerUpdatedAt,
+    };
+
+    if (row.side === "A") {
+      game.sideAPlayers.push(player);
+    } else {
+      game.sideBPlayers.push(player);
+    }
+  }
+
+  return Array.from(resolvedById.values());
 }
 
-async function readStore(): Promise<DiaryStore> {
+async function selectResolvedGames(whereGameId?: number) {
   const db = getDb();
-  const [playerRows, gameRows] = await Promise.all([
-    db.select().from(players),
-    db.select().from(games).orderBy(desc(games.playedAt)),
-  ]);
+  const query = db
+    .select({
+      gameId: games.id,
+      playedAt: games.playedAt,
+      format: games.format,
+      sideAScore: games.sideAScore,
+      sideBScore: games.sideBScore,
+      winnerSide: games.winnerSide,
+      gameCreatedAt: games.createdAt,
+      gameUpdatedAt: games.updatedAt,
+      participantId: gameParticipants.id,
+      side: gameParticipants.side,
+      slot: gameParticipants.slot,
+      playerId: players.id,
+      playerName: players.name,
+      playerCreatedAt: players.createdAt,
+      playerUpdatedAt: players.updatedAt,
+    })
+    .from(games)
+    .leftJoin(gameParticipants, eq(gameParticipants.gameId, games.id))
+    .leftJoin(players, eq(players.id, gameParticipants.playerId))
+    .orderBy(desc(games.playedAt), asc(gameParticipants.side), asc(gameParticipants.slot));
 
-  return {
-    players: playerRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })),
-    games: gameRows.map((row) => ({
-      id: row.id,
-      playedAt: row.playedAt,
-      format: row.format as Game["format"],
-      sideAPlayerIds: row.sideAPlayerIds,
-      sideBPlayerIds: row.sideBPlayerIds,
-      sideAScore: row.sideAScore,
-      sideBScore: row.sideBScore,
-      winnerSide: row.winnerSide as Game["winnerSide"],
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })),
-  };
+  const rows = whereGameId ? await query.where(eq(games.id, whereGameId)) : await query;
+  return resolveGames(rows as GameRow[]);
 }
 
-type WriteDatabase = ReturnType<typeof getDb>;
-type WriteClient = Pick<WriteDatabase, "select" | "insert">;
+type WriteClient = Pick<ReturnType<typeof getDb>, "select" | "insert">;
 
 async function upsertPlayers(names: string[], client: WriteClient) {
-  const ids: string[] = [];
-  const knownByLowerName = new Map<string, string>();
+  const ids: number[] = [];
+  const knownByNameKey = new Map<string, number>();
 
   for (const rawName of names) {
-    const name = normalizeName(rawName);
-    const lowerName = name.toLowerCase();
+    const name = normalizePlayerName(rawName);
+    const nameKey = normalizePlayerNameKey(rawName);
 
-    const cachedId = knownByLowerName.get(lowerName);
+    const cachedId = knownByNameKey.get(nameKey);
     if (cachedId) {
       ids.push(cachedId);
       continue;
     }
 
-    const [existing] = await client
-      .select({ id: players.id })
-      .from(players)
-      .where(sql`lower(${players.name}) = ${lowerName}`)
-      .limit(1);
+    const [existing] = await client.select({ id: players.id }).from(players).where(eq(players.nameKey, nameKey)).limit(1);
 
     if (existing) {
-      knownByLowerName.set(lowerName, existing.id);
+      knownByNameKey.set(nameKey, existing.id);
       ids.push(existing.id);
       continue;
     }
 
     const timestamp = new Date().toISOString();
-    const id = makeId("p");
-
-    try {
-      await client.insert(players).values({
-        id,
+    const [inserted] = await client
+      .insert(players)
+      .values({
         name,
+        nameKey,
         createdAt: timestamp,
         updatedAt: timestamp,
-      });
-      knownByLowerName.set(lowerName, id);
-      ids.push(id);
+      })
+      .onConflictDoNothing({ target: players.nameKey })
+      .returning({ id: players.id });
+
+    if (inserted) {
+      knownByNameKey.set(nameKey, inserted.id);
+      ids.push(inserted.id);
       continue;
-    } catch {
-      const [concurrent] = await client
-        .select({ id: players.id })
-        .from(players)
-        .where(sql`lower(${players.name}) = ${lowerName}`)
-        .limit(1);
-
-      if (!concurrent) {
-        throw new Error("Could not save player.");
-      }
-
-      knownByLowerName.set(lowerName, concurrent.id);
-      ids.push(concurrent.id);
     }
+
+    const [concurrent] = await client.select({ id: players.id }).from(players).where(eq(players.nameKey, nameKey)).limit(1);
+    if (!concurrent) {
+      throw new Error("Could not save player.");
+    }
+
+    knownByNameKey.set(nameKey, concurrent.id);
+    ids.push(concurrent.id);
   }
 
   return ids;
+}
+
+function buildParticipantValues(gameId: number, sideAPlayerIds: number[], sideBPlayerIds: number[], createdAt: string) {
+  return [
+    ...sideAPlayerIds.map((playerId, index) => ({
+      gameId,
+      playerId,
+      side: "A" as const,
+      slot: (index + 1) as 1 | 2,
+      createdAt,
+    })),
+    ...sideBPlayerIds.map((playerId, index) => ({
+      gameId,
+      playerId,
+      side: "B" as const,
+      slot: (index + 1) as 1 | 2,
+      createdAt,
+    })),
+  ];
 }
 
 export async function listPlayers() {
@@ -134,18 +188,26 @@ export async function listPlayers() {
     return listPlayersSqlite();
   }
 
-  const store = await readStore();
-  return store.players.slice().sort((a, b) => {
-    const aIsSagar = a.name.toLowerCase() === "sagar";
-    const bIsSagar = b.name.toLowerCase() === "sagar";
-    if (aIsSagar && !bIsSagar) {
-      return -1;
-    }
-    if (!aIsSagar && bIsSagar) {
-      return 1;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const playerRows = await getDb().select().from(players);
+
+  return playerRows
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    }))
+    .sort((a, b) => {
+      const aIsSagar = a.name.toLowerCase() === "sagar";
+      const bIsSagar = b.name.toLowerCase() === "sagar";
+      if (aIsSagar && !bIsSagar) {
+        return -1;
+      }
+      if (!aIsSagar && bIsSagar) {
+        return 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
 }
 
 export async function listGames() {
@@ -153,57 +215,20 @@ export async function listGames() {
     return listGamesSqlite();
   }
 
-  const store = await readStore();
-  return resolveGames(store);
+  return selectResolvedGames();
 }
 
-export async function getGameById(id: string) {
+export async function getGameById(id: number) {
   if (isTestMode()) {
     return getGameByIdSqlite(id);
   }
 
-  const db = getDb();
-  const [gameRow, playerRows] = await Promise.all([
-    db
-      .select()
-      .from(games)
-      .where(eq(games.id, id))
-      .limit(1),
-    db.select().from(players),
-  ]);
-
-  if (!gameRow[0]) {
-    return null;
-  }
-
-  const store: DiaryStore = {
-    players: playerRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })),
-    games: [
-      {
-        id: gameRow[0].id,
-        playedAt: gameRow[0].playedAt,
-        format: gameRow[0].format as Game["format"],
-        sideAPlayerIds: gameRow[0].sideAPlayerIds,
-        sideBPlayerIds: gameRow[0].sideBPlayerIds,
-        sideAScore: gameRow[0].sideAScore,
-        sideBScore: gameRow[0].sideBScore,
-        winnerSide: gameRow[0].winnerSide as Game["winnerSide"],
-        createdAt: gameRow[0].createdAt,
-        updatedAt: gameRow[0].updatedAt,
-      },
-    ],
-  };
-
-  return resolveGames(store)[0] ?? null;
+  const resolvedGames = await selectResolvedGames(id);
+  return resolvedGames[0] ?? null;
 }
 
 type SaveGameInput = {
-  id?: string;
+  id?: number;
   playedAt: string;
   format: Game["format"];
   sideAPlayers: string[];
@@ -228,8 +253,8 @@ export async function saveGame(input: SaveGameInput) {
 
   return db.transaction(async (tx) => {
     const timestamp = new Date().toISOString();
-    const sideAPlayerIds = await upsertPlayers(input.sideAPlayers, tx);
-    const sideBPlayerIds = await upsertPlayers(input.sideBPlayers, tx);
+    const sideAPlayerIds = await upsertPlayers(input.sideAPlayers, tx as WriteClient);
+    const sideBPlayerIds = await upsertPlayers(input.sideBPlayers, tx as WriteClient);
     const playedAt = toIsoDateTime(input.playedAt);
 
     if (input.id) {
@@ -238,8 +263,6 @@ export async function saveGame(input: SaveGameInput) {
         .set({
           playedAt,
           format: input.format,
-          sideAPlayerIds,
-          sideBPlayerIds,
           sideAScore: input.sideAScore,
           sideBScore: input.sideBScore,
           winnerSide: input.winnerSide,
@@ -253,26 +276,40 @@ export async function saveGame(input: SaveGameInput) {
         throw new Error("Game not found.");
       }
 
+      await tx.delete(gameParticipants).where(eq(gameParticipants.gameId, input.id));
+
+      const participantValues = buildParticipantValues(input.id, sideAPlayerIds, sideBPlayerIds, timestamp);
+      if (participantValues.length) {
+        await tx.insert(gameParticipants).values(participantValues);
+      }
+
       logStoreEvent("saveGame:updated", { id: updated[0].id });
       return updated[0].id;
     }
 
-    const id = makeId("g");
+    const [created] = await tx
+      .insert(games)
+      .values({
+        playedAt,
+        format: input.format,
+        sideAScore: input.sideAScore,
+        sideBScore: input.sideBScore,
+        winnerSide: input.winnerSide,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+      .returning({ id: games.id });
 
-    await tx.insert(games).values({
-      id,
-      playedAt,
-      format: input.format,
-      sideAPlayerIds,
-      sideBPlayerIds,
-      sideAScore: input.sideAScore,
-      sideBScore: input.sideBScore,
-      winnerSide: input.winnerSide,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
+    if (!created) {
+      throw new Error("Could not create game.");
+    }
 
-    logStoreEvent("saveGame:created", { id });
-    return id;
+    const participantValues = buildParticipantValues(created.id, sideAPlayerIds, sideBPlayerIds, timestamp);
+    if (participantValues.length) {
+      await tx.insert(gameParticipants).values(participantValues);
+    }
+
+    logStoreEvent("saveGame:created", { id: created.id });
+    return created.id;
   });
 }

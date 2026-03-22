@@ -6,9 +6,9 @@ import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 
 export function IdentityPicker() {
   const { players, selectedPlayerId, setSelectedPlayerId, isPickerOpen, closePicker } = useSelectedPlayer();
-  const [draftPlayerId, setDraftPlayerId] = useState("");
+  const [draftPlayerId, setDraftPlayerId] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const resolvedDraftPlayerId = draftPlayerId || selectedPlayerId || players[0]?.id || "";
+  const resolvedDraftPlayerId = draftPlayerId ?? selectedPlayerId ?? players[0]?.id ?? null;
   const selectedPlayer = useMemo(
     () => players.find((player) => player.id === resolvedDraftPlayerId) ?? null,
     [players, resolvedDraftPlayerId],
@@ -80,11 +80,11 @@ export function IdentityPicker() {
           style={{ marginTop: "1.25rem", width: "100%" }}
           type="button"
           onClick={() => {
-            if (!resolvedDraftPlayerId) {
+            if (resolvedDraftPlayerId === null) {
               return;
             }
             setSelectedPlayerId(resolvedDraftPlayerId);
-            setDraftPlayerId("");
+            setDraftPlayerId(null);
             setIsOpen(false);
             closePicker();
           }}

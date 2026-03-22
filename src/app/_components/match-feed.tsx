@@ -10,7 +10,7 @@ function joinNames(players: Player[]) {
   return players.map((player) => player.name).join("\n");
 }
 
-function getPerspectiveTeams(game: ResolvedGame, playerId?: string | null) {
+function getPerspectiveTeams(game: ResolvedGame, playerId?: number | null) {
   if (!playerId) {
     return {
       ownSide: game.sideAPlayers,
@@ -43,7 +43,7 @@ export function MatchFeed({
   playerId,
 }: Readonly<{
   games: ResolvedGame[];
-  playerId?: string | null;
+  playerId?: number | null;
 }>) {
   if (!games.length) {
     return <div className="empty-state">No matches to show yet.</div>;

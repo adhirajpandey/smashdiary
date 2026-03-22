@@ -35,3 +35,16 @@ export function fromInputDateTimeValue(value: string) {
 export function ensureArray<T>(value: T | T[]) {
   return Array.isArray(value) ? value : [value];
 }
+
+export function normalizePlayerName(name: string) {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+export function normalizePlayerNameKey(name: string) {
+  return normalizePlayerName(name).toLowerCase();
+}
+
+export function parseNumericId(value: string) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}

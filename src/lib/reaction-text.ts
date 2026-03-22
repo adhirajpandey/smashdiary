@@ -37,16 +37,16 @@ function containsForbiddenToken(text: string) {
   return FORBIDDEN_TOKENS.some((token) => normalized.includes(token));
 }
 
-export function buildMatchReaction(game: ResolvedGame, selectedPlayerId: string | null): MatchReaction {
+export function buildMatchReaction(game: ResolvedGame, selectedPlayerId: number | null): MatchReaction {
   if (!selectedPlayerId) {
-    return { text: pickDeterministic(NEUTRAL_REACTIONS, game.id), tone: "neutral" };
+    return { text: pickDeterministic(NEUTRAL_REACTIONS, String(game.id)), tone: "neutral" };
   }
 
   const sideA = game.sideAPlayers.some((player) => player.id === selectedPlayerId);
   const sideB = game.sideBPlayers.some((player) => player.id === selectedPlayerId);
 
   if (!sideA && !sideB) {
-    return { text: pickDeterministic(NEUTRAL_REACTIONS, game.id), tone: "neutral" };
+    return { text: pickDeterministic(NEUTRAL_REACTIONS, String(game.id)), tone: "neutral" };
   }
 
   const didWin = (sideA && game.winnerSide === "A") || (sideB && game.winnerSide === "B");
@@ -55,7 +55,7 @@ export function buildMatchReaction(game: ResolvedGame, selectedPlayerId: string 
   const text = pickDeterministic(set, `${game.id}:${selectedPlayerId}:${tone}`);
 
   if (containsForbiddenToken(text)) {
-    return { text: pickDeterministic(NEUTRAL_REACTIONS, game.id), tone: "neutral" };
+    return { text: pickDeterministic(NEUTRAL_REACTIONS, String(game.id)), tone: "neutral" };
   }
 
   return { text, tone };

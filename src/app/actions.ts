@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import type { UpsertGameActionState } from "@/app/action-state";
 import { normalizeGameFormErrors } from "@/lib/action-errors";
 import { saveGame } from "@/lib/store";
+import { parseNumericId } from "@/lib/utils";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 
 function collectPlayers(formData: FormData, key: string) {
@@ -16,7 +17,16 @@ function collectPlayers(formData: FormData, key: string) {
 }
 
 export async function upsertGameAction(_: UpsertGameActionState, formData: FormData): Promise<UpsertGameActionState> {
-  const id = String(formData.get("id") ?? "").trim() || undefined;
+  const rawId = String(formData.get("id") ?? "").trim();
+  const parsedId = rawId ? parseNumericId(rawId) : null;
+  const id = parsedId ?? undefined;
+
+  if (rawId && !parsedId) {
+    return {
+      formError: "Could not save game. Please try again.",
+      fieldErrors: {},
+    };
+  }
 
   const parsed = gameFormSchema.safeParse({
     playedAt: String(formData.get("playedAt") ?? ""),
@@ -32,7 +42,7 @@ export async function upsertGameAction(_: UpsertGameActionState, formData: FormD
     return normalized;
   }
 
-  let savedGameId = id ?? "";
+  let savedGameId = id ?? 0;
   try {
     savedGameId = await saveGame({
       id,

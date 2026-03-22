@@ -1,6 +1,6 @@
 import type { Player, PlayerDashboardMetrics, PlayerStanding, PlayerStatsSummary, ResolvedGame } from "@/lib/types";
 
-export function getPlayerSide(game: ResolvedGame, playerId: string) {
+export function getPlayerSide(game: ResolvedGame, playerId: number) {
   if (game.sideAPlayers.some((player) => player.id === playerId)) {
     return "A";
   }
@@ -12,12 +12,12 @@ export function getPlayerSide(game: ResolvedGame, playerId: string) {
   return null;
 }
 
-export function didPlayerWin(game: ResolvedGame, playerId: string) {
+export function didPlayerWin(game: ResolvedGame, playerId: number) {
   const side = getPlayerSide(game, playerId);
   return side ? game.winnerSide === side : false;
 }
 
-export function getPlayerPerspectiveScore(game: ResolvedGame, playerId: string) {
+export function getPlayerPerspectiveScore(game: ResolvedGame, playerId: number) {
   const side = getPlayerSide(game, playerId);
   if (side === "A") {
     return { scoreFor: game.sideAScore, scoreAgainst: game.sideBScore };
@@ -30,7 +30,7 @@ export function getPlayerPerspectiveScore(game: ResolvedGame, playerId: string) 
   return { scoreFor: game.sideAScore, scoreAgainst: game.sideBScore };
 }
 
-export function getPlayerGames(games: ResolvedGame[], playerId: string) {
+export function getPlayerGames(games: ResolvedGame[], playerId: number) {
   return games.filter(
     (game) =>
       game.sideAPlayers.some((player) => player.id === playerId) ||
@@ -41,7 +41,7 @@ export function getPlayerGames(games: ResolvedGame[], playerId: string) {
 export function getPlayerStatsSummary(
   games: ResolvedGame[],
   players: Player[],
-  playerId: string,
+  playerId: number,
 ): PlayerStatsSummary | null {
   const player = players.find((entry) => entry.id === playerId);
   if (!player) {
@@ -67,7 +67,7 @@ export function getPlayerStatsSummary(
 export function getDashboardMetrics(
   games: ResolvedGame[],
   players: Player[],
-  playerId: string,
+  playerId: number,
 ): PlayerDashboardMetrics | null {
   const stats = getPlayerStatsSummary(games, players, playerId);
   if (!stats) {
