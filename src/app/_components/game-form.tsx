@@ -93,12 +93,24 @@ function PlayerField({
   }, []);
 
   function selectOption(option: string) {
+    if (clearInternalPointerTimeoutRef.current !== null) {
+      window.clearTimeout(clearInternalPointerTimeoutRef.current);
+      clearInternalPointerTimeoutRef.current = null;
+    }
     onChange(option);
     internalPointerRef.current = false;
     setIsOpen(false);
   }
 
-  function markInternalPointerInteraction() {
+  function markInternalPointerInteraction(event: React.PointerEvent<HTMLDivElement>) {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    if (!event.target.closest("[data-autocomplete-option]")) {
+      return;
+    }
+
     if (clearInternalPointerTimeoutRef.current !== null) {
       window.clearTimeout(clearInternalPointerTimeoutRef.current);
       clearInternalPointerTimeoutRef.current = null;
@@ -107,6 +119,10 @@ function PlayerField({
   }
 
   function clearInternalPointerInteraction() {
+    if (!internalPointerRef.current) {
+      return;
+    }
+
     if (clearInternalPointerTimeoutRef.current !== null) {
       window.clearTimeout(clearInternalPointerTimeoutRef.current);
     }
@@ -114,7 +130,7 @@ function PlayerField({
     clearInternalPointerTimeoutRef.current = window.setTimeout(() => {
       internalPointerRef.current = false;
       clearInternalPointerTimeoutRef.current = null;
-    }, 0);
+    }, 250);
   }
 
   return (
@@ -172,6 +188,7 @@ function PlayerField({
               <button
                 aria-selected={option.toLowerCase() === normalizedValue}
                 className="autocomplete__option"
+                data-autocomplete-option="true"
                 key={option}
                 onClick={() => {
                   selectOption(option);
