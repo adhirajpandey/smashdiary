@@ -33,6 +33,8 @@ export default async function MatchDetailPage({
     full: formatPlayerName(player.name),
     stacked: formatPlayerName(player.name, "stacked"),
   }));
+  const sideAState = game.winnerSide === "A" ? "is-winner" : "is-loser";
+  const sideBState = game.winnerSide === "B" ? "is-winner" : "is-loser";
 
   return (
     <AppShell activePath="">
@@ -65,7 +67,7 @@ export default async function MatchDetailPage({
           </div>
 
           <div className="detail-stage__sides">
-            <section className={`detail-stage__side ${game.winnerSide === "A" ? "is-winner" : ""}`}>
+            <section className={`detail-stage__side ${sideAState}`}>
               <div className="detail-stage__side-top">
                 <span className="detail-stage__side-label">Side A</span>
                 {game.winnerSide === "A" ? <span className="detail-stage__side-badge">Winner</span> : null}
@@ -84,7 +86,7 @@ export default async function MatchDetailPage({
               <p className="display detail-stage__side-score">{game.sideAScore}</p>
             </section>
 
-            <section className={`detail-stage__side ${game.winnerSide === "B" ? "is-winner" : ""}`}>
+            <section className={`detail-stage__side ${sideBState}`}>
               <div className="detail-stage__side-top">
                 <span className="detail-stage__side-label">Side B</span>
                 {game.winnerSide === "B" ? <span className="detail-stage__side-badge">Winner</span> : null}

@@ -1382,10 +1382,7 @@ img {
   gap: 1rem;
   padding: 1rem;
   border-radius: 1.15rem;
-  background:
-    radial-gradient(circle at top left, rgb(214 255 0 / 0.06), transparent 30%),
-    radial-gradient(circle at bottom right, rgb(125 152 255 / 0.08), transparent 32%),
-    linear-gradient(180deg, rgb(22 22 22 / 0.98), rgb(10 10 10 / 1));
+  background: linear-gradient(180deg, rgb(22 22 22 / 0.98), rgb(10 10 10 / 1));
 }
 
 .detail-stage::after {
@@ -1395,7 +1392,7 @@ img {
   width: 10rem;
   height: 10rem;
   border-radius: 999px;
-  background: radial-gradient(circle, rgb(214 255 0 / 0.12), transparent 70%);
+  background: none;
   pointer-events: none;
 }
 
@@ -1478,6 +1475,12 @@ img {
 .detail-stage__side.is-winner {
   background:
     linear-gradient(90deg, rgb(214 255 0 / 0.12), transparent 46%),
+    linear-gradient(180deg, rgb(31 31 31 / 0.94), rgb(18 18 18 / 0.98));
+}
+
+.detail-stage__side.is-loser {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--danger) 12%, transparent), transparent 46%),
     linear-gradient(180deg, rgb(31 31 31 / 0.94), rgb(18 18 18 / 0.98));
 }
 
