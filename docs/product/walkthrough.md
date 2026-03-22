@@ -17,14 +17,15 @@ It currently shows:
 - recent matches for the selected player
 - a top-performer summary
 
-If no player is selected in context, the dashboard does not render metrics content.
+If no player is selected in context, the dashboard does not render metrics content. The player context is controlled from the identity picker anchored in the app shell.
 
 ### Match History (`/matches`)
 
-The history screen shows standalone match history for the selected player.
+The history screen shows match history for the selected player.
 
 - matches are shown newest first
 - the page title adapts to the current player selection
+- an empty state prompts for player selection before the feed is shown
 - the feed links into match detail pages
 
 ### Match Form (`/matches/new`)
@@ -34,10 +35,13 @@ The new-match screen is the main write surface.
 Current supported behavior:
 
 - log a completed singles or doubles match
+- treat the currently selected player as the fixed "You" slot
 - enter final scores
 - assign players to side A and side B
 - use existing player suggestions
 - create new players implicitly by typing names during submission
+- prefill the played-at field with the current local date and time for new entries
+- adjust scores with either number inputs or score stepper buttons
 
 The underlying server action also supports update behavior when an ID is supplied, even though the primary documented workflow is new match entry.
 
@@ -58,7 +62,7 @@ Invalid or missing IDs resolve to the app's not-found behavior.
 
 ### Stats (`/stats`)
 
-The stats screen renders player-focused summary information derived from stored matches and players. It is read-only and depends on the currently selected player context and available match data.
+The stats screen renders player-focused summary information derived from stored matches and players. It is read-only, depends on the currently selected player context for the personal breakdown, and still shows the shared leaderboard when no player is selected.
 
 ### Rankings Redirect (`/rankings`)
 
@@ -68,7 +72,7 @@ The stats screen renders player-focused summary information derived from stored 
 
 The product currently supports these main workflows:
 
-- selecting a player context in the shell
+- selecting a player context from the shell identity picker
 - logging completed singles matches
 - logging completed doubles matches
 - creating new players as part of match entry
