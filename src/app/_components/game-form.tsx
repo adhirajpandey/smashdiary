@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { initialUpsertGameActionState } from "@/app/action-state";
@@ -56,12 +56,65 @@ function PlayerField({
   const [isOpen, setIsOpen] = useState(false);
   const inputId = useId();
   const listboxId = useId();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const internalPointerRef = useRef(false);
+  const clearInternalPointerTimeoutRef = useRef<number | null>(null);
   const filteredSuggestions = useMemo(() => filterSuggestions(suggestions, value), [suggestions, value]);
   const normalizedValue = value.trim().toLowerCase();
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleDocumentPointerDown(event: PointerEvent) {
+      if (!(event.target instanceof Node)) {
+        return;
+      }
+
+      if (!rootRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (clearInternalPointerTimeoutRef.current !== null) {
+        window.clearTimeout(clearInternalPointerTimeoutRef.current);
+      }
+    };
+  }, []);
+
   function selectOption(option: string) {
     onChange(option);
+    internalPointerRef.current = false;
     setIsOpen(false);
+  }
+
+  function markInternalPointerInteraction() {
+    if (clearInternalPointerTimeoutRef.current !== null) {
+      window.clearTimeout(clearInternalPointerTimeoutRef.current);
+      clearInternalPointerTimeoutRef.current = null;
+    }
+    internalPointerRef.current = true;
+  }
+
+  function clearInternalPointerInteraction() {
+    if (clearInternalPointerTimeoutRef.current !== null) {
+      window.clearTimeout(clearInternalPointerTimeoutRef.current);
+    }
+
+    clearInternalPointerTimeoutRef.current = window.setTimeout(() => {
+      internalPointerRef.current = false;
+      clearInternalPointerTimeoutRef.current = null;
+    }, 0);
   }
 
   return (
@@ -71,7 +124,11 @@ function PlayerField({
       </label>
       <div
         className="autocomplete"
+        ref={rootRef}
         onBlur={(event) => {
+          if (internalPointerRef.current) {
+            return;
+          }
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
             setIsOpen(false);
           }
@@ -103,17 +160,20 @@ function PlayerField({
         </div>
 
         {isOpen && filteredSuggestions.length ? (
-          <div className="autocomplete__dropdown" id={listboxId} role="listbox">
+          <div
+            className="autocomplete__dropdown"
+            id={listboxId}
+            onPointerCancel={clearInternalPointerInteraction}
+            onPointerDownCapture={markInternalPointerInteraction}
+            onPointerUp={clearInternalPointerInteraction}
+            role="listbox"
+          >
             {filteredSuggestions.map((option) => (
               <button
                 aria-selected={option.toLowerCase() === normalizedValue}
                 className="autocomplete__option"
                 key={option}
                 onClick={() => {
-                  selectOption(option);
-                }}
-                onPointerDown={(event) => {
-                  event.preventDefault();
                   selectOption(option);
                 }}
                 role="option"

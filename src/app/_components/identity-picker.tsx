@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
@@ -12,15 +12,68 @@ export function IdentityPicker() {
   const fieldLabelId = useId();
   const listboxId = useId();
   const selectedValueId = useId();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const internalPointerRef = useRef(false);
+  const clearInternalPointerTimeoutRef = useRef<number | null>(null);
   const resolvedDraftPlayerId = draftPlayerId ?? selectedPlayerId ?? players[0]?.id ?? null;
   const selectedPlayer = useMemo(
     () => players.find((player) => player.id === resolvedDraftPlayerId) ?? null,
     [players, resolvedDraftPlayerId],
   );
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleDocumentPointerDown(event: PointerEvent) {
+      if (!(event.target instanceof Node)) {
+        return;
+      }
+
+      if (!rootRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (clearInternalPointerTimeoutRef.current !== null) {
+        window.clearTimeout(clearInternalPointerTimeoutRef.current);
+      }
+    };
+  }, []);
+
   function selectPlayer(playerId: number) {
     setDraftPlayerId(playerId);
+    internalPointerRef.current = false;
     setIsOpen(false);
+  }
+
+  function markInternalPointerInteraction() {
+    if (clearInternalPointerTimeoutRef.current !== null) {
+      window.clearTimeout(clearInternalPointerTimeoutRef.current);
+      clearInternalPointerTimeoutRef.current = null;
+    }
+    internalPointerRef.current = true;
+  }
+
+  function clearInternalPointerInteraction() {
+    if (clearInternalPointerTimeoutRef.current !== null) {
+      window.clearTimeout(clearInternalPointerTimeoutRef.current);
+    }
+
+    clearInternalPointerTimeoutRef.current = window.setTimeout(() => {
+      internalPointerRef.current = false;
+      clearInternalPointerTimeoutRef.current = null;
+    }, 0);
   }
 
   if (!isPickerOpen) {
@@ -44,7 +97,11 @@ export function IdentityPicker() {
           </span>
           <div
             className="autocomplete"
+            ref={rootRef}
             onBlur={(event) => {
+              if (internalPointerRef.current) {
+                return;
+              }
               if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
                 setIsOpen(false);
               }
@@ -72,6 +129,9 @@ export function IdentityPicker() {
                 aria-labelledby={fieldLabelId}
                 className="autocomplete__dropdown"
                 id={listboxId}
+                onPointerCancel={clearInternalPointerInteraction}
+                onPointerDownCapture={markInternalPointerInteraction}
+                onPointerUp={clearInternalPointerInteraction}
                 role="listbox"
               >
                 {players.map((player) => (
@@ -80,10 +140,6 @@ export function IdentityPicker() {
                     className="autocomplete__option"
                     key={player.id}
                     onClick={() => {
-                      selectPlayer(player.id);
-                    }}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
                       selectPlayer(player.id);
                     }}
                     role="option"
