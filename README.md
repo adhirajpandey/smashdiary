@@ -1,95 +1,98 @@
 # Smash Diary
 
-Smash Diary is a mobile-first badminton journal for logging singles and doubles matches, tracking recent results, and surfacing lightweight player metrics.
+Smash Diary is a mobile-first badminton journal for logging matches, tracking recent results, and surfacing lightweight player metrics.
+
+The app is built for quick local iteration: in normal mode it uses Postgres through Drizzle ORM, and in test mode it swaps to a local SQLite database seeded with dummy data.
+
+## What It Does
+
+- Record singles and doubles matches
+- Create players during match entry
+- Browse match history
+- View dashboard and stats for the selected player
+- Inspect a dedicated match detail screen
+
+User-facing docs use the term "match". Some internal code still uses `game` in names and types.
 
 ## Stack
 
 - Next.js 16 App Router
 - React 19
 - TypeScript
-- Postgres with Drizzle ORM
-- Jest + ts-jest for unit tests
+- Drizzle ORM
+- Postgres in default mode
+- SQLite in local test mode
+- Jest + ts-jest
 
-## Features
-
-- Record singles and doubles matches
-- Create players on demand from match entry
-- Browse recent match history
-- View dashboard and stats by selected player
-- Persist games and players in Postgres
-
-## Getting Started
-
-1. Install dependencies:
+## Quick Start
 
 ```bash
 npm install
-```
-
-2. Create a local env file and set your database connection:
-
-```bash
 cp .env.example .env
-```
-
-Required:
-- `DATABASE_URL`
-
-Optional:
-- `LOG_LEVEL=debug|info|warn|error` (defaults to `info`)
-- `APP_MODE=test` (uses local SQLite test mode with dummy data)
-
-3. Run database migrations:
-
-```bash
 npm run db:migrate
-```
-
-4. Start the dev server:
-
-```bash
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
-### Test Mode (SQLite Dummy Data)
-
-Set `APP_MODE=test` to run the app against a local SQLite file seeded from `src/data/diary.json`:
+If you want to run the app without Postgres, use test mode instead:
 
 ```bash
 APP_MODE=test npm run dev
 ```
 
-In this mode:
-- `DATABASE_URL` is not required
-- data resets to the dummy seed on each server start
-- create/update flows still work for end-to-end testing
+## Environment Variables
 
-## Scripts
+- `DATABASE_URL`: required in default mode and for Drizzle migration commands
+- `LOG_LEVEL`: optional logger level such as `debug`, `info`, `warn`, or `error`
+- `APP_MODE`: set to `test` to use the local SQLite test repository
 
-- `npm run dev` starts the local Next.js server
-- `npm run build` creates a production build
-- `npm run start` serves the production build
-- `npm run lint` runs ESLint
-- `npm run test` runs Jest once
-- `npm run test:watch` runs Jest in watch mode
+## Runtime Modes
+
+### Default mode
+
+- Uses the Postgres repository
+- Reads schema from `src/lib/db/schema.ts`
+- Requires `DATABASE_URL`
+
+### Test mode
+
+- Enabled with `APP_MODE=test`
+- Uses a local SQLite file at `.gstack/test-mode.sqlite`
+- Seeds data from `src/data/diary.json` on server start
+- Resets seeded data when the server process is reinitialized
+- Does not require `DATABASE_URL` for app runtime
+
+## Database Workflow
+
 - `npm run db:generate` creates Drizzle migration files
-- `npm run db:migrate` applies migrations
+- `npm run db:migrate` applies migrations using `DATABASE_URL`
 - `npm run db:studio` opens Drizzle Studio
+
+Schema changes should be accompanied by a matching migration in `drizzle/`.
+
+## Testing and Linting
+
+- `npm run lint`
+- `npm run test`
+- `npm run test:watch`
+- `npm run build`
+
+Tests live beside source files as `*.test.ts` under `src/`.
 
 ## Project Layout
 
-- `src/app` routes, server actions, and UI components
-- `src/lib` shared logic, DB access, validation, metrics, and utilities
-- `src/data` local seed and reference data
-- `drizzle` SQL migrations and metadata
-- `docs` design references and notes
+- `src/app`: routes, server actions, and UI components
+- `src/lib`: domain logic, validation, queries, repositories, DB access, metrics, and utilities
+- `src/data`: local seed and reference data
+- `drizzle`: SQL migrations and Drizzle metadata
+- `docs`: architecture, development, data model, product walkthrough, and design notes
 
-## Design Notes
+## Further Reading
 
-The visual system follows [docs/DESIGN.md](docs/DESIGN.md): `Space Grotesk` for display typography, `Lexend` for UI copy, dark tonal surfaces, neon lime primary actions, and electric blue accents. Avoid rigid card grids and hard divider lines when extending the UI.
-
-## Testing
-
-Tests live beside source files as `*.test.ts` under `src/`. Run `npm run test` before submitting changes, especially for validation, metrics, and store logic.
+- [docs/README.md](docs/README.md)
+- [docs/guides/development.md](docs/guides/development.md)
+- [docs/architecture/overview.md](docs/architecture/overview.md)
+- [docs/architecture/data-model.md](docs/architecture/data-model.md)
+- [docs/product/walkthrough.md](docs/product/walkthrough.md)
+- [docs/design/system.md](docs/design/system.md)
