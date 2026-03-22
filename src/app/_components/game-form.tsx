@@ -332,7 +332,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
         {format === "doubles" ? (
           <PlayerField
             icon="+"
-            label="Partner (for doubles)"
+            label="Your Partner"
             name="sideAPlayers"
             onChange={setPartnerName}
             placeholder="Add a teammate..."
@@ -354,7 +354,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
         {format === "doubles" ? (
           <PlayerField
             icon="OP"
-            label="Opponent Partner"
+            label="Opponent's Partner"
             name="sideBPlayers"
             onChange={setOpponentPartnerName}
             placeholder="Add second opponent..."
