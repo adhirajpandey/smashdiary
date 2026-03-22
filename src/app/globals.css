@@ -975,34 +975,45 @@ img {
   border-radius: 1px;
 }
 
-.nav-icon--clock {
-  width: 0.8rem;
-  height: 0.8rem;
+.nav-icon--scorecard {
+  width: 0.92rem;
+  height: 0.78rem;
+  grid-template-columns: repeat(2, 0.22rem);
+  justify-content: center;
+  align-content: center;
+  column-gap: 0.16rem;
   border: 2px solid currentColor;
-  border-radius: 999px;
+  border-radius: 0.16rem;
   position: relative;
 }
 
-.nav-icon--clock::before,
-.nav-icon--clock::after {
+.nav-icon--scorecard::before {
   content: "";
   position: absolute;
-  background: currentColor;
-  left: 50%;
-  top: 50%;
-  transform-origin: left top;
-}
-
-.nav-icon--clock::before {
-  width: 0.2rem;
-  height: 2px;
-  transform: translate(-1px, -1px);
-}
-
-.nav-icon--clock::after {
+  inset: 0.14rem auto 0.14rem 50%;
   width: 2px;
-  height: 0.22rem;
-  transform: translate(-1px, -1px) rotate(315deg);
+  transform: translateX(-50%);
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.nav-icon--scorecard span {
+  width: 0.14rem;
+  height: 0.14rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.nav-icon--scorecard span:nth-child(1) {
+  box-shadow:
+    0 0.2rem 0 currentColor,
+    0 0.4rem 0 currentColor;
+}
+
+.nav-icon--scorecard span:nth-child(2) {
+  box-shadow:
+    0 0.2rem 0 currentColor,
+    0 0.4rem 0 currentColor;
 }
 
 .nav-icon--bars {

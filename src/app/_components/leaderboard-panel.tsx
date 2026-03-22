@@ -2,7 +2,7 @@ import type { PlayerStanding } from "@/lib/types";
 
 export function LeaderboardPanel({
   players,
-  title = "Top Performance",
+  title = "Leaderboard",
 }: Readonly<{
   players: PlayerStanding[];
   title?: string;
