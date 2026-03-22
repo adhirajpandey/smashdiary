@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useRef, useState } from "react";
+import { useActionState, useId, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { initialUpsertGameActionState } from "@/app/action-state";
@@ -54,11 +54,21 @@ function PlayerField({
   value: string;
 }>) {
   const [isOpen, setIsOpen] = useState(false);
+  const inputId = useId();
+  const listboxId = useId();
   const filteredSuggestions = useMemo(() => filterSuggestions(suggestions, value), [suggestions, value]);
+  const normalizedValue = value.trim().toLowerCase();
+
+  function selectOption(option: string) {
+    onChange(option);
+    setIsOpen(false);
+  }
 
   return (
-    <label className="match-input-group">
-      <span className="match-input-group__label">{label}</span>
+    <div className="match-input-group">
+      <label className="match-input-group__label" htmlFor={inputId}>
+        {label}
+      </label>
       <div
         className="autocomplete"
         onBlur={(event) => {
@@ -72,8 +82,13 @@ function PlayerField({
             {icon}
           </span>
           <input
+            aria-autocomplete="list"
+            aria-controls={listboxId}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
             autoComplete="off"
             className="match-input-shell__input"
+            id={inputId}
             name={name}
             onChange={(event) => {
               onChange(event.target.value);
@@ -82,24 +97,30 @@ function PlayerField({
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
             required
+            role="combobox"
             value={value}
           />
         </div>
 
         {isOpen && filteredSuggestions.length ? (
-          <div className="autocomplete__dropdown">
+          <div className="autocomplete__dropdown" id={listboxId} role="listbox">
             {filteredSuggestions.map((option) => (
               <button
+                aria-selected={option.toLowerCase() === normalizedValue}
                 className="autocomplete__option"
                 key={option}
                 onClick={() => {
-                  onChange(option);
-                  setIsOpen(false);
+                  selectOption(option);
                 }}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  selectOption(option);
+                }}
+                role="option"
                 type="button"
               >
                 <span>{option}</span>
-                {option.toLowerCase() === value.trim().toLowerCase() ? (
+                {option.toLowerCase() === normalizedValue ? (
                   <span className="autocomplete__hint">Selected</span>
                 ) : null}
               </button>
@@ -107,7 +128,7 @@ function PlayerField({
           </div>
         ) : null}
       </div>
-    </label>
+    </div>
   );
 }
 
