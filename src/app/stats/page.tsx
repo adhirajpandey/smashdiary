@@ -1,13 +1,13 @@
 import { AppShell } from "@/app/_components/app-shell";
 import { StatsPanel } from "@/app/_components/stats-panel";
-import { listGames, listPlayers } from "@/lib/store";
+import { getStatsPageData } from "@/lib/queries/page-data";
 
 export default async function StatsPage() {
-  const [games, players] = await Promise.all([listGames(), listPlayers()]);
+  const { matches, players } = await getStatsPageData();
 
   return (
     <AppShell activePath="/stats">
-      <StatsPanel games={games} players={players} />
+      <StatsPanel games={matches} players={players} />
     </AppShell>
   );
 }

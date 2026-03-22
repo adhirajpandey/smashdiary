@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 
 import { initialUpsertGameActionState } from "@/app/action-state";
 import { upsertGameAction } from "@/app/actions";
+import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import type { GameFormat, ResolvedGame } from "@/lib/types";
 import { toInputDateTimeValue } from "@/lib/utils";
@@ -199,9 +200,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
       {state.formError ? <p className="match-form__banner">{state.formError}</p> : null}
 
       <section className="match-form__section">
-        <p className="eyebrow" style={{ margin: 0 }}>
-          Select format
-        </p>
+        <SectionHeading align="compact" eyebrow="Select format" />
 
         <div className="format-grid">
           <FormatCard

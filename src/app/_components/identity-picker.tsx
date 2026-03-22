@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 
 export function IdentityPicker() {
@@ -22,17 +23,14 @@ export function IdentityPicker() {
     <div className="identity-modal">
       <div className="identity-modal__backdrop" />
       <div className="identity-modal__panel glass">
-        <p className="eyebrow" style={{ margin: 0 }}>
-          Player identity
-        </p>
-        <h2 className="display" style={{ margin: "0.35rem 0 0", fontSize: "2rem" }}>
-          Who are you?
-        </h2>
-        <p style={{ margin: "0.5rem 0 0", color: "var(--text-secondary)" }}>
-          Pick your name to personalize dashboard activity and recent matches.
-        </p>
+        <SectionHeading
+          eyebrow="Player identity"
+          title="Who are you?"
+          description="Pick your name to personalize dashboard activity and recent matches."
+          titleClassName="page-title"
+        />
 
-        <label style={{ display: "grid", gap: "0.45rem", marginTop: "1.25rem" }}>
+        <label className="picker-field">
           <span className="section-title">Select player</span>
           <div
             className="autocomplete"
@@ -76,8 +74,7 @@ export function IdentityPicker() {
         </label>
 
         <button
-          className="primary-button"
-          style={{ marginTop: "1.25rem", width: "100%" }}
+          className="primary-button picker-submit"
           type="button"
           onClick={() => {
             if (resolvedDraftPlayerId === null) {

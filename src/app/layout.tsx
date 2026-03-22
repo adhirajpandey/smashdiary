@@ -3,7 +3,7 @@ import { Lexend, Space_Grotesk } from "next/font/google";
 
 import { SelectedPlayerProvider } from "@/app/_components/selected-player-provider";
 import "./globals.css";
-import { listPlayers } from "@/lib/store";
+import { getAppShellData } from "@/lib/queries/page-data";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const players = await listPlayers();
+  const { players } = await getAppShellData();
 
   return (
     <html lang="en" className={`${lexend.variable} ${spaceGrotesk.variable}`}>

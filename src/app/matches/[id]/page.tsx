@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
-import { getGameById } from "@/lib/store";
+import { SectionHeading } from "@/app/_components/section-heading";
+import { getMatchDetailPageData } from "@/lib/queries/page-data";
 import { formatGameDate, parseNumericId } from "@/lib/utils";
 
 function joinNames(names: string[]) {
@@ -18,7 +19,7 @@ export default async function MatchDetailPage({
   if (!gameId) {
     notFound();
   }
-  const game = await getGameById(gameId);
+  const game = await getMatchDetailPageData(gameId);
 
   if (!game) {
     notFound();
@@ -31,13 +32,13 @@ export default async function MatchDetailPage({
     <AppShell activePath="">
       <section className="detail-view">
         <div className="detail-header">
-          <div>
-            <p className="eyebrow" style={{ margin: 0 }}>
-              Match detail
-            </p>
-            <h1 className="display detail-header__title">{game.format}</h1>
-            <p className="detail-header__date">{formatGameDate(game.playedAt)}</p>
-          </div>
+          <SectionHeading
+            align="compact"
+            eyebrow="Match detail"
+            title={game.format}
+            titleClassName="detail-header__title"
+          />
+          <p className="detail-header__date">{formatGameDate(game.playedAt)}</p>
           <span className="detail-pill">{game.winnerSide === "A" ? "Side A won" : "Side B won"}</span>
         </div>
 

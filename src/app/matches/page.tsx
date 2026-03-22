@@ -1,13 +1,13 @@
 import { AppShell } from "@/app/_components/app-shell";
 import { MatchesView } from "@/app/_components/matches-view";
-import { listGames, listPlayers } from "@/lib/store";
+import { getMatchesPageData } from "@/lib/queries/page-data";
 
 export default async function MatchesPage() {
-  const [games, players] = await Promise.all([listGames(), listPlayers()]);
+  const { matches, players } = await getMatchesPageData();
 
   return (
     <AppShell activePath="/matches">
-      <MatchesView games={games} players={players} />
+      <MatchesView games={matches} players={players} />
     </AppShell>
   );
 }

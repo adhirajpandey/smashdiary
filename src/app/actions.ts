@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import type { UpsertGameActionState } from "@/app/action-state";
 import { normalizeGameFormErrors } from "@/lib/action-errors";
-import { saveGame } from "@/lib/store";
+import { saveMatch } from "@/lib/commands/save-match";
 import { parseNumericId } from "@/lib/utils";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 
@@ -44,7 +44,7 @@ export async function upsertGameAction(_: UpsertGameActionState, formData: FormD
 
   let savedGameId = id ?? 0;
   try {
-    savedGameId = await saveGame({
+    savedGameId = await saveMatch({
       id,
       ...parsed.data,
       winnerSide: deriveWinnerSide(parsed.data.sideAScore, parsed.data.sideBScore),

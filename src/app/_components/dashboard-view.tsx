@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 import { MatchFeed } from "@/app/_components/match-feed";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getDashboardMetrics, getTopPerformers } from "@/lib/diary-metrics";
+import { getDashboardMetrics, getTopPerformers } from "@/lib/match-selectors";
 import { buildMatchReaction } from "@/lib/reaction-text";
 import type { Player, ResolvedGame } from "@/lib/types";
-import { parseNumericId } from "@/lib/utils";
 
 function StatTile({
   id,
@@ -62,21 +60,21 @@ function StatTile({
 export function DashboardView({
   games,
   players,
+  savedMatchId,
 }: Readonly<{
   games: ResolvedGame[];
   players: Player[];
+  savedMatchId: number | null;
 }>) {
   const { selectedPlayerId } = useSelectedPlayer();
-  const searchParams = useSearchParams();
   const [dismissedSavedGameId, setDismissedSavedGameId] = useState<number | null>(null);
   const [openMetricId, setOpenMetricId] = useState<string | null>(null);
-  const savedGameId = parseNumericId(searchParams.get("savedGameId") ?? "");
   const metrics = useMemo(
     () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
     [games, players, selectedPlayerId],
   );
   const topPerformers = useMemo(() => getTopPerformers(games, players), [games, players]);
-  const savedGame = useMemo(() => games.find((game) => game.id === savedGameId) ?? null, [games, savedGameId]);
+  const savedGame = useMemo(() => games.find((game) => game.id === savedMatchId) ?? null, [games, savedMatchId]);
   const reaction = useMemo(() => {
     if (!savedGame || savedGame.id === dismissedSavedGameId) {
       return null;
@@ -165,7 +163,7 @@ export function DashboardView({
       </section>
 
       <section className="leaderboard">
-        <h2 className="dashboard-section__title" style={{ marginBottom: "1rem" }}>
+        <h2 className="dashboard-section__title leaderboard__title">
           Top Performance
         </h2>
         <div className="leaderboard__list">

@@ -138,6 +138,10 @@ img {
   min-height: min-content;
 }
 
+.page-stack--compact {
+  gap: 0.75rem;
+}
+
 .status-view {
   min-height: 100%;
   display: grid;
@@ -193,6 +197,50 @@ img {
 .section-title {
   margin: 0;
   font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.section-title--tight {
+  margin: 0;
+}
+
+.section-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.section-heading--compact {
+  gap: 0.2rem;
+}
+
+.section-heading__eyebrow {
+  margin: 0;
+}
+
+.section-heading__title {
+  margin: 0;
+}
+
+.section-heading__description {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.page-title {
+  font-size: 2rem;
+}
+
+.page-title--large {
+  font-size: 2.2rem;
+}
+
+.section-offset {
+  margin-top: 1.2rem;
+}
+
+.muted-copy {
+  margin: 0;
   color: var(--text-secondary);
 }
 
@@ -650,6 +698,10 @@ img {
   gap: 0.95rem;
 }
 
+.leaderboard__title {
+  margin-bottom: 1rem;
+}
+
 .leaderboard__row {
   display: flex;
   justify-content: space-between;
@@ -904,6 +956,17 @@ img {
 .identity-select__chevron.is-open {
   color: var(--primary-deep);
   transform: rotate(0deg);
+}
+
+.picker-field {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.25rem;
+}
+
+.picker-submit {
+  width: 100%;
+  margin-top: 1.25rem;
 }
 
 .match-form {
@@ -1246,6 +1309,59 @@ img {
   font-size: 1rem;
   line-height: 1.4;
   font-weight: 800;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.summary-stat {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgb(32 32 31 / 0.94), rgb(23 23 23 / 0.94));
+}
+
+.summary-stat__label {
+  margin-bottom: 0.45rem;
+}
+
+.summary-stat__value {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.summary-stat__value--primary {
+  color: var(--primary-deep);
+}
+
+.summary-stat__value--secondary {
+  color: var(--secondary);
+}
+
+.form-pill-list {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.form-pill {
+  min-width: 3rem;
+  padding: 0.95rem 0.85rem;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.form-pill.is-win {
+  background: linear-gradient(45deg, rgb(243 255 202 / 0.95), rgb(202 253 0 / 0.92));
+  color: var(--on-primary);
+}
+
+.form-pill.is-loss {
+  background: linear-gradient(45deg, rgb(125 152 255 / 0.95), rgb(0 77 234 / 0.92));
+  color: white;
 }
 
 @media (min-width: 760px) {

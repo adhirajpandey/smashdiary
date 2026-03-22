@@ -11,13 +11,13 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
-jest.mock("@/lib/store", () => ({
-  saveGame: jest.fn(),
+jest.mock("@/lib/commands/save-match", () => ({
+  saveMatch: jest.fn(),
 }));
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { saveGame } from "@/lib/store";
+import { saveMatch } from "@/lib/commands/save-match";
 
 function buildValidFormData() {
   const formData = new FormData();
@@ -51,7 +51,7 @@ describe("upsertGameAction", () => {
   });
 
   it("redirects with savedGameId on success", async () => {
-    (saveGame as jest.Mock).mockResolvedValue(101);
+    (saveMatch as jest.Mock).mockResolvedValue(101);
     const formData = buildValidFormData();
 
     await expect(upsertGameAction(initialUpsertGameActionState, formData)).rejects.toThrow("NEXT_REDIRECT");
