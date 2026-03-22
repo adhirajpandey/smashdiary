@@ -3,7 +3,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { gameParticipants, games, players } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
-import { buildParticipantValues, normalizePlayerNames, resolveMatches, sortPlayers, toIsoDateTime, type ResolvedMatchRow } from "@/lib/repositories/shared";
+import { buildParticipantValues, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
 
 function logRepositoryEvent(event: string, payload?: Record<string, unknown>) {
@@ -126,7 +126,7 @@ export const postgresMatchRepository: MatchRepository = {
       const timestamp = new Date().toISOString();
       const sideAPlayerIds = await upsertPlayers(input.sideAPlayers, tx as WriteClient);
       const sideBPlayerIds = await upsertPlayers(input.sideBPlayers, tx as WriteClient);
-      const playedAt = toIsoDateTime(input.playedAt);
+      const playedAt = normalizePlayedAt(input.playedAt);
 
       if (input.id) {
         const updated = await tx

@@ -1,4 +1,4 @@
-import { cn, ensureArray, formatPlayerName, fromInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
+import { cn, ensureArray, formatCompactDate, formatGameDate, formatPlayerName, fromInputDateTimeValue, getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
 
 describe("utils", () => {
   it("wraps non-array values and preserves arrays", () => {
@@ -12,11 +12,23 @@ describe("utils", () => {
 
   it("round-trips datetime-local values", () => {
     const input = "2026-03-21T18:30";
-    const iso = fromInputDateTimeValue(input);
+    const normalized = fromInputDateTimeValue(input);
 
-    expect(iso).toContain("T");
-    expect(iso.endsWith("Z")).toBe(true);
-    expect(toInputDateTimeValue(iso)).toBe(input);
+    expect(normalized).toBe("2026-03-21 18:30:00");
+    expect(toInputDateTimeValue(normalized)).toBe(input);
+  });
+
+  it("formats stored match dates without timezone drift", () => {
+    const storedValue = "2026-03-22 22:29:00";
+
+    expect(formatCompactDate(storedValue)).toBe("22 Mar");
+    expect(formatGameDate(storedValue)).toBe("Sun, 22 Mar, 10:29 pm");
+  });
+
+  it("builds the default input value in IST", () => {
+    const instant = new Date("2026-03-22T18:30:00.000Z");
+
+    expect(getCurrentInputDateTimeValue(instant)).toBe("2026-03-23T00:00");
   });
 
   it("formats player names for full and stacked display", () => {

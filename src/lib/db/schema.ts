@@ -27,7 +27,9 @@ export const games = pgTable(
   "games",
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
-    playedAt: timestamp("played_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+    playedAt: timestamp("played_at", { mode: "string" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata'`),
     format: text("format").notNull(),
     sideAScore: integer("side_a_score").notNull(),
     sideBScore: integer("side_b_score").notNull(),

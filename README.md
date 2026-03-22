@@ -54,6 +54,7 @@ APP_MODE=test npm run dev
 - Uses the Postgres repository
 - Reads schema from `src/lib/db/schema.ts`
 - Requires `DATABASE_URL`
+- Stores `games.played_at` as an Asia/Kolkata wall-clock timestamp instead of a UTC-normalized instant
 
 ### Test mode
 
@@ -62,6 +63,7 @@ APP_MODE=test npm run dev
 - Seeds data from `src/data/diary.json` on server start
 - Resets seeded data when the server process is reinitialized
 - Does not require `DATABASE_URL` for app runtime
+- Mirrors the same Asia/Kolkata wall-clock `played_at` behavior used in Postgres
 
 ## Database Workflow
 

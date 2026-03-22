@@ -8,7 +8,7 @@ import { upsertGameAction } from "@/app/actions";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import type { GameFormat, ResolvedGame } from "@/lib/types";
-import { toInputDateTimeValue } from "@/lib/utils";
+import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
 
 type GameFormProps = {
   game?: ResolvedGame;
@@ -373,7 +373,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </span>
             <input
               className="match-input-shell__input"
-              defaultValue={toInputDateTimeValue(game?.playedAt ?? new Date().toISOString())}
+              defaultValue={game ? toInputDateTimeValue(game.playedAt) : getCurrentInputDateTimeValue()}
               name="playedAt"
               required
               type="datetime-local"

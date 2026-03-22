@@ -1,4 +1,4 @@
-import { buildParticipantValues, resolveMatches, sortPlayers } from "@/lib/repositories/shared";
+import { buildParticipantValues, normalizePlayedAt, resolveMatches, sortPlayers } from "@/lib/repositories/shared";
 import type { Player } from "@/lib/types";
 
 describe("repository shared helpers", () => {
@@ -61,5 +61,10 @@ describe("repository shared helpers", () => {
       { gameId: 5, playerId: 12, side: "A", slot: 2, createdAt: "2026-03-20T10:00:00.000Z" },
       { gameId: 5, playerId: 21, side: "B", slot: 1, createdAt: "2026-03-20T10:00:00.000Z" },
     ]);
+  });
+
+  it("normalizes playedAt values to IST wall-clock storage", () => {
+    expect(normalizePlayedAt("2026-03-22T22:29")).toBe("2026-03-22 22:29:00");
+    expect(normalizePlayedAt("2026-03-22T22:29:00.000Z")).toBe("2026-03-22 22:29:00");
   });
 });

@@ -1,5 +1,5 @@
 import type { Game, GameParticipant, Player, ResolvedGame } from "@/lib/types";
-import { normalizePlayerName, normalizePlayerNameKey } from "@/lib/utils";
+import { normalizePlayedAtValue, normalizePlayerName, normalizePlayerNameKey } from "@/lib/utils";
 
 export type ResolvedMatchRow = {
   gameId: number;
@@ -19,13 +19,8 @@ export type ResolvedMatchRow = {
   playerUpdatedAt: string | null;
 };
 
-export function toIsoDateTime(dateTime: string) {
-  const parsed = new Date(dateTime);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error("Invalid match date.");
-  }
-
-  return parsed.toISOString();
+export function normalizePlayedAt(dateTime: string) {
+  return normalizePlayedAtValue(dateTime);
 }
 
 export function sortPlayers(players: Player[]) {

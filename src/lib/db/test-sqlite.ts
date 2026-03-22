@@ -4,7 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 
 import seedData from "@/data/diary.json";
-import { normalizePlayerNameKey } from "@/lib/utils";
+import { normalizePlayedAtValue, normalizePlayerNameKey } from "@/lib/utils";
 
 type LegacySeedPlayer = {
   id: string;
@@ -200,7 +200,7 @@ function resetAndSeed(client: Database.Database) {
 
     for (const game of games) {
       const insertedGame = insertGame.run(
-        game.playedAt,
+        normalizePlayedAtValue(game.playedAt),
         game.format,
         game.sideAScore,
         game.sideBScore,

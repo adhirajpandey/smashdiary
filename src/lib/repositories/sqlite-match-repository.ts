@@ -2,7 +2,7 @@ import type Database from "better-sqlite3";
 
 import { getTestSqliteClient } from "@/lib/db/test-sqlite";
 import { logger } from "@/lib/logger";
-import { buildParticipantValues, normalizePlayerNames, resolveMatches, sortPlayers, toIsoDateTime, type ResolvedMatchRow } from "@/lib/repositories/shared";
+import { buildParticipantValues, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
 
 type PlayerRow = {
@@ -152,7 +152,7 @@ export const sqliteMatchRepository: MatchRepository = {
       const timestamp = new Date().toISOString();
       const sideAPlayerIds = upsertPlayers(input.sideAPlayers, client);
       const sideBPlayerIds = upsertPlayers(input.sideBPlayers, client);
-      const playedAt = toIsoDateTime(input.playedAt);
+      const playedAt = normalizePlayedAt(input.playedAt);
 
       if (input.id) {
         const updated = client
