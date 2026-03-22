@@ -96,13 +96,19 @@ export function DashboardView({
     <>
       {reaction ? (
         <section className={`reaction-card reaction-card--${reaction.tone}`}>
-          <div>
+          <div className="reaction-card__body">
             <p className="reaction-card__eyebrow">Post-match</p>
             <p className="reaction-card__text">{reaction.text}</p>
           </div>
-          <button className="reaction-card__dismiss" onClick={() => setDismissedSavedGameId(savedGame?.id ?? null)} type="button">
-            Dismiss
-          </button>
+          <div className="reaction-card__actions">
+            <button
+              className="reaction-card__dismiss"
+              onClick={() => setDismissedSavedGameId(savedGame?.id ?? null)}
+              type="button"
+            >
+              Dismiss
+            </button>
+          </div>
         </section>
       ) : null}
 

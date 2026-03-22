@@ -307,14 +307,18 @@ img {
 
 .reaction-card {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 1rem;
   padding: 0.9rem 1rem;
   margin-bottom: 0.85rem;
   border-radius: 0.9rem;
   background: linear-gradient(180deg, rgb(28 28 28 / 0.96), rgb(20 20 20 / 1));
   box-shadow: 0 0 0 1px rgb(72 72 71 / 0.16);
+}
+
+.reaction-card__body {
+  min-width: 0;
 }
 
 .reaction-card--win {
@@ -342,11 +346,20 @@ img {
   margin: 0;
   color: var(--text-primary);
   font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.reaction-card__actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .reaction-card__dismiss {
   min-width: 44px;
   min-height: 44px;
+  flex-shrink: 0;
+  align-self: flex-end;
   border: 0;
   border-radius: 0.7rem;
   padding: 0.5rem 0.7rem;
@@ -1300,6 +1313,21 @@ img {
   .app-content::-webkit-scrollbar {
     width: 0;
     height: 0;
+  }
+
+  .reaction-card {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .reaction-card__body {
+    flex: 1 1 auto;
+  }
+
+  .reaction-card__actions {
+    flex: 0 0 auto;
+    align-items: center;
   }
 }
 
