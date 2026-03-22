@@ -2,11 +2,16 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
 import { SectionHeading } from "@/app/_components/section-heading";
+import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
 import { getMatchDetailPageData } from "@/lib/queries/page-data";
 import { formatGameDate, parseNumericId } from "@/lib/utils";
 
 function joinNames(names: string[]) {
   return names.join(" / ");
+}
+
+function getFormatTitle(format: "singles" | "doubles") {
+  return format === "singles" ? "Singles match" : "Doubles match";
 }
 
 export default async function MatchDetailPage({
@@ -25,61 +30,59 @@ export default async function MatchDetailPage({
     notFound();
   }
 
+  const winnerLabel = game.winnerSide === "A" ? "Side A" : "Side B";
+
   const sideA = joinNames(game.sideAPlayers.map((player) => player.name));
   const sideB = joinNames(game.sideBPlayers.map((player) => player.name));
 
   return (
     <AppShell activePath="">
       <section className="detail-view">
-        <div className="detail-header">
+        <div className="detail-page__header">
           <SectionHeading
-            align="compact"
             eyebrow="Match detail"
-            title={game.format}
-            titleClassName="detail-header__title"
+            title={getFormatTitle(game.format)}
+            description={formatGameDate(game.playedAt)}
+            titleClassName="page-title detail-page__title"
           />
-          <p className="detail-header__date">{formatGameDate(game.playedAt)}</p>
-          <span className="detail-pill">{game.winnerSide === "A" ? "Side A won" : "Side B won"}</span>
         </div>
 
-        <section className="score-panel detail-score-panel">
-          <p className="score-panel__label">Final Match Score</p>
-          <div className="score-panel__grid">
-            <div className="score-panel__side">
-              <span className="score-panel__side-label">Side A</span>
-              <p className="display score-panel__input detail-score-panel__value">{game.sideAScore}</p>
-            </div>
-
-            <div className="score-panel__divider" aria-hidden="true">
-              /
-            </div>
-
-            <div className="score-panel__side">
-              <span className="score-panel__side-label">Side B</span>
-              <p className="display score-panel__input score-panel__input--alt detail-score-panel__value">
-                {game.sideBScore}
-              </p>
-            </div>
+        <section className="detail-page__summary">
+          <div className="detail-page__score-tile">
+            <span className="detail-page__summary-label">Final score</span>
+            <strong className="display detail-page__score-value">
+              {game.sideAScore}-{game.sideBScore}
+            </strong>
           </div>
+          <SummaryStatTile label="Winner" value={winnerLabel} accent="primary" />
         </section>
 
-        <div className="detail-team-list">
-          <section className={`detail-team-card ${game.winnerSide === "A" ? "is-winner" : ""}`}>
-            <div className="detail-team-card__meta">
-              <span className="detail-team-card__label">Side A</span>
-              <span className="detail-team-card__status">{game.winnerSide === "A" ? "Victory" : "Played"}</span>
-            </div>
-            <p className="detail-team-card__names">{sideA}</p>
-          </section>
+        <section className="detail-page__breakdown">
+          <div className="dashboard-section__row">
+            <h2 className="dashboard-section__title">Side breakdown</h2>
+            <p className="stats-results__meta">{game.format}</p>
+          </div>
 
-          <section className={`detail-team-card ${game.winnerSide === "B" ? "is-winner" : ""}`}>
-            <div className="detail-team-card__meta">
-              <span className="detail-team-card__label">Side B</span>
-              <span className="detail-team-card__status">{game.winnerSide === "B" ? "Victory" : "Played"}</span>
-            </div>
-            <p className="detail-team-card__names">{sideB}</p>
-          </section>
-        </div>
+          <div className="detail-page__side-list">
+            <section className={`detail-page__side ${game.winnerSide === "A" ? "is-winner" : ""}`}>
+              <div className="detail-page__side-meta">
+                <span className="detail-page__side-label">Side A</span>
+                <span className="detail-page__side-status">{game.winnerSide === "A" ? "Winner" : "Played"}</span>
+              </div>
+              <p className="detail-page__side-names">{sideA}</p>
+              <p className="detail-page__side-score">Score {game.sideAScore}</p>
+            </section>
+
+            <section className={`detail-page__side ${game.winnerSide === "B" ? "is-winner" : ""}`}>
+              <div className="detail-page__side-meta">
+                <span className="detail-page__side-label">Side B</span>
+                <span className="detail-page__side-status">{game.winnerSide === "B" ? "Winner" : "Played"}</span>
+              </div>
+              <p className="detail-page__side-names">{sideB}</p>
+              <p className="detail-page__side-score">Score {game.sideBScore}</p>
+            </section>
+          </div>
+        </section>
       </section>
     </AppShell>
   );

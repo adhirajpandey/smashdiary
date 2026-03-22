@@ -49,6 +49,10 @@ export type PlayerStatsSummary = {
   recentForm: Array<"W" | "L">;
   singlesGames: number;
   doublesGames: number;
+  singlesWins: number;
+  singlesLosses: number;
+  doublesWins: number;
+  doublesLosses: number;
 };
 
 export type PlayerDashboardMetrics = {

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { MatchFeed } from "@/app/_components/match-feed";
-import { PageHero } from "@/app/_components/page-hero";
+import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import { getPlayerMatches } from "@/lib/match-selectors";
 import type { Player, ResolvedGame } from "@/lib/types";
@@ -26,63 +26,39 @@ export function MatchesView({
   );
 
   return (
-    <section className="page-stack--compact">
-      <PageHero
-        eyebrow="Match history"
-        title={selectedPlayer ? `${selectedPlayer.name}'s matches` : "Matches ready."}
-        description={
-          selectedPlayer
-            ? "Standalone match history, sorted from newest to oldest."
-            : "Pick a player to load a cleaner, player-specific history feed."
-        }
-        className="page-hero--matches"
-        meta={
-          selectedPlayer ? (
-            <>
-              <div className="page-hero-chip">
-                <span className="page-hero-chip__label">Player</span>
-                <strong className="page-hero-chip__value">{selectedPlayer.name}</strong>
-              </div>
-              <div className="page-hero-chip">
-                <span className="page-hero-chip__label">Matches</span>
-                <strong className="page-hero-chip__value">{selectedGames.length}</strong>
-              </div>
-              <div className="page-hero-chip">
-                <span className="page-hero-chip__label">Sort</span>
-                <strong className="page-hero-chip__value">Recent first</strong>
-              </div>
-            </>
-          ) : (
-            <div className="page-hero-chip page-hero-chip--prompt">
-              <span className="page-hero-chip__label">Player context</span>
-              <strong className="page-hero-chip__value">Select a player to focus the feed.</strong>
-            </div>
-          )
-        }
-        feature={
-          selectedPlayer ? (
-            <div className="matches-hero-feature">
-              <p className="matches-hero-feature__eyebrow">Focused timeline</p>
-              <p className="display matches-hero-feature__value">{selectedGames.length}</p>
-              <p className="matches-hero-feature__copy">
-                Every result for {selectedPlayer.name}, newest first and ready to scan.
-              </p>
-            </div>
-          ) : (
-            <div className="matches-hero-feature matches-hero-feature--empty">
-              <p className="matches-hero-feature__eyebrow">History view</p>
-              <p className="matches-hero-feature__copy">
-                Once a player is selected, this screen narrows the full log into a clean personal match history.
-              </p>
-            </div>
-          )
-        }
-        empty={!selectedPlayer}
-      />
-
-      <div>
-        <MatchFeed games={selectedGames} playerId={selectedPlayerId} />
+    <section className="matches-page">
+      <div className="matches-page__header">
+        <SectionHeading
+          eyebrow="Match history"
+          title={selectedPlayer ? `${selectedPlayer.name}'s matches` : "Matches"}
+          description={
+            selectedPlayer
+              ? `${selectedGames.length} matches, newest first.`
+              : "Choose a player to focus this feed."
+          }
+          titleClassName="page-title matches-page__title"
+        />
       </div>
+
+      {!selectedPlayer ? (
+        <div className="matches-page__empty">
+          <p className="matches-page__empty-title">Player context needed</p>
+          <p className="muted-copy">Pick a player from the header to load a cleaner personal timeline.</p>
+        </div>
+      ) : null}
+
+      {selectedPlayer ? (
+        <>
+          {selectedGames.length ? (
+            <MatchFeed games={selectedGames} playerId={selectedPlayerId} />
+          ) : (
+            <div className="matches-page__empty">
+              <p className="matches-page__empty-title">No matches yet</p>
+              <p className="muted-copy">Start with a fresh entry to build {selectedPlayer.name}&apos;s match history.</p>
+            </div>
+          )}
+        </>
+      ) : null}
     </section>
   );
 }

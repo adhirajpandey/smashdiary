@@ -2,14 +2,25 @@
 
 import { useMemo } from "react";
 
-import { PageHero } from "@/app/_components/page-hero";
+import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
+import { SectionHeading } from "@/app/_components/section-heading";
+import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getDashboardMetrics, getPlayerStatsSummary } from "@/lib/match-selectors";
+import { getDashboardMetrics, getPlayerStatsSummary, getTopPerformers } from "@/lib/match-selectors";
 import type { Player, ResolvedGame } from "@/lib/types";
 
 function formatPercent(value: number) {
   return `${Math.round(value * 10)}%`;
 }
+
+const resultsGrid = [
+  { key: "singlesWins", label: "Singles Wins", accent: "default" },
+  { key: "doublesWins", label: "Doubles Wins", accent: "default" },
+  { key: "wins", label: "Total Wins", accent: "primary" },
+  { key: "singlesLosses", label: "Singles Losses", accent: "default" },
+  { key: "doublesLosses", label: "Doubles Losses", accent: "default" },
+  { key: "losses", label: "Total Losses", accent: "danger" },
+] as const;
 
 export function StatsPanel({
   games,
@@ -27,123 +38,69 @@ export function StatsPanel({
     () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
     [games, players, selectedPlayerId],
   );
+  const leaderboard = useMemo(() => getTopPerformers(games, players), [games, players]);
 
   if (!summary || !metrics) {
     return (
       <section className="stats-page">
-        <PageHero
-          eyebrow="Stats"
-          title="Performance sheet ready."
-          description="Choose a player to load their match rhythm, ratings, and recent form."
-          empty
-        />
+        <div className="stats-page__header">
+          <SectionHeading
+            eyebrow="Stats"
+            title="Performance sheet"
+            description="Choose a player to load ratings, records, and leaderboard context."
+            titleClassName="page-title stats-page__title"
+          />
+        </div>
+
+        <div className="stats-page__empty">
+          <p className="stats-page__empty-title">Player context needed</p>
+          <p className="muted-copy">Pick a player from the header to load personal ratings and results breakdown.</p>
+        </div>
+
+        <LeaderboardPanel players={leaderboard} />
       </section>
     );
   }
 
   return (
     <section className="stats-page">
-      <PageHero
-        eyebrow="Performance sheet"
-        title={`${summary.playerName}'s stats`}
-        description="Player performance, match volume, and recent form in one place."
-        titleClassName="page-title--large"
-        className="page-hero--stats"
-        meta={
-          <>
-            <div className="page-hero-chip">
-              <span className="page-hero-chip__label">Record</span>
-              <strong className="page-hero-chip__value">
-                {summary.wins}-{summary.losses}
+      <div className="stats-page__header">
+        <SectionHeading
+          eyebrow="Performance sheet"
+          title={`${summary.playerName}'s stats`}
+          description={`${summary.totalMatches} matches across singles and doubles.`}
+          titleClassName="page-title stats-page__title"
+        />
+      </div>
+
+      <section className="dashboard-grid stats-page__metrics">
+        <SummaryStatTile accent="primary" label="Win rate" value={formatPercent(metrics.winScore)} />
+        <SummaryStatTile accent="secondary" label="Player rating" value={metrics.playerRating.toFixed(1)} />
+      </section>
+
+      <section className="stats-results">
+        <div className="dashboard-section__row">
+          <h2 className="dashboard-section__title">Results Breakdown</h2>
+          <p className="stats-results__meta">{summary.totalMatches} matches</p>
+        </div>
+
+        <div className="stats-results__grid">
+          {resultsGrid.map((item) => (
+            <div className="stats-results__card" key={item.key}>
+              <span className="stats-results__label">{item.label}</span>
+              <strong
+                className={`display stats-results__value ${
+                  item.accent !== "default" ? `stats-results__value--${item.accent}` : ""
+                }`}
+              >
+                {summary[item.key]}
               </strong>
             </div>
-            <div className="page-hero-chip">
-              <span className="page-hero-chip__label">Matches</span>
-              <strong className="page-hero-chip__value">{summary.totalMatches}</strong>
-            </div>
-            <div className="page-hero-chip">
-              <span className="page-hero-chip__label">Trend</span>
-              <strong className="page-hero-chip__value">{summary.wins >= summary.losses ? "Up" : "Even"}</strong>
-            </div>
-          </>
-        }
-        feature={
-          <div className="stats-hero__band">
-            <div className="stats-spotlight">
-              <p className="eyebrow stats-spotlight__eyebrow">Win rate</p>
-              <p className="display stats-spotlight__value">{formatPercent(metrics.winScore)}</p>
-              <p className="stats-spotlight__caption">{summary.wins} wins from {summary.totalMatches} matches</p>
-            </div>
-
-            <div className="stats-rating">
-              <p className="eyebrow stats-rating__eyebrow">Player rating</p>
-              <p className="display stats-rating__value">{metrics.playerRating.toFixed(1)}</p>
-              <div className="stats-rating__stack">
-                <div className="stats-rating__meta">
-                  <span className="stats-rating__meta-label">Record</span>
-                  <strong className="stats-rating__meta-value">
-                    {summary.wins}-{summary.losses}
-                  </strong>
-                </div>
-                <div className="stats-rating__meta">
-                  <span className="stats-rating__meta-label">Trend</span>
-                  <strong className="stats-rating__meta-value">
-                    {summary.wins >= summary.losses ? "Up" : "Even"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-      />
-
-      <section className="stats-support">
-        <div className="stats-breakdown">
-          <div className="stats-breakdown__header">
-            <p className="section-title section-title--tight">Match breakdown</p>
-            <p className="stats-breakdown__meta">{summary.totalMatches} matches</p>
-          </div>
-
-          <div className="stats-breakdown__grid">
-            <div className="stats-breakdown__item">
-              <span className="stats-breakdown__label">Wins</span>
-              <strong className="display stats-breakdown__value stats-breakdown__value--primary">{summary.wins}</strong>
-            </div>
-            <div className="stats-breakdown__item">
-              <span className="stats-breakdown__label">Losses</span>
-              <strong className="display stats-breakdown__value stats-breakdown__value--secondary">{summary.losses}</strong>
-            </div>
-            <div className="stats-breakdown__item">
-              <span className="stats-breakdown__label">Singles</span>
-              <strong className="display stats-breakdown__value">{summary.singlesGames}</strong>
-            </div>
-            <div className="stats-breakdown__item">
-              <span className="stats-breakdown__label">Doubles</span>
-              <strong className="display stats-breakdown__value">{summary.doublesGames}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="stats-form">
-          <div className="stats-form__header">
-            <p className="section-title section-title--tight">Recent form</p>
-            <p className="stats-form__meta">Last {summary.recentForm.length || 0} results</p>
-          </div>
-
-          {summary.recentForm.length ? (
-            <div className="stats-form__track" aria-label="Recent form">
-              {summary.recentForm.map((result, index) => (
-                <div className={`stats-form__marker ${result === "W" ? "is-win" : "is-loss"}`} key={`${result}-${index}`}>
-                  <span className="stats-form__index">{index + 1}</span>
-                  <span className="display stats-form__result">{result}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="muted-copy">No recent matches yet.</p>
-          )}
+          ))}
         </div>
       </section>
+
+      <LeaderboardPanel players={leaderboard} title="Leaderboard" />
     </section>
   );
 }

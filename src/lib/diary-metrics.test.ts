@@ -86,6 +86,10 @@ describe("diary metrics", () => {
       losses: 1,
       singlesGames: 2,
       doublesGames: 1,
+      singlesWins: 2,
+      singlesLosses: 0,
+      doublesWins: 0,
+      doublesLosses: 1,
       recentForm: ["L", "W", "W"],
     });
   });

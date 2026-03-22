@@ -51,8 +51,12 @@ export function getPlayerSummary(
   }
 
   const playerMatches = getPlayerMatches(matches, playerId);
+  const singlesMatches = playerMatches.filter((match) => match.format === "singles");
+  const doublesMatches = playerMatches.filter((match) => match.format === "doubles");
   const wins = playerMatches.filter((match) => didPlayerWin(match, playerId)).length;
   const losses = playerMatches.length - wins;
+  const singlesWins = singlesMatches.filter((match) => didPlayerWin(match, playerId)).length;
+  const doublesWins = doublesMatches.filter((match) => didPlayerWin(match, playerId)).length;
 
   return {
     playerId: player.id,
@@ -61,8 +65,12 @@ export function getPlayerSummary(
     wins,
     losses,
     recentForm: playerMatches.slice(0, 6).map((match) => (didPlayerWin(match, playerId) ? "W" : "L")),
-    singlesGames: playerMatches.filter((match) => match.format === "singles").length,
-    doublesGames: playerMatches.filter((match) => match.format === "doubles").length,
+    singlesGames: singlesMatches.length,
+    doublesGames: doublesMatches.length,
+    singlesWins,
+    singlesLosses: singlesMatches.length - singlesWins,
+    doublesWins,
+    doublesLosses: doublesMatches.length - doublesWins,
   };
 }
 

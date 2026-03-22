@@ -52,6 +52,10 @@ describe("match selectors", () => {
       losses: 1,
       singlesGames: 1,
       doublesGames: 1,
+      singlesWins: 1,
+      singlesLosses: 0,
+      doublesWins: 0,
+      doublesLosses: 1,
     });
   });
 
