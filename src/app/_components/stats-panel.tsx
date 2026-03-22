@@ -15,10 +15,10 @@ function formatPercent(value: number) {
 
 const resultsGrid = [
   { key: "singlesWins", label: "Singles Wins", accent: "default" },
-  { key: "doublesWins", label: "Doubles Wins", accent: "default" },
-  { key: "wins", label: "Total Wins", accent: "primary" },
   { key: "singlesLosses", label: "Singles Losses", accent: "default" },
+  { key: "doublesWins", label: "Doubles Wins", accent: "default" },
   { key: "doublesLosses", label: "Doubles Losses", accent: "default" },
+  { key: "wins", label: "Total Wins", accent: "primary" },
   { key: "losses", label: "Total Losses", accent: "danger" },
 ] as const;
 
