@@ -207,7 +207,7 @@
       "sideAPlayerIds": ["p11"],
       "sideBPlayerIds": ["p3"],
       "sideAScore": 4,
-      "sideBScore": 11,
+      "sideBScore": 21,
       "winnerSide": "B",
       "createdAt": "2026-03-05T12:44:00.000Z",
       "updatedAt": "2026-03-05T12:44:00.000Z"
@@ -518,7 +518,7 @@
       "format": "doubles",
       "sideAPlayerIds": ["p4", "p11"],
       "sideBPlayerIds": ["p10", "p2"],
-      "sideAScore": 20,
+      "sideAScore": 19,
       "sideBScore": 21,
       "winnerSide": "B",
       "createdAt": "2026-03-20T13:12:00.000Z",
