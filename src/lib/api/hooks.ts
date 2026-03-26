@@ -83,7 +83,6 @@ export function useCreateGameMutation() {
         body: JSON.stringify(payload),
       }),
     onSuccess: async (result) => {
-      queryClient.setQueryData(queryKeys.lastSavedGame(), result.id);
       await invalidateMatchQueries(queryClient, result.id);
     },
   });
@@ -98,8 +97,7 @@ export function useUpdateGameMutation(id: string) {
         method: "PUT",
         body: JSON.stringify(payload),
       }),
-    onSuccess: async (result) => {
-      queryClient.setQueryData(queryKeys.lastSavedGame(), result.id);
+    onSuccess: async () => {
       await invalidateMatchQueries(queryClient, id);
     },
   });

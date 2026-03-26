@@ -4,5 +4,4 @@ export const queryKeys = {
   game: (id: string) => ["game", id] as const,
   dashboard: (playerId?: string | null) => ["dashboard", playerId ?? null] as const,
   stats: (playerId?: string | null) => ["stats", playerId ?? null] as const,
-  lastSavedGame: () => ["last-saved-game"] as const,
 };

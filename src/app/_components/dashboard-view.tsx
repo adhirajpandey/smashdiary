@@ -1,15 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { MatchFeed } from "@/app/_components/match-feed";
 import { StatusView } from "@/app/_components/status-view";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { queryKeys } from "@/lib/api/query-keys";
 import { useDashboardQuery } from "@/lib/api/hooks";
-import { buildMatchReaction } from "@/lib/reaction-text";
 
 function StatTile({
   label,
@@ -30,21 +26,7 @@ function StatTile({
 
 export function DashboardView() {
   const { selectedPlayerId } = useSelectedPlayer();
-  const queryClient = useQueryClient();
   const { data, isLoading, isError, error } = useDashboardQuery(selectedPlayerId);
-  const [dismissedSavedGameId, setDismissedSavedGameId] = useState<string | null>(null);
-  const savedGameId = queryClient.getQueryData<string | null>(queryKeys.lastSavedGame()) ?? null;
-
-  const savedGame = useMemo(
-    () => data?.metrics?.recentMatches.find((game) => game.id === savedGameId) ?? null,
-    [data?.metrics?.recentMatches, savedGameId],
-  );
-  const reaction = useMemo(() => {
-    if (!savedGame || savedGame.id === dismissedSavedGameId) {
-      return null;
-    }
-    return buildMatchReaction(savedGame, selectedPlayerId);
-  }, [dismissedSavedGameId, savedGame, selectedPlayerId]);
 
   if (!selectedPlayerId) {
     return null;
@@ -64,25 +46,6 @@ export function DashboardView() {
 
   return (
     <>
-      {reaction ? (
-        <section className={`reaction-card reaction-card--${reaction.tone}`}>
-          <div>
-            <p className="reaction-card__eyebrow">Post-match</p>
-            <p className="reaction-card__text">{reaction.text}</p>
-          </div>
-          <button
-            className="reaction-card__dismiss"
-            onClick={() => {
-              setDismissedSavedGameId(savedGame?.id ?? null);
-              queryClient.removeQueries({ queryKey: queryKeys.lastSavedGame(), exact: true });
-            }}
-            type="button"
-          >
-            Dismiss
-          </button>
-        </section>
-      ) : null}
-
       <Link className="quick-log" href="/matches/new">
         <span className="quick-log__icon">+</span>
         <span>Add a Match</span>

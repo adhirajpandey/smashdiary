@@ -305,58 +305,6 @@ img {
   font-size: 1rem;
 }
 
-.reaction-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
-  margin-bottom: 0.85rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(180deg, rgb(28 28 28 / 0.96), rgb(20 20 20 / 1));
-  box-shadow: 0 0 0 1px rgb(72 72 71 / 0.16);
-}
-
-.reaction-card--win {
-  box-shadow: 0 0 0 1px rgb(214 255 0 / 0.28), 0 14px 26px rgb(214 255 0 / 0.08);
-}
-
-.reaction-card--loss {
-  box-shadow: 0 0 0 1px rgb(125 152 255 / 0.24), 0 14px 26px rgb(125 152 255 / 0.08);
-}
-
-.reaction-card--neutral {
-  box-shadow: 0 0 0 1px rgb(72 72 71 / 0.22), 0 14px 26px rgb(0 0 0 / 0.18);
-}
-
-.reaction-card__eyebrow {
-  margin: 0 0 0.3rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.62rem;
-  font-weight: 900;
-}
-
-.reaction-card__text {
-  margin: 0;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.reaction-card__dismiss {
-  min-width: 44px;
-  min-height: 44px;
-  border: 0;
-  border-radius: 0.7rem;
-  padding: 0.5rem 0.7rem;
-  background: rgb(57 57 57 / 0.82);
-  color: var(--text-primary);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
