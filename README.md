@@ -49,6 +49,7 @@ APP_MODE=test npm run dev
 - `APP_MODE`: set to `test` to use the local SQLite test repository
 
 The app shell always includes a player picker. Dashboard, match history, and player-specific stats content depend on that selected player context.
+Reads and writes now flow through internal JSON route handlers under `src/app/api`.
 
 ## Runtime Modes
 
@@ -87,7 +88,7 @@ Tests live beside source files as `*.test.ts` under `src/`.
 
 ## Project Layout
 
-- `src/app`: routes, server actions, and UI components
+- `src/app`: routes, JSON route handlers, thin pages, and UI components
 - `src/lib`: domain logic, validation, queries, repositories, DB access, metrics, and utilities
 - `src/data`: local seed and reference data
 - `drizzle`: SQL migrations and Drizzle metadata

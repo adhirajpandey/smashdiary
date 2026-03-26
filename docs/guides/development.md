@@ -101,12 +101,14 @@ The app shell includes a persistent identity picker. Several screens intentional
 
 ### App and UI
 
-- `src/app`: App Router pages, server actions, route-level composition
+- `src/app`: App Router pages, JSON route handlers, and route-level composition
 - `src/app/_components`: UI building blocks and page views
 
 ### Domain and persistence
 
 - `src/lib/domain`: match rules and validation logic
+- `src/lib/api`: shared JSON API client, transport contracts, and response helpers
+- `src/lib/services`: server-side screen-data composition and JSON write coordination
 - `src/lib/queries`: read-oriented accessors
 - `src/lib/commands`: write-oriented accessors
 - `src/lib/repositories`: persistence boundary and backend selection
@@ -132,11 +134,13 @@ Tests live beside the source under `src/` as `*.test.ts`.
 
 Areas with meaningful existing test coverage include:
 
-- server actions
+- route handlers
+- API and client boundary behavior
 - validation and action error normalization
 - metrics and selectors
+- screen-data services
 - repositories shared logic
-- utilities and reaction text
+- utilities
 
 When changing behavior, prefer focused test updates near the touched module before broadening scope.
 
@@ -164,5 +168,10 @@ When changing schema or persistence behavior:
 
 - include the matching Drizzle migration
 - mention env or setup implications in the PR
+
+When changing match-entry behavior:
+
+- keep JSON API mutations aligned with the shared validation and command path
+- keep the Postgres and SQLite repository behavior aligned where persistence overlaps
 
 For UI changes, keep the established visual language and refer to [system.md](../design/system.md) instead of duplicating design rules into feature docs.

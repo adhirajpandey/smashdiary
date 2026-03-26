@@ -10,7 +10,6 @@ The dashboard is the main landing screen.
 
 It currently shows:
 
-- the selected player's recent post-match reaction after a save, when applicable
 - quick access to add a new match
 - player-specific dashboard metrics such as win rate and player rating
 - counts for singles and doubles activity
@@ -43,7 +42,7 @@ Current supported behavior:
 - prefill the played-at field with the current local date and time for new entries
 - adjust scores with either number inputs or score stepper buttons
 
-The underlying server action also supports update behavior when an ID is supplied, even though the primary documented workflow is new match entry.
+The underlying JSON match API also supports update behavior when an ID is supplied, even though the primary documented workflow is new match entry.
 
 ### Match Detail (`/matches/[id]`)
 

@@ -4,9 +4,9 @@ Smash Diary is a Next.js App Router application with a thin server layer and a r
 
 ## App Shape
 
-- `src/app` contains App Router pages, layouts, loading/error boundaries, and server actions
-- Route pages fetch data on the server and render React components with hydrated client-side interactions where needed
-- Writes go through server actions, not client-side direct database calls
+- `src/app` contains App Router pages, layouts, loading/error boundaries, JSON route handlers, and client render components
+- Route pages stay thin and mainly mount client-side containers that fetch screen data from internal JSON endpoints
+- Writes go through JSON route handlers backed by the shared command and repository layers
 
 Current route surfaces:
 
@@ -24,23 +24,24 @@ Current route surfaces:
 
 `src/app` owns page composition and user-facing components.
 
-- Route files call query helpers from `src/lib/queries/page-data.ts`
-- UI components such as dashboard, history, stats, forms, and shell controls live under `src/app/_components`
-- The server action in `src/app/actions.ts` handles form submission for create and update flows
+- Route files stay thin and mostly render page shells for dashboard, history, stats, and form flows
+- Client containers and presentational components such as dashboard, history, stats, forms, and shell controls live under `src/app/_components`
+- Route handlers under `src/app/api` expose the app's internal JSON read and write endpoints
 
 ### Query layer
 
 `src/lib/queries` provides read-oriented functions.
 
-- `page-data.ts` groups route-specific read needs
 - `matches.ts` and `players.ts` delegate to the selected repository
-- Query functions return already-resolved match data for UI consumption
+- Query functions return already-resolved match data for server-side composition
+- `src/lib/services` assembles screen-specific JSON view models for dashboard, history, stats, and match detail
 
 ### Command layer
 
-`src/lib/commands/save-match.ts` is the write entrypoint used by the server action.
+`src/lib/commands/save-match.ts` is the core write entrypoint used by the JSON match APIs.
 
-- The command itself stays thin
+- `saveMatch()` stays thin
+- `saveMatchFromJson()` handles JSON payload validation before delegating to the command
 - Persistence decisions are delegated to the active repository
 
 ### Repository layer
@@ -75,31 +76,32 @@ This layer is responsible for:
 
 The normal read path is:
 
-1. A route page calls a page-data query helper.
-2. The query helper calls repository-backed query functions.
-3. The active repository returns players or resolved matches.
-4. Selector utilities derive player-centric metrics for the UI.
-5. React components render the resulting view.
+1. A client page container fetches JSON from an internal route handler.
+2. The route handler calls a screen-data service.
+3. The service calls repository-backed query functions.
+4. The active repository returns players or resolved matches.
+5. The service derives dashboard, history, stats, or detail view data and returns JSON.
+6. React components render the resulting view.
 
 Examples:
 
-- The dashboard page loads matches and players, then uses selector functions such as `getDashboardMetrics()` and `getTopPerformers()`. Selected-player state from the shell decides whether personal dashboard content renders.
-- The match history page loads matches and players, then filters matches for the selected player. Without a selected player, the route shows an empty state instead of a mixed global feed.
-- The match detail page loads a single resolved match and renders a read-only score and side breakdown.
+- The dashboard route fetches screen-ready metrics, leaderboard data, and recent matches. Selected-player state from the shell decides which personalized JSON view model is requested.
+- The match history route fetches player-filtered history from the matches API. Without a selected player, the route shows an empty state instead of a mixed global feed.
+- The match detail route fetches a single resolved match from the match-detail API and renders a read-only score and side breakdown.
 
 ## Write Flow
 
 The normal write path is:
 
-1. The form posts to `upsertGameAction` in `src/app/actions.ts`. The selected player from shell context is treated as the fixed "You" side in the form UI.
-2. The action parses form data and validates it with `gameFormSchema`.
-3. The action derives `winnerSide`.
-4. The action calls the `saveMatch()` command.
+1. The client form submits JSON to `POST /api/matches` or `PUT /api/matches/[id]`. The selected player from shell context is treated as the fixed "You" side in the form UI.
+2. The route handler parses the JSON body and passes it to `saveMatchFromJson()`.
+3. The service validates the payload with `gameFormSchema` and derives `winnerSide`.
+4. The service calls the `saveMatch()` command.
 5. The command delegates to the active repository.
 6. The repository upserts players, writes the match, and writes participants in a transaction.
-7. The action revalidates affected routes and redirects back to the dashboard with `savedGameId`.
+7. The client invalidates affected queries and navigates to the destination screen.
 
-The server action intentionally keeps orchestration in one place while leaving persistence and business rules outside the route layer.
+This keeps route handlers thin while moving dashboard, history, and stats derivation into the server-side service layer before JSON is returned.
 
 ## Runtime Modes
 
