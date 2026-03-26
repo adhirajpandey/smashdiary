@@ -2,15 +2,13 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
-type NavIconType = "grid" | "scorecard" | "bars";
-
 const navItems = [
   { href: "/", label: "Dashboard", icon: "grid" },
-  { href: "/matches", label: "Matches", icon: "scorecard" },
+  { href: "/matches", label: "Matches", icon: "clock" },
   { href: "/stats", label: "Stats", icon: "bars" },
-] as const;
+];
 
-function Icon({ type }: Readonly<{ type: NavIconType }>) {
+function Icon({ type }: Readonly<{ type: string }>) {
   if (type === "grid") {
     return (
       <span className="nav-icon nav-icon--grid" aria-hidden="true">
@@ -22,13 +20,8 @@ function Icon({ type }: Readonly<{ type: NavIconType }>) {
     );
   }
 
-  if (type === "scorecard") {
-    return (
-      <span className="nav-icon nav-icon--scorecard" aria-hidden="true">
-        <span />
-        <span />
-      </span>
-    );
+  if (type === "clock") {
+    return <span className="nav-icon nav-icon--clock" aria-hidden="true" />;
   }
 
   return (

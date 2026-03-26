@@ -13,7 +13,7 @@ export function GameList({ games }: Readonly<{ games: ResolvedGame[] }>) {
   }
 
   return (
-    <div className="page-stack page-stack--compact">
+    <div className="page-stack" style={{ gap: "0.75rem" }}>
       {games.map((game) => {
         const sideA = joinNames(game.sideAPlayers.map((player) => player.name));
         const sideB = joinNames(game.sideBPlayers.map((player) => player.name));
@@ -25,7 +25,7 @@ export function GameList({ games }: Readonly<{ games: ResolvedGame[] }>) {
 
             <div className="match-card__topline">
               <div>
-                <p className="eyebrow section-heading__eyebrow">
+                <p className="eyebrow" style={{ margin: 0 }}>
                   {game.format} game
                 </p>
                 <p className="match-card__date">{formatCompactDate(game.playedAt)}</p>

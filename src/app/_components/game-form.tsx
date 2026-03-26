@@ -1,18 +1,27 @@
 "use client";
 
-import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import { initialUpsertGameActionState } from "@/app/action-state";
-import { upsertGameAction } from "@/app/actions";
-import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import type { GameFormFieldErrors } from "@/lib/action-errors";
+import { ApiClientError } from "@/lib/api/client";
+import { useCreateGameMutation, useUpdateGameMutation } from "@/lib/api/hooks";
 import type { GameFormat, ResolvedGame } from "@/lib/types";
-import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
+import { toInputDateTimeValue } from "@/lib/utils";
 
 type GameFormProps = {
   game?: ResolvedGame;
-  playerSuggestions: string[];
+};
+
+type FormState = {
+  formError: string | null;
+  fieldErrors: GameFormFieldErrors;
+};
+
+const initialFormState: FormState = {
+  formError: null,
+  fieldErrors: {},
 };
 
 function buildInitialValues(values: string[]) {
@@ -36,10 +45,17 @@ function filterSuggestions(options: string[], query: string) {
     });
 }
 
+function FieldError({ message }: Readonly<{ message?: string }>) {
+  if (!message) {
+    return null;
+  }
+
+  return <p className="match-form__field-error">{message}</p>;
+}
+
 function PlayerField({
   icon,
   label,
-  name,
   onChange,
   placeholder,
   suggestions,
@@ -47,104 +63,20 @@ function PlayerField({
 }: Readonly<{
   icon: string;
   label: string;
-  name: string;
   onChange: (value: string) => void;
   placeholder: string;
   suggestions: string[];
   value: string;
 }>) {
   const [isOpen, setIsOpen] = useState(false);
-  const inputId = useId();
-  const listboxId = useId();
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const internalPointerRef = useRef(false);
-  const clearInternalPointerTimeoutRef = useRef<number | null>(null);
   const filteredSuggestions = useMemo(() => filterSuggestions(suggestions, value), [suggestions, value]);
-  const normalizedValue = value.trim().toLowerCase();
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handleDocumentPointerDown(event: PointerEvent) {
-      if (!(event.target instanceof Node)) {
-        return;
-      }
-
-      if (!rootRef.current?.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handleDocumentPointerDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handleDocumentPointerDown);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    return () => {
-      if (clearInternalPointerTimeoutRef.current !== null) {
-        window.clearTimeout(clearInternalPointerTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  function selectOption(option: string) {
-    if (clearInternalPointerTimeoutRef.current !== null) {
-      window.clearTimeout(clearInternalPointerTimeoutRef.current);
-      clearInternalPointerTimeoutRef.current = null;
-    }
-    onChange(option);
-    internalPointerRef.current = false;
-    setIsOpen(false);
-  }
-
-  function markInternalPointerInteraction(event: React.PointerEvent<HTMLDivElement>) {
-    if (!(event.target instanceof Element)) {
-      return;
-    }
-
-    if (!event.target.closest("[data-autocomplete-option]")) {
-      return;
-    }
-
-    if (clearInternalPointerTimeoutRef.current !== null) {
-      window.clearTimeout(clearInternalPointerTimeoutRef.current);
-      clearInternalPointerTimeoutRef.current = null;
-    }
-    internalPointerRef.current = true;
-  }
-
-  function clearInternalPointerInteraction() {
-    if (!internalPointerRef.current) {
-      return;
-    }
-
-    if (clearInternalPointerTimeoutRef.current !== null) {
-      window.clearTimeout(clearInternalPointerTimeoutRef.current);
-    }
-
-    clearInternalPointerTimeoutRef.current = window.setTimeout(() => {
-      internalPointerRef.current = false;
-      clearInternalPointerTimeoutRef.current = null;
-    }, 250);
-  }
 
   return (
-    <div className="match-input-group">
-      <label className="match-input-group__label" htmlFor={inputId}>
-        {label}
-      </label>
+    <label className="match-input-group">
+      <span className="match-input-group__label">{label}</span>
       <div
         className="autocomplete"
-        ref={rootRef}
         onBlur={(event) => {
-          if (internalPointerRef.current) {
-            return;
-          }
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
             setIsOpen(false);
           }
@@ -155,14 +87,8 @@ function PlayerField({
             {icon}
           </span>
           <input
-            aria-autocomplete="list"
-            aria-controls={listboxId}
-            aria-expanded={isOpen}
-            aria-haspopup="listbox"
             autoComplete="off"
             className="match-input-shell__input"
-            id={inputId}
-            name={name}
             onChange={(event) => {
               onChange(event.target.value);
               setIsOpen(true);
@@ -170,34 +96,24 @@ function PlayerField({
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
             required
-            role="combobox"
             value={value}
           />
         </div>
 
         {isOpen && filteredSuggestions.length ? (
-          <div
-            className="autocomplete__dropdown"
-            id={listboxId}
-            onPointerCancel={clearInternalPointerInteraction}
-            onPointerDownCapture={markInternalPointerInteraction}
-            onPointerUp={clearInternalPointerInteraction}
-            role="listbox"
-          >
+          <div className="autocomplete__dropdown">
             {filteredSuggestions.map((option) => (
               <button
-                aria-selected={option.toLowerCase() === normalizedValue}
                 className="autocomplete__option"
-                data-autocomplete-option="true"
                 key={option}
                 onClick={() => {
-                  selectOption(option);
+                  onChange(option);
+                  setIsOpen(false);
                 }}
-                role="option"
                 type="button"
               >
                 <span>{option}</span>
-                {option.toLowerCase() === normalizedValue ? (
+                {option.toLowerCase() === value.trim().toLowerCase() ? (
                   <span className="autocomplete__hint">Selected</span>
                 ) : null}
               </button>
@@ -205,7 +121,7 @@ function PlayerField({
           </div>
         ) : null}
       </div>
-    </div>
+    </label>
   );
 }
 
@@ -233,40 +149,48 @@ function FormatCard({
   );
 }
 
-function SaveButton() {
-  const { pending } = useFormStatus();
-
+function SaveButton({ disabled, pending }: Readonly<{ disabled: boolean; pending: boolean }>) {
   return (
-    <button className="match-save-button" disabled={pending} type="submit">
+    <button className="match-save-button" disabled={disabled || pending} type="submit">
       {pending ? "Saving..." : "Save Match"}
     </button>
   );
 }
 
-export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
+export function GameForm({ game }: Readonly<GameFormProps>) {
+  const router = useRouter();
   const { players, selectedPlayerId } = useSelectedPlayer();
+  const isEditing = Boolean(game);
   const [format, setFormat] = useState<GameFormat>(game?.format ?? "singles");
+  const [playedAt, setPlayedAt] = useState(toInputDateTimeValue(game?.playedAt ?? new Date().toISOString()));
   const [sideAScore, setSideAScore] = useState<number>(game?.sideAScore ?? 20);
   const [sideBScore, setSideBScore] = useState<number>(game?.sideBScore ?? 20);
-  const allSuggestions = useMemo(
-    () => Array.from(new Set(playerSuggestions)).sort((a, b) => a.localeCompare(b)),
-    [playerSuggestions],
-  );
   const initialSideAValues = game?.sideAPlayers.map((player) => player.name) ?? [];
   const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? [];
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
-  const [state, formAction] = useActionState(upsertGameAction, initialUpsertGameActionState);
+  const [state, setState] = useState<FormState>(initialFormState);
   const lastScoreTapRef = useRef(0);
+  const createMutation = useCreateGameMutation();
+  const updateMutation = useUpdateGameMutation(game?.id ?? "");
+  const mutation = game ? updateMutation : createMutation;
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
-  const primaryPlayerName = game ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
+  const primaryPlayerName = isEditing ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
   const partnerName = sideAPlayers[1] ?? "";
   const opponentName = sideBPlayers[0] ?? "";
   const opponentPartnerName = sideBPlayers[1] ?? "";
+  const allSuggestions = useMemo(
+    () => Array.from(new Set(players.map((player) => player.name))).sort((a, b) => a.localeCompare(b)),
+    [players],
+  );
+
+  function setPrimaryPlayerName(value: string) {
+    setSideAPlayers((current) => [value, current[1] ?? ""]);
+  }
 
   function setPartnerName(value: string) {
-    setSideAPlayers([primaryPlayerName, value]);
+    setSideAPlayers((current) => [isEditing ? current[0] ?? "" : primaryPlayerName, value]);
   }
 
   function setOpponentName(value: string) {
@@ -290,15 +214,54 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
     return true;
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setState(initialFormState);
+
+    if (!primaryPlayerName.trim()) {
+      setState({
+        formError: isEditing ? "Add at least one player on Side A before saving." : "Select your identity before saving a match.",
+        fieldErrors: {},
+      });
+      return;
+    }
+
+    const payload = {
+      playedAt,
+      format,
+      sideAScore,
+      sideBScore,
+      sideAPlayers: format === "doubles" ? [primaryPlayerName, partnerName] : [primaryPlayerName],
+      sideBPlayers: format === "doubles" ? [opponentName, opponentPartnerName] : [opponentName],
+    };
+
+    try {
+      const result = await mutation.mutateAsync(payload);
+      router.push(game ? `/matches/${result.id}` : "/");
+    } catch (error) {
+      if (error instanceof ApiClientError && error.payload) {
+        setState({
+          formError: error.payload.message,
+          fieldErrors: error.payload.fieldErrors ?? {},
+        });
+        return;
+      }
+
+      setState({
+        formError: "Could not save game. Please try again.",
+        fieldErrors: {},
+      });
+    }
+  }
+
   return (
-    <form action={formAction} className="match-form">
-      <input name="id" type="hidden" defaultValue={game?.id ?? ""} />
-      <input name="format" type="hidden" value={format} />
-      <input name="sideAPlayers" type="hidden" value={primaryPlayerName} />
+    <form className="match-form" onSubmit={handleSubmit}>
       {state.formError ? <p className="match-form__banner">{state.formError}</p> : null}
 
       <section className="match-form__section">
-        <SectionHeading align="compact" eyebrow="Select format" />
+        <p className="eyebrow" style={{ margin: 0 }}>
+          Select format
+        </p>
 
         <div className="format-grid">
           <FormatCard
@@ -316,54 +279,65 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             onClick={() => setFormat("doubles")}
           />
         </div>
+        <FieldError message={state.fieldErrors.format} />
       </section>
 
       <section className="match-form__section">
-        <label className="match-input-group">
-          <span className="match-input-group__label">You</span>
-          <div className="match-input-shell is-readonly">
-            <span className="match-input-shell__icon" aria-hidden="true">
-              ME
-            </span>
-            <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
-          </div>
-        </label>
+        {isEditing ? (
+          <PlayerField
+            icon="A1"
+            label="Side A"
+            onChange={setPrimaryPlayerName}
+            placeholder="Add first Side A player..."
+            suggestions={allSuggestions.filter((option) => option !== partnerName && option !== opponentName)}
+            value={primaryPlayerName}
+          />
+        ) : (
+          <label className="match-input-group">
+            <span className="match-input-group__label">You</span>
+            <div className="match-input-shell is-readonly">
+              <span className="match-input-shell__icon" aria-hidden="true">
+                ME
+              </span>
+              <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
+            </div>
+          </label>
+        )}
 
         {format === "doubles" ? (
           <PlayerField
-            icon="+"
-            label="Your Partner"
-            name="sideAPlayers"
+            icon={isEditing ? "A2" : "+"}
+            label={isEditing ? "Side A Partner" : "Partner (for doubles)"}
             onChange={setPartnerName}
-            placeholder="Add a teammate..."
+            placeholder={isEditing ? "Add second Side A player..." : "Add a teammate..."}
             suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== opponentName)}
             value={partnerName}
           />
         ) : null}
+        <FieldError message={state.fieldErrors.sideAPlayers} />
 
         <PlayerField
-          icon="OP"
-          label="Opponent"
-          name="sideBPlayers"
+          icon={isEditing ? "B1" : "OP"}
+          label={isEditing ? "Side B" : "Opponent"}
           onChange={setOpponentName}
-          placeholder="Search by name or handle..."
+          placeholder={isEditing ? "Add first Side B player..." : "Search by name or handle..."}
           suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
           value={opponentName}
         />
 
         {format === "doubles" ? (
           <PlayerField
-            icon="OP"
-            label="Opponent's Partner"
-            name="sideBPlayers"
+            icon={isEditing ? "B2" : "OP"}
+            label={isEditing ? "Side B Partner" : "Opponent Partner"}
             onChange={setOpponentPartnerName}
-            placeholder="Add second opponent..."
+            placeholder={isEditing ? "Add second Side B player..." : "Add second opponent..."}
             suggestions={allSuggestions.filter(
               (option) => option !== primaryPlayerName && option !== partnerName && option !== opponentName,
             )}
             value={opponentPartnerName}
           />
         ) : null}
+        <FieldError message={state.fieldErrors.sideBPlayers} />
 
         <label className="match-input-group">
           <span className="match-input-group__label">Played at</span>
@@ -373,20 +347,21 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </span>
             <input
               className="match-input-shell__input"
-              defaultValue={game ? toInputDateTimeValue(game.playedAt) : getCurrentInputDateTimeValue()}
-              name="playedAt"
+              onChange={(event) => setPlayedAt(event.target.value)}
               required
               type="datetime-local"
+              value={playedAt}
             />
           </div>
         </label>
+        <FieldError message={state.fieldErrors.playedAt} />
       </section>
 
       <section className="score-panel">
         <p className="score-panel__label">Final Match Score</p>
         <div className="score-panel__grid">
           <label className="score-panel__side">
-            <span className="score-panel__side-label">You</span>
+            <span className="score-panel__side-label">{isEditing ? "Side A" : "You"}</span>
             <div className="score-stepper">
               <button
                 aria-label="Decrease your score"
@@ -403,9 +378,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               </button>
               <input
                 className="display score-panel__input"
-                min={0}
                 max={30}
-                name="sideAScore"
+                min={0}
                 onChange={(event) => setSideAScore(clampScore(Number(event.target.value) || 0))}
                 required
                 type="number"
@@ -432,7 +406,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
           </div>
 
           <label className="score-panel__side">
-            <span className="score-panel__side-label">Opp</span>
+            <span className="score-panel__side-label">{isEditing ? "Side B" : "Opp"}</span>
             <div className="score-stepper">
               <button
                 aria-label="Decrease opponent score"
@@ -449,9 +423,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               </button>
               <input
                 className="display score-panel__input score-panel__input--alt"
-                min={0}
                 max={30}
-                name="sideBScore"
+                min={0}
                 onChange={(event) => setSideBScore(clampScore(Number(event.target.value) || 0))}
                 required
                 type="number"
@@ -473,9 +446,10 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </div>
           </label>
         </div>
+        <FieldError message={state.fieldErrors.sideAScore ?? state.fieldErrors.sideBScore} />
       </section>
 
-      <SaveButton />
+      <SaveButton disabled={!primaryPlayerName.trim()} pending={mutation.isPending} />
     </form>
   );
 }

@@ -1,76 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
 
-import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
 import { MatchFeed } from "@/app/_components/match-feed";
-import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
+import { StatusView } from "@/app/_components/status-view";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getDashboardMetrics, getTopPerformers } from "@/lib/match-selectors";
-import { buildMatchReaction } from "@/lib/reaction-text";
-import type { Player, ResolvedGame } from "@/lib/types";
+import { useDashboardQuery } from "@/lib/api/hooks";
 
-function formatPercent(value: number) {
-  return `${Math.round(value * 10)}%`;
+function StatTile({
+  label,
+  value,
+  accent,
+}: Readonly<{
+  label: string;
+  value: string;
+  accent: "lime" | "blue";
+}>) {
+  return (
+    <div className="dashboard-tile">
+      <p className="dashboard-tile__label">{label}</p>
+      <p className={`display dashboard-tile__value dashboard-tile__value--${accent}`}>{value}</p>
+    </div>
+  );
 }
 
-export function DashboardView({
-  games,
-  players,
-  savedMatchId,
-}: Readonly<{
-  games: ResolvedGame[];
-  players: Player[];
-  savedMatchId: number | null;
-}>) {
+export function DashboardView() {
   const { selectedPlayerId } = useSelectedPlayer();
-  const [dismissedSavedGameId, setDismissedSavedGameId] = useState<number | null>(null);
-  const metrics = useMemo(
-    () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
-    [games, players, selectedPlayerId],
-  );
-  const topPerformers = useMemo(() => getTopPerformers(games, players), [games, players]);
-  const savedGame = useMemo(() => games.find((game) => game.id === savedMatchId) ?? null, [games, savedMatchId]);
-  const reaction = useMemo(() => {
-    if (!savedGame || savedGame.id === dismissedSavedGameId) {
-      return null;
-    }
-    return buildMatchReaction(savedGame, selectedPlayerId);
-  }, [dismissedSavedGameId, savedGame, selectedPlayerId]);
+  const { data, isLoading, isError, error } = useDashboardQuery(selectedPlayerId);
 
-  if (!metrics) {
+  if (!selectedPlayerId) {
     return null;
+  }
+
+  if (isLoading) {
+    return <StatusView eyebrow="Dashboard" title="Loading your dashboard" description="Pulling your recent court activity." />;
+  }
+
+  if (isError) {
+    return <StatusView eyebrow="Dashboard" title="Could not load your dashboard" description={error.message} />;
+  }
+
+  if (!data?.metrics) {
+    return <StatusView eyebrow="Dashboard" title="Pick a player to continue" description="Select your identity to personalize the diary." />;
   }
 
   return (
     <>
-      {reaction ? (
-        <section className={`reaction-card reaction-card--${reaction.tone}`}>
-          <div className="reaction-card__body">
-            <p className="reaction-card__eyebrow">Post-match</p>
-            <p className="reaction-card__text">{reaction.text}</p>
-          </div>
-          <div className="reaction-card__actions">
-            <button
-              className="reaction-card__dismiss"
-              onClick={() => setDismissedSavedGameId(savedGame?.id ?? null)}
-              type="button"
-            >
-              Dismiss
-            </button>
-          </div>
-        </section>
-      ) : null}
-
       <Link className="quick-log" href="/matches/new">
         <span className="quick-log__icon">+</span>
         <span>Add a Match</span>
       </Link>
 
       <section className="dashboard-grid">
-        <SummaryStatTile accent="primary" label="Win rate" value={formatPercent(metrics.winScore)} />
-        <SummaryStatTile accent="secondary" label="Player rating" value={metrics.playerRating.toFixed(1)} />
+        <StatTile accent="lime" label="Win Score" value={data.metrics.winScore.toFixed(1)} />
+        <StatTile accent="blue" label="Player Rating" value={data.metrics.playerRating.toFixed(1)} />
       </section>
 
       <section className="dashboard-section">
@@ -78,11 +61,11 @@ export function DashboardView({
         <div className="activity-list">
           <div className="activity-list__row">
             <span>Singles Matches</span>
-            <strong>{metrics.singlesGames}</strong>
+            <strong>{data.metrics.singlesGames}</strong>
           </div>
           <div className="activity-list__row">
             <span>Doubles Matches</span>
-            <strong>{metrics.doublesGames}</strong>
+            <strong>{data.metrics.doublesGames}</strong>
           </div>
         </div>
       </section>
@@ -94,10 +77,28 @@ export function DashboardView({
             View all
           </Link>
         </div>
-        <MatchFeed games={metrics.recentMatches} playerId={metrics.playerId} />
+        <MatchFeed games={data.metrics.recentMatches} playerId={data.metrics.playerId} />
       </section>
 
-      <LeaderboardPanel players={topPerformers} />
+      <section className="leaderboard">
+        <h2 className="dashboard-section__title" style={{ marginBottom: "1rem" }}>
+          Top Performance
+        </h2>
+        <div className="leaderboard__list">
+          {data.topPerformers.map((player, index) => (
+            <div className="leaderboard__row" key={player.playerId}>
+              <div className="leaderboard__left">
+                <span className="display leaderboard__rank">{index + 1}</span>
+                <div>
+                  <p className="leaderboard__name">{player.playerName}</p>
+                  <p className="leaderboard__wins">{player.wins} wins</p>
+                </div>
+              </div>
+              <strong className="leaderboard__rating">{player.rating.toFixed(1)}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
     </>
   );
 }

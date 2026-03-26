@@ -8,20 +8,6 @@
       "when": 1774104932583,
       "tag": "0000_great_trauma",
       "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1774171851284,
-      "tag": "0001_numerous_landau",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1774250000000,
-      "tag": "0002_played_at_ist",
-      "breakpoints": true
     }
   ]
 }

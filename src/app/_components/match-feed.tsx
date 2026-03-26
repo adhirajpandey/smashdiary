@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { getMatchPerspective } from "@/lib/match-selectors";
+import { didPlayerWin, getPlayerPerspectiveScore, getPlayerSide } from "@/lib/diary-metrics";
 import type { Player, ResolvedGame } from "@/lib/types";
 import { formatCompactDate } from "@/lib/utils";
 
@@ -10,12 +10,40 @@ function joinNames(players: Player[]) {
   return players.map((player) => player.name).join("\n");
 }
 
+function getPerspectiveTeams(game: ResolvedGame, playerId?: string | null) {
+  if (!playerId) {
+    return {
+      ownSide: game.sideAPlayers,
+      opposingSide: game.sideBPlayers,
+      result: null,
+      score: { scoreFor: game.sideAScore, scoreAgainst: game.sideBScore },
+    };
+  }
+
+  const side = getPlayerSide(game, playerId);
+  if (side === "B") {
+    return {
+      ownSide: game.sideBPlayers,
+      opposingSide: game.sideAPlayers,
+      result: didPlayerWin(game, playerId) ? "Victory" : "Defeat",
+      score: getPlayerPerspectiveScore(game, playerId),
+    };
+  }
+
+  return {
+    ownSide: game.sideAPlayers,
+    opposingSide: game.sideBPlayers,
+    result: side ? (didPlayerWin(game, playerId) ? "Victory" : "Defeat") : null,
+    score: side ? getPlayerPerspectiveScore(game, playerId) : { scoreFor: game.sideAScore, scoreAgainst: game.sideBScore },
+  };
+}
+
 export function MatchFeed({
   games,
   playerId,
 }: Readonly<{
   games: ResolvedGame[];
-  playerId?: number | null;
+  playerId?: string | null;
 }>) {
   if (!games.length) {
     return <div className="empty-state">No matches to show yet.</div>;
@@ -24,7 +52,7 @@ export function MatchFeed({
   return (
     <div className="match-feed">
       {games.map((game) => {
-        const perspective = getMatchPerspective(game, playerId);
+        const perspective = getPerspectiveTeams(game, playerId);
 
         return (
           <Link className="dashboard-match" href={`/matches/${game.id}`} key={game.id}>
