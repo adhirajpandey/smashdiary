@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Lexend, Space_Grotesk } from "next/font/google";
 
+import { AppQueryProvider } from "@/app/_components/query-provider";
 import { SelectedPlayerProvider } from "@/app/_components/selected-player-provider";
 import "./globals.css";
-import { getAppShellData } from "@/lib/queries/page-data";
 
 export const dynamic = "force-dynamic";
 
@@ -24,13 +24,13 @@ export const metadata: Metadata = {
   description: "Track standalone badminton games with kinetic precision.",
 };
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { players } = await getAppShellData();
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${lexend.variable} ${spaceGrotesk.variable}`}>
       <body>
-        <SelectedPlayerProvider players={players}>{children}</SelectedPlayerProvider>
+        <AppQueryProvider>
+          <SelectedPlayerProvider>{children}</SelectedPlayerProvider>
+        </AppQueryProvider>
       </body>
     </html>
   );

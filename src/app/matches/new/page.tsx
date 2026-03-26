@@ -1,13 +1,10 @@
 import { AppShell } from "@/app/_components/app-shell";
-import { GameForm } from "@/app/_components/game-form";
-import { getMatchFormPageData } from "@/lib/queries/page-data";
+import { NewMatchPageClient } from "@/app/_components/new-match-page-client";
 
-export default async function NewMatchPage() {
-  const { playerSuggestions } = await getMatchFormPageData();
-
+export default function NewMatchPage() {
   return (
     <AppShell activePath="">
-      <GameForm playerSuggestions={playerSuggestions} />
+      <NewMatchPageClient />
     </AppShell>
   );
 }

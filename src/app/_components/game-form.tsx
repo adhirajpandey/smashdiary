@@ -1,18 +1,23 @@
 "use client";
 
-import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useRouter } from "next/navigation";
 
-import { initialUpsertGameActionState } from "@/app/action-state";
-import { upsertGameAction } from "@/app/actions";
+import type { GameFormFieldErrors } from "@/lib/action-errors";
+import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import type { GameFormat, ResolvedGame } from "@/lib/types";
+import type { GameFormat, Player, ResolvedGame } from "@/lib/types";
 import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
 
 type GameFormProps = {
   game?: ResolvedGame;
-  playerSuggestions: string[];
+  players: Player[];
+};
+
+type GameFormState = {
+  formError: string | null;
+  fieldErrors: GameFormFieldErrors;
 };
 
 function buildInitialValues(values: string[]) {
@@ -37,17 +42,17 @@ function filterSuggestions(options: string[], query: string) {
 }
 
 function PlayerField({
+  error,
   icon,
   label,
-  name,
   onChange,
   placeholder,
   suggestions,
   value,
 }: Readonly<{
+  error?: string;
   icon: string;
   label: string;
-  name: string;
   onChange: (value: string) => void;
   placeholder: string;
   suggestions: string[];
@@ -102,7 +107,7 @@ function PlayerField({
     setIsOpen(false);
   }
 
-  function markInternalPointerInteraction(event: React.PointerEvent<HTMLDivElement>) {
+  function markInternalPointerInteraction(event: ReactPointerEvent<HTMLDivElement>) {
     if (!(event.target instanceof Element)) {
       return;
     }
@@ -162,7 +167,6 @@ function PlayerField({
             autoComplete="off"
             className="match-input-shell__input"
             id={inputId}
-            name={name}
             onChange={(event) => {
               onChange(event.target.value);
               setIsOpen(true);
@@ -205,6 +209,7 @@ function PlayerField({
           </div>
         ) : null}
       </div>
+      {error ? <p className="match-form__field-error">{error}</p> : null}
     </div>
   );
 }
@@ -233,9 +238,7 @@ function FormatCard({
   );
 }
 
-function SaveButton() {
-  const { pending } = useFormStatus();
-
+function SaveButton({ pending }: Readonly<{ pending: boolean }>) {
   return (
     <button className="match-save-button" disabled={pending} type="submit">
       {pending ? "Saving..." : "Save Match"}
@@ -243,20 +246,29 @@ function SaveButton() {
   );
 }
 
-export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
-  const { players, selectedPlayerId } = useSelectedPlayer();
+const initialFormState: GameFormState = {
+  formError: null,
+  fieldErrors: {},
+};
+
+export function GameForm({ game, players }: Readonly<GameFormProps>) {
+  const router = useRouter();
+  const { selectedPlayerId } = useSelectedPlayer();
+  const createMatchMutation = useCreateMatchMutation();
+  const updateMatchMutation = useUpdateMatchMutation(game?.id ?? 0);
   const [format, setFormat] = useState<GameFormat>(game?.format ?? "singles");
+  const [playedAt, setPlayedAt] = useState(game ? toInputDateTimeValue(game.playedAt) : getCurrentInputDateTimeValue());
   const [sideAScore, setSideAScore] = useState<number>(game?.sideAScore ?? 20);
   const [sideBScore, setSideBScore] = useState<number>(game?.sideBScore ?? 20);
-  const allSuggestions = useMemo(
-    () => Array.from(new Set(playerSuggestions)).sort((a, b) => a.localeCompare(b)),
-    [playerSuggestions],
+  const [formState, setFormState] = useState(initialFormState);
+  const playerSuggestions = useMemo(
+    () => Array.from(new Set(players.map((player) => player.name))).sort((a, b) => a.localeCompare(b)),
+    [players],
   );
   const initialSideAValues = game?.sideAPlayers.map((player) => player.name) ?? [];
   const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? [];
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
-  const [state, formAction] = useActionState(upsertGameAction, initialUpsertGameActionState);
   const lastScoreTapRef = useRef(0);
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
@@ -264,6 +276,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
   const partnerName = sideAPlayers[1] ?? "";
   const opponentName = sideBPlayers[0] ?? "";
   const opponentPartnerName = sideBPlayers[1] ?? "";
+  const isPending = createMatchMutation.isPending || updateMatchMutation.isPending;
 
   function setPartnerName(value: string) {
     setSideAPlayers([primaryPlayerName, value]);
@@ -290,12 +303,44 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
     return true;
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormState(initialFormState);
+
+    const payload = {
+      playedAt,
+      format,
+      sideAScore,
+      sideBScore,
+      sideAPlayers: (format === "doubles" ? [primaryPlayerName, partnerName] : [primaryPlayerName]).filter(Boolean),
+      sideBPlayers: (format === "doubles" ? [opponentName, opponentPartnerName] : [opponentName]).filter(Boolean),
+    };
+
+    try {
+      const result = game
+        ? await updateMatchMutation.mutateAsync(payload)
+        : await createMatchMutation.mutateAsync(payload);
+
+      router.push(game ? `/matches/${result.id}` : "/");
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        setFormState({
+          formError: error.formError ?? error.message,
+          fieldErrors: error.fieldErrors ?? {},
+        });
+        return;
+      }
+
+      setFormState({
+        formError: "Could not save game. Please try again.",
+        fieldErrors: {},
+      });
+    }
+  }
+
   return (
-    <form action={formAction} className="match-form">
-      <input name="id" type="hidden" defaultValue={game?.id ?? ""} />
-      <input name="format" type="hidden" value={format} />
-      <input name="sideAPlayers" type="hidden" value={primaryPlayerName} />
-      {state.formError ? <p className="match-form__banner">{state.formError}</p> : null}
+    <form className="match-form" onSubmit={(event) => void handleSubmit(event)}>
+      {formState.formError ? <p className="match-form__banner">{formState.formError}</p> : null}
 
       <section className="match-form__section">
         <SectionHeading align="compact" eyebrow="Select format" />
@@ -328,37 +373,39 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
           </div>
         </label>
+        {formState.fieldErrors.sideAPlayers ? (
+          <p className="match-form__field-error">{formState.fieldErrors.sideAPlayers}</p>
+        ) : null}
 
         {format === "doubles" ? (
           <PlayerField
             icon="+"
             label="Your Partner"
-            name="sideAPlayers"
             onChange={setPartnerName}
             placeholder="Add a teammate..."
-            suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== opponentName)}
+            suggestions={playerSuggestions.filter((option) => option !== primaryPlayerName && option !== opponentName)}
             value={partnerName}
           />
         ) : null}
 
         <PlayerField
+          error={formState.fieldErrors.sideBPlayers}
           icon="OP"
           label="Opponent"
-          name="sideBPlayers"
           onChange={setOpponentName}
           placeholder="Search by name or handle..."
-          suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
+          suggestions={playerSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
           value={opponentName}
         />
 
         {format === "doubles" ? (
           <PlayerField
+            error={formState.fieldErrors.sideBPlayers}
             icon="OP"
             label="Opponent's Partner"
-            name="sideBPlayers"
             onChange={setOpponentPartnerName}
             placeholder="Add second opponent..."
-            suggestions={allSuggestions.filter(
+            suggestions={playerSuggestions.filter(
               (option) => option !== primaryPlayerName && option !== partnerName && option !== opponentName,
             )}
             value={opponentPartnerName}
@@ -373,13 +420,16 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </span>
             <input
               className="match-input-shell__input"
-              defaultValue={game ? toInputDateTimeValue(game.playedAt) : getCurrentInputDateTimeValue()}
-              name="playedAt"
+              onChange={(event) => setPlayedAt(event.target.value)}
               required
               type="datetime-local"
+              value={playedAt}
             />
           </div>
         </label>
+        {formState.fieldErrors.playedAt ? (
+          <p className="match-form__field-error">{formState.fieldErrors.playedAt}</p>
+        ) : null}
       </section>
 
       <section className="score-panel">
@@ -403,9 +453,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               </button>
               <input
                 className="display score-panel__input"
-                min={0}
                 max={30}
-                name="sideAScore"
+                min={0}
                 onChange={(event) => setSideAScore(clampScore(Number(event.target.value) || 0))}
                 required
                 type="number"
@@ -449,9 +498,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               </button>
               <input
                 className="display score-panel__input score-panel__input--alt"
-                min={0}
                 max={30}
-                name="sideBScore"
+                min={0}
                 onChange={(event) => setSideBScore(clampScore(Number(event.target.value) || 0))}
                 required
                 type="number"
@@ -473,9 +521,12 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </div>
           </label>
         </div>
+        {formState.fieldErrors.sideAScore ? (
+          <p className="match-form__field-error">{formState.fieldErrors.sideAScore}</p>
+        ) : null}
       </section>
 
-      <SaveButton />
+      <SaveButton pending={isPending} />
     </form>
   );
 }

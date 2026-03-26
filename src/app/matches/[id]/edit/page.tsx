@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/app/_components/app-shell";
-import { MatchDetailPageClient } from "@/app/_components/match-detail-page-client";
+import { EditMatchPageClient } from "@/app/_components/edit-match-page-client";
 import { parseNumericId } from "@/lib/utils";
 
-export default async function MatchDetailPage({
+export default async function EditMatchPage({
   params,
 }: Readonly<{
   params: Promise<{ id: string }>;
@@ -18,7 +18,7 @@ export default async function MatchDetailPage({
 
   return (
     <AppShell activePath="">
-      <MatchDetailPageClient matchId={matchId} />
+      <EditMatchPageClient matchId={matchId} />
     </AppShell>
   );
 }

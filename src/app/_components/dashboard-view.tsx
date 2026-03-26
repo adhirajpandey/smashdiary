@@ -1,68 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
 
 import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
 import { MatchFeed } from "@/app/_components/match-feed";
 import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
-import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getDashboardMetrics, getTopPerformers } from "@/lib/match-selectors";
-import { buildMatchReaction } from "@/lib/reaction-text";
-import type { Player, ResolvedGame } from "@/lib/types";
+import type { PlayerDashboardMetrics, PlayerStanding } from "@/lib/types";
+import type { MatchFeedItem } from "@/lib/view-models";
 
 function formatPercent(value: number) {
   return `${Math.round(value * 10)}%`;
 }
 
 export function DashboardView({
-  games,
-  players,
-  savedMatchId,
+  leaderboard,
+  metrics,
+  recentMatches,
 }: Readonly<{
-  games: ResolvedGame[];
-  players: Player[];
-  savedMatchId: number | null;
+  leaderboard: PlayerStanding[];
+  metrics: PlayerDashboardMetrics | null;
+  recentMatches: MatchFeedItem[];
 }>) {
-  const { selectedPlayerId } = useSelectedPlayer();
-  const [dismissedSavedGameId, setDismissedSavedGameId] = useState<number | null>(null);
-  const metrics = useMemo(
-    () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
-    [games, players, selectedPlayerId],
-  );
-  const topPerformers = useMemo(() => getTopPerformers(games, players), [games, players]);
-  const savedGame = useMemo(() => games.find((game) => game.id === savedMatchId) ?? null, [games, savedMatchId]);
-  const reaction = useMemo(() => {
-    if (!savedGame || savedGame.id === dismissedSavedGameId) {
-      return null;
-    }
-    return buildMatchReaction(savedGame, selectedPlayerId);
-  }, [dismissedSavedGameId, savedGame, selectedPlayerId]);
-
   if (!metrics) {
     return null;
   }
 
   return (
     <>
-      {reaction ? (
-        <section className={`reaction-card reaction-card--${reaction.tone}`}>
-          <div className="reaction-card__body">
-            <p className="reaction-card__eyebrow">Post-match</p>
-            <p className="reaction-card__text">{reaction.text}</p>
-          </div>
-          <div className="reaction-card__actions">
-            <button
-              className="reaction-card__dismiss"
-              onClick={() => setDismissedSavedGameId(savedGame?.id ?? null)}
-              type="button"
-            >
-              Dismiss
-            </button>
-          </div>
-        </section>
-      ) : null}
-
       <Link className="quick-log" href="/matches/new">
         <span className="quick-log__icon">+</span>
         <span>Add a Match</span>
@@ -94,10 +58,10 @@ export function DashboardView({
             View all
           </Link>
         </div>
-        <MatchFeed games={metrics.recentMatches} playerId={metrics.playerId} />
+        <MatchFeed matches={recentMatches} />
       </section>
 
-      <LeaderboardPanel players={topPerformers} />
+      <LeaderboardPanel players={leaderboard} />
     </>
   );
 }

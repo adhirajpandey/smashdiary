@@ -2,12 +2,11 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import type { Player } from "@/lib/types";
-
 type SelectedPlayerContextValue = {
-  players: Player[];
   selectedPlayerId: number | null;
+  isHydrated: boolean;
   setSelectedPlayerId: (value: number) => void;
+  clearSelectedPlayerId: () => void;
   isPickerOpen: boolean;
   openPicker: () => void;
   closePicker: () => void;
@@ -19,43 +18,46 @@ const SelectedPlayerContext = createContext<SelectedPlayerContextValue | null>(n
 
 export function SelectedPlayerProvider({
   children,
-  players,
 }: Readonly<{
   children: React.ReactNode;
-  players: Player[];
 }>) {
   const [selectedPlayerId, setSelectedPlayerIdState] = useState<number | null>(null);
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
     const storedValue = window.localStorage.getItem(STORAGE_KEY);
     const stored = storedValue ? Number(storedValue) : null;
-    const isValid = stored !== null && Number.isInteger(stored) && players.some((player) => player.id === stored);
     const timeoutId = window.setTimeout(() => {
-      setSelectedPlayerIdState(isValid ? stored : null);
-      setIsPickerOpen(!isValid);
-      setHasHydrated(true);
+      setSelectedPlayerIdState(stored !== null && Number.isInteger(stored) ? stored : null);
+      setIsPickerOpen(stored === null);
+      setIsHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [players]);
+  }, []);
 
   function setSelectedPlayerId(value: number) {
     setSelectedPlayerIdState(value);
     window.localStorage.setItem(STORAGE_KEY, String(value));
   }
 
+  function clearSelectedPlayerId() {
+    setSelectedPlayerIdState(null);
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+
   const contextValue = useMemo(
     () => ({
-      players,
       selectedPlayerId,
+      isHydrated,
       setSelectedPlayerId,
-      isPickerOpen: hasHydrated && isPickerOpen,
+      clearSelectedPlayerId,
+      isPickerOpen: isHydrated && isPickerOpen,
       openPicker: () => setIsPickerOpen(true),
       closePicker: () => setIsPickerOpen(false),
     }),
-    [hasHydrated, isPickerOpen, players, selectedPlayerId],
+    [isHydrated, isPickerOpen, selectedPlayerId],
   );
 
   return <SelectedPlayerContext.Provider value={contextValue}>{children}</SelectedPlayerContext.Provider>;
