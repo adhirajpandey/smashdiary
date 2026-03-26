@@ -20,6 +20,8 @@ Smash Diary is a mobile-first badminton journal for logging singles and doubles 
 - View dashboard, stats, and matches by selected player
 - Persist the selected player identity between visits
 - Open match detail pages and edit or delete saved matches
+- Load dashboard, stats, players, and matches through route handlers backed by a shared diary service
+- Keep client-side views in sync with React Query after create, edit, and delete operations
 - Support legacy route redirects from `/games/*` and `/rankings`
 - Persist games and players in Postgres
 
@@ -88,13 +90,28 @@ In this mode:
 
 ## Project Layout
 
-- `src/app` routes, route handlers, and UI components
-- `src/lib` shared client logic, validation, metrics, and utilities
+- `src/app` App Router pages, route handlers, and UI components
+- `src/lib` shared client logic, API contracts/hooks, validation, metrics, and utilities
 - `src/lib/server` service, repository, and API error helpers
 - `src/data` local seed and reference data
 - `drizzle` SQL migrations and metadata
 - `docs` design references and notes
 - `tests/e2e` Playwright coverage for identity, dashboard, and match flows
+
+## API Surface
+
+The app now exposes route handlers for the client data layer:
+
+- `GET /api/players` lists players
+- `GET /api/games` lists matches, with optional `playerId` and `limit` query params
+- `POST /api/games` creates a match
+- `GET /api/games/:id` fetches one match
+- `PUT /api/games/:id` updates a match
+- `DELETE /api/games/:id` deletes a match
+- `GET /api/dashboard/:playerId` returns dashboard metrics and top performers
+- `GET /api/stats/:playerId` returns the selected player stats summary
+
+Server actions for match CRUD are no longer the primary integration path. Client views use React Query hooks under `src/lib/api` against these endpoints.
 
 ## Design Notes
 
@@ -102,4 +119,4 @@ The visual system follows [docs/DESIGN.md](docs/DESIGN.md): `Space Grotesk` for 
 
 ## Testing
 
-Tests live beside source files as `*.test.ts` under `src/`, and end-to-end coverage lives under `tests/e2e`. Run `npm run test` before submitting changes, especially for validation, metrics, and service logic, and use `npm run test:e2e` to verify the app flow in `APP_MODE=test`.
+Tests live beside source files as `*.test.ts` under `src/`, and end-to-end coverage lives under `tests/e2e`. Run `npm run test` before submitting changes, especially for validation, API routes, and service logic, and use `npm run test:e2e` to verify identity, dashboard, route redirects, and create/edit/delete match flows in `APP_MODE=test`.
