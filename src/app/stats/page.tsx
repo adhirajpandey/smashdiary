@@ -1,10 +1,13 @@
 import { AppShell } from "@/app/_components/app-shell";
 import { StatsPanel } from "@/app/_components/stats-panel";
+import { getStatsPageData } from "@/lib/queries/page-data";
 
-export default function StatsPage() {
+export default async function StatsPage() {
+  const { matches, players } = await getStatsPageData();
+
   return (
     <AppShell activePath="/stats">
-      <StatsPanel />
+      <StatsPanel games={matches} players={players} />
     </AppShell>
   );
 }
