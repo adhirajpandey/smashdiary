@@ -11,10 +11,10 @@ import type {
 } from "@/lib/api/contracts";
 import { getDashboardMetrics, getPlayerStatsSummary, getTopPerformers } from "@/lib/diary-metrics";
 import { isTestMode } from "@/lib/runtime-mode";
-import { getGameByIdSqlite, listGamesSqlite, listPlayersSqlite, saveGameSqlite } from "@/lib/store-sqlite";
+import { deleteGameSqlite, getGameByIdSqlite, listGamesSqlite, listPlayersSqlite, saveGameSqlite } from "@/lib/store-sqlite";
 import type { Player, ResolvedGame } from "@/lib/types";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
-import { getGameByIdRepo, listGamesRepo, listPlayersRepo, saveGameRepo } from "@/lib/server/diary-repository";
+import { deleteGameRepo, getGameByIdRepo, listGamesRepo, listPlayersRepo, saveGameRepo } from "@/lib/server/diary-repository";
 import { ApiNotFoundError, ApiValidationError } from "@/lib/server/errors";
 
 function toPlayerDto(player: Player): PlayerDto {
@@ -113,6 +113,14 @@ export async function upsertGameService(payload: GameUpsertRequest, id?: string)
   }
 
   return { id: savedId };
+}
+
+export async function deleteGameService(id: string) {
+  const deleted = isTestMode() ? await deleteGameSqlite(id) : await deleteGameRepo(id);
+
+  if (!deleted) {
+    throw new ApiNotFoundError("Match record not found.");
+  }
 }
 
 export async function getDashboardService(playerId: string): Promise<DashboardResponse> {

@@ -31,5 +31,14 @@ export async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit)
     throw new ApiClientError(response.status, payload);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const contentLength = response.headers.get("content-length");
+  if (contentLength === "0") {
+    return undefined as T;
+  }
+
   return (await response.json()) as T;
 }

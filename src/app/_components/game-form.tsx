@@ -160,6 +160,7 @@ function SaveButton({ disabled, pending }: Readonly<{ disabled: boolean; pending
 export function GameForm({ game }: Readonly<GameFormProps>) {
   const router = useRouter();
   const { players, selectedPlayerId } = useSelectedPlayer();
+  const isEditing = Boolean(game);
   const [format, setFormat] = useState<GameFormat>(game?.format ?? "singles");
   const [playedAt, setPlayedAt] = useState(toInputDateTimeValue(game?.playedAt ?? new Date().toISOString()));
   const [sideAScore, setSideAScore] = useState<number>(game?.sideAScore ?? 20);
@@ -170,12 +171,12 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
   const [state, setState] = useState<FormState>(initialFormState);
   const lastScoreTapRef = useRef(0);
-  const createMutation = useCreateGameMutation(selectedPlayerId);
-  const updateMutation = useUpdateGameMutation(game?.id ?? "", selectedPlayerId);
+  const createMutation = useCreateGameMutation();
+  const updateMutation = useUpdateGameMutation(game?.id ?? "");
   const mutation = game ? updateMutation : createMutation;
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
-  const primaryPlayerName = game ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
+  const primaryPlayerName = isEditing ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
   const partnerName = sideAPlayers[1] ?? "";
   const opponentName = sideBPlayers[0] ?? "";
   const opponentPartnerName = sideBPlayers[1] ?? "";
@@ -184,8 +185,12 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
     [players],
   );
 
+  function setPrimaryPlayerName(value: string) {
+    setSideAPlayers((current) => [value, current[1] ?? ""]);
+  }
+
   function setPartnerName(value: string) {
-    setSideAPlayers([primaryPlayerName, value]);
+    setSideAPlayers((current) => [isEditing ? current[0] ?? "" : primaryPlayerName, value]);
   }
 
   function setOpponentName(value: string) {
@@ -215,7 +220,7 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
 
     if (!primaryPlayerName.trim()) {
       setState({
-        formError: "Select your identity before saving a match.",
+        formError: isEditing ? "Add at least one player on Side A before saving." : "Select your identity before saving a match.",
         fieldErrors: {},
       });
       return;
@@ -278,22 +283,33 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
       </section>
 
       <section className="match-form__section">
-        <label className="match-input-group">
-          <span className="match-input-group__label">You</span>
-          <div className="match-input-shell is-readonly">
-            <span className="match-input-shell__icon" aria-hidden="true">
-              ME
-            </span>
-            <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
-          </div>
-        </label>
+        {isEditing ? (
+          <PlayerField
+            icon="A1"
+            label="Side A"
+            onChange={setPrimaryPlayerName}
+            placeholder="Add first Side A player..."
+            suggestions={allSuggestions.filter((option) => option !== partnerName && option !== opponentName)}
+            value={primaryPlayerName}
+          />
+        ) : (
+          <label className="match-input-group">
+            <span className="match-input-group__label">You</span>
+            <div className="match-input-shell is-readonly">
+              <span className="match-input-shell__icon" aria-hidden="true">
+                ME
+              </span>
+              <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
+            </div>
+          </label>
+        )}
 
         {format === "doubles" ? (
           <PlayerField
-            icon="+"
-            label="Partner (for doubles)"
+            icon={isEditing ? "A2" : "+"}
+            label={isEditing ? "Side A Partner" : "Partner (for doubles)"}
             onChange={setPartnerName}
-            placeholder="Add a teammate..."
+            placeholder={isEditing ? "Add second Side A player..." : "Add a teammate..."}
             suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== opponentName)}
             value={partnerName}
           />
@@ -301,20 +317,20 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
         <FieldError message={state.fieldErrors.sideAPlayers} />
 
         <PlayerField
-          icon="OP"
-          label="Opponent"
+          icon={isEditing ? "B1" : "OP"}
+          label={isEditing ? "Side B" : "Opponent"}
           onChange={setOpponentName}
-          placeholder="Search by name or handle..."
+          placeholder={isEditing ? "Add first Side B player..." : "Search by name or handle..."}
           suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
           value={opponentName}
         />
 
         {format === "doubles" ? (
           <PlayerField
-            icon="OP"
-            label="Opponent Partner"
+            icon={isEditing ? "B2" : "OP"}
+            label={isEditing ? "Side B Partner" : "Opponent Partner"}
             onChange={setOpponentPartnerName}
-            placeholder="Add second opponent..."
+            placeholder={isEditing ? "Add second Side B player..." : "Add second opponent..."}
             suggestions={allSuggestions.filter(
               (option) => option !== primaryPlayerName && option !== partnerName && option !== opponentName,
             )}
@@ -345,7 +361,7 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
         <p className="score-panel__label">Final Match Score</p>
         <div className="score-panel__grid">
           <label className="score-panel__side">
-            <span className="score-panel__side-label">You</span>
+            <span className="score-panel__side-label">{isEditing ? "Side A" : "You"}</span>
             <div className="score-stepper">
               <button
                 aria-label="Decrease your score"
@@ -390,7 +406,7 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
           </div>
 
           <label className="score-panel__side">
-            <span className="score-panel__side-label">Opp</span>
+            <span className="score-panel__side-label">{isEditing ? "Side B" : "Opp"}</span>
             <div className="score-stepper">
               <button
                 aria-label="Decrease opponent score"
@@ -433,7 +449,7 @@ export function GameForm({ game }: Readonly<GameFormProps>) {
         <FieldError message={state.fieldErrors.sideAScore ?? state.fieldErrors.sideBScore} />
       </section>
 
-      <SaveButton disabled={!primaryPlayerName} pending={mutation.isPending} />
+      <SaveButton disabled={!primaryPlayerName.trim()} pending={mutation.isPending} />
     </form>
   );
 }

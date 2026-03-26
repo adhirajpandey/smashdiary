@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { StatusView } from "@/app/_components/status-view";
 import { ApiClientError } from "@/lib/api/client";
-import { useGameQuery } from "@/lib/api/hooks";
+import { useDeleteGameMutation, useGameQuery } from "@/lib/api/hooks";
 import { formatGameDate } from "@/lib/utils";
 
 function joinNames(names: string[]) {
@@ -12,7 +13,9 @@ function joinNames(names: string[]) {
 }
 
 export function MatchDetailView({ id }: Readonly<{ id: string }>) {
+  const router = useRouter();
   const { data: game, isLoading, isError, error } = useGameQuery(id);
+  const deleteMutation = useDeleteGameMutation(id);
 
   if (isLoading) {
     return <StatusView eyebrow="Match" title="Loading match detail" description="Fetching the full scoreline." />;
@@ -56,6 +59,36 @@ export function MatchDetailView({ id }: Readonly<{ id: string }>) {
         </div>
         <span className="detail-pill">{game.winnerSide === "A" ? "Side A won" : "Side B won"}</span>
       </div>
+
+      <div className="detail-actions">
+        <Link className="secondary-button detail-actions__button" href={`/matches/${game.id}/edit`}>
+          Edit match
+        </Link>
+        <button
+          className="danger-button detail-actions__button detail-actions__button--danger"
+          disabled={deleteMutation.isPending}
+          onClick={async () => {
+            const confirmed = window.confirm("Delete this match? This cannot be undone.");
+            if (!confirmed) {
+              return;
+            }
+
+            try {
+              await deleteMutation.mutateAsync();
+              router.push("/matches");
+            } catch {
+              // Error state is surfaced inline below.
+            }
+          }}
+          type="button"
+        >
+          {deleteMutation.isPending ? "Deleting..." : "Delete match"}
+        </button>
+      </div>
+
+      {deleteMutation.isError ? (
+        <p className="match-form__banner">Could not delete this match. Please try again.</p>
+      ) : null}
 
       <section className="score-panel detail-score-panel">
         <p className="score-panel__label">Final Match Score</p>

@@ -63,15 +63,17 @@ export function useStatsQuery(playerId?: string | null) {
   });
 }
 
-function invalidatePlayerScopedQueries(queryClient: ReturnType<typeof useQueryClient>, playerId?: string | null) {
+function invalidateMatchQueries(queryClient: ReturnType<typeof useQueryClient>, id?: string) {
   return Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.games(playerId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(playerId) }),
-    queryClient.invalidateQueries({ queryKey: queryKeys.stats(playerId) }),
+    queryClient.invalidateQueries({ queryKey: ["players"] }),
+    queryClient.invalidateQueries({ queryKey: ["games"] }),
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+    queryClient.invalidateQueries({ queryKey: ["stats"] }),
+    ...(id ? [queryClient.invalidateQueries({ queryKey: queryKeys.game(id) })] : []),
   ]);
 }
 
-export function useCreateGameMutation(selectedPlayerId?: string | null) {
+export function useCreateGameMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -82,16 +84,12 @@ export function useCreateGameMutation(selectedPlayerId?: string | null) {
       }),
     onSuccess: async (result) => {
       queryClient.setQueryData(queryKeys.lastSavedGame(), result.id);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.players() }),
-        invalidatePlayerScopedQueries(queryClient, selectedPlayerId),
-        queryClient.invalidateQueries({ queryKey: queryKeys.games() }),
-      ]);
+      await invalidateMatchQueries(queryClient, result.id);
     },
   });
 }
 
-export function useUpdateGameMutation(id: string, selectedPlayerId?: string | null) {
+export function useUpdateGameMutation(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -102,12 +100,22 @@ export function useUpdateGameMutation(id: string, selectedPlayerId?: string | nu
       }),
     onSuccess: async (result) => {
       queryClient.setQueryData(queryKeys.lastSavedGame(), result.id);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.players() }),
-        invalidatePlayerScopedQueries(queryClient, selectedPlayerId),
-        queryClient.invalidateQueries({ queryKey: queryKeys.games() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.game(id) }),
-      ]);
+      await invalidateMatchQueries(queryClient, id);
+    },
+  });
+}
+
+export function useDeleteGameMutation(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      fetchJson<void>(`/api/games/${id}`, {
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: queryKeys.game(id) });
+      await invalidateMatchQueries(queryClient);
     },
   });
 }

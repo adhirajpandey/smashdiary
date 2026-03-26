@@ -314,3 +314,18 @@ export async function saveGameSqlite(input: SaveGameInput) {
 
   return run();
 }
+
+export async function deleteGameSqlite(id: string) {
+  const client = getClient();
+  logStoreEvent("deleteGame:start", { id });
+
+  const result = client.prepare("DELETE FROM games WHERE id = ?").run(id);
+
+  if (!result.changes) {
+    logStoreEvent("deleteGame:missing_game", { id });
+    return false;
+  }
+
+  logStoreEvent("deleteGame:deleted", { id });
+  return true;
+}

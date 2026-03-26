@@ -220,3 +220,9 @@ export async function saveGameRepo(input: SaveGameInput) {
     return id;
   });
 }
+
+export async function deleteGameRepo(id: string) {
+  const db = getDb();
+  const deleted = await db.delete(games).where(eq(games.id, id)).returning({ id: games.id });
+  return Boolean(deleted[0]);
+}
