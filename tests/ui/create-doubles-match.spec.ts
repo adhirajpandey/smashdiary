@@ -9,8 +9,8 @@ import {
   submitMatchAndExpectDetail,
 } from "./helpers";
 
-test("creates a doubles match with a seeded partner and a new opponent", async ({ page }) => {
-  const newOpponentPartner = createUniquePlayerName("E2EOpp");
+test("lets me record a doubles match with a new opponent", async ({ page }) => {
+  const newOpponentPartner = createUniquePlayerName("New Opponent ");
 
   await openAppAndSelectPlayer(page);
   await openNewMatchForm(page);

@@ -1,5 +1,11 @@
 import { expect, type Page } from "@playwright/test";
 
+type MatchDetails = {
+  formatHeading: "Singles match" | "Doubles match";
+  players: string[];
+  scoreline: `${number}-${number}`;
+};
+
 export async function openAppAndSelectPlayer(page: Page, playerName = "Adhiraj") {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
@@ -33,6 +39,11 @@ export async function openNewMatchForm(page: Page) {
   await expect(page.getByRole("button", { name: "Save Match" })).toBeVisible();
 }
 
+export async function openExistingMatchDetail(page: Page, matchLinkName: string) {
+  await page.getByRole("link", { name: matchLinkName }).click();
+  await expect(page).toHaveURL(/\/matches\/\d+$/);
+}
+
 export async function fillPlayerField(
   page: Page,
   label: "Your Partner" | "Opponent" | "Opponent's Partner",
@@ -55,27 +66,78 @@ export async function fillMatchScores(page: Page, scores: { yours: number; oppon
   await page.getByRole("spinbutton", { name: "Opponent score" }).fill(String(scores.opponent));
 }
 
-export async function submitMatchAndExpectDetail(
+export async function expectToast(
   page: Page,
-  details: {
-    formatHeading: "Singles match" | "Doubles match";
-    players: string[];
-    scoreline: `${number}-${number}`;
+  options: {
+    role: "status" | "alert";
+    title: string;
+    description?: string;
   },
 ) {
-  await page.getByRole("button", { name: "Save Match" }).click();
+  const toast = page.getByRole(options.role).filter({ hasText: options.title });
+  await expect(toast).toContainText(options.title);
 
-  const successToast = page.getByRole("status").filter({ hasText: "Match saved" });
-  await expect(successToast).toContainText("The scoreline has been added to your diary.");
+  if (options.description) {
+    await expect(toast).toContainText(options.description);
+  }
+}
+
+export async function expectMatchDetail(page: Page, details: MatchDetails) {
   await expect(page).toHaveURL(/\/matches\/\d+$/);
   await expect(page.getByRole("heading", { name: details.formatHeading })).toBeVisible();
   await expect(page.getByText(new RegExp(details.scoreline.replace("-", "\\s*/\\s*")))).toBeVisible();
 
   for (const player of details.players) {
-    await expect(page.getByText(player, { exact: false })).toBeVisible();
+    const playerParts = player.trim().split(/\s+/).filter(Boolean);
+
+    for (const part of playerParts) {
+      await expect(page.getByText(part, { exact: true })).toBeVisible();
+    }
   }
 }
 
+export async function submitMatchAndExpectDetail(page: Page, details: MatchDetails) {
+  await page.getByRole("button", { name: "Save Match" }).click();
+
+  await expectToast(page, {
+    role: "status",
+    title: "Match saved",
+    description: "The scoreline has been added to your diary.",
+  });
+  await expectMatchDetail(page, details);
+}
+
+export async function openEditMatchForm(page: Page) {
+  await page.getByRole("link", { name: "Edit match" }).click();
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();
+}
+
+export async function updateMatchAndExpectDetail(page: Page, details: MatchDetails) {
+  await page.getByRole("button", { name: "Update Match" }).click();
+
+  await expectToast(page, {
+    role: "status",
+    title: "Match updated",
+    description: "The refreshed scoreline is live in your diary.",
+  });
+  await expectMatchDetail(page, details);
+}
+
+export async function deleteMatchAndExpectRedirect(page: Page) {
+  await page.getByRole("button", { name: "Delete match" }).click();
+  await expect(page.getByText("Remove this saved match?")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+
+  await expectToast(page, {
+    role: "status",
+    title: "Match deleted",
+    description: "The saved scoreline has been cleared from your diary.",
+  });
+  await expect(page).toHaveURL("/matches");
+}
+
 export function createUniquePlayerName(prefix: string) {
-  return `${prefix}${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const suffix = `${Date.now().toString(36).slice(-4)}${Math.random().toString(36).slice(2, 4)}`;
+  return `${prefix}${suffix}`;
 }

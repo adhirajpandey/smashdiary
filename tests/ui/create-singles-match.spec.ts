@@ -8,7 +8,7 @@ import {
   submitMatchAndExpectDetail,
 } from "./helpers";
 
-test("creates a singles match against an existing player", async ({ page }) => {
+test("lets me record a singles win", async ({ page }) => {
   await openAppAndSelectPlayer(page);
   await openNewMatchForm(page);
   await fillPlayerField(page, "Opponent", "Jinu");
