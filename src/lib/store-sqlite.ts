@@ -211,17 +211,7 @@ function insertParticipants(client: Database.Database, gameId: number, sideAPlay
 
 export async function listPlayersSqlite() {
   const players = readPlayers(getClient());
-  return players.slice().sort((a, b) => {
-    const aIsSagar = a.name.toLowerCase() === "sagar";
-    const bIsSagar = b.name.toLowerCase() === "sagar";
-    if (aIsSagar && !bIsSagar) {
-      return -1;
-    }
-    if (!aIsSagar && bIsSagar) {
-      return 1;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  return players.slice().sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function listGamesSqlite() {

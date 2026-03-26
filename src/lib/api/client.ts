@@ -72,6 +72,8 @@ export function usePlayersQuery() {
   return useQuery({
     queryKey: queryKeys.players,
     queryFn: () => fetchJson<PlayersData>("/api/players"),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
   });
 }
 
