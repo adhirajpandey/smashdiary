@@ -7,6 +7,7 @@ import type { GameFormFieldErrors } from "@/lib/action-errors";
 import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import { useToast } from "@/app/_components/toast-provider";
 import type { GameFormat, Player, ResolvedGame } from "@/lib/types";
 import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
 
@@ -16,7 +17,6 @@ type GameFormProps = {
 };
 
 type GameFormState = {
-  formError: string | null;
   fieldErrors: GameFormFieldErrors;
 };
 
@@ -238,21 +238,21 @@ function FormatCard({
   );
 }
 
-function SaveButton({ pending }: Readonly<{ pending: boolean }>) {
+function SaveButton({ pending, isEdit }: Readonly<{ pending: boolean; isEdit: boolean }>) {
   return (
     <button className="match-save-button" disabled={pending} type="submit">
-      {pending ? "Saving..." : "Save Match"}
+      {pending ? "Saving..." : isEdit ? "Update Match" : "Save Match"}
     </button>
   );
 }
 
 const initialFormState: GameFormState = {
-  formError: null,
   fieldErrors: {},
 };
 
 export function GameForm({ game, players }: Readonly<GameFormProps>) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const { selectedPlayerId } = useSelectedPlayer();
   const createMatchMutation = useCreateMatchMutation();
   const updateMatchMutation = useUpdateMatchMutation(game?.id ?? 0);
@@ -321,18 +321,34 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
         ? await updateMatchMutation.mutateAsync(payload)
         : await createMatchMutation.mutateAsync(payload);
 
-      router.push(game ? `/matches/${result.id}` : "/");
+      pushToast({
+        variant: "success",
+        title: game ? "Match updated" : "Match saved",
+        description: game
+          ? "The refreshed scoreline is live in your diary."
+          : "The scoreline has been added to your diary.",
+      });
+      router.push(`/matches/${result.id}`);
     } catch (error) {
       if (error instanceof ApiClientError) {
+        pushToast({
+          variant: "error",
+          title: "Check the highlighted values",
+          description: error.formError ?? error.message,
+        });
         setFormState({
-          formError: error.formError ?? error.message,
           fieldErrors: error.fieldErrors ?? {},
         });
         return;
       }
 
+      pushToast({
+        variant: "error",
+        title: "Save failed",
+        description: "Could not save game. Please try again.",
+        durationMs: null,
+      });
       setFormState({
-        formError: "Could not save game. Please try again.",
         fieldErrors: {},
       });
     }
@@ -340,8 +356,6 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
 
   return (
     <form className="match-form" onSubmit={(event) => void handleSubmit(event)}>
-      {formState.formError ? <p className="match-form__banner">{formState.formError}</p> : null}
-
       <section className="match-form__section">
         <SectionHeading align="compact" eyebrow="Select format" />
 
@@ -452,6 +466,7 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
                 -
               </button>
               <input
+                aria-label="Your score"
                 className="display score-panel__input"
                 max={30}
                 min={0}
@@ -497,6 +512,7 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
                 -
               </button>
               <input
+                aria-label="Opponent score"
                 className="display score-panel__input score-panel__input--alt"
                 max={30}
                 min={0}
@@ -526,7 +542,7 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
         ) : null}
       </section>
 
-      <SaveButton pending={isPending} />
+      <SaveButton isEdit={Boolean(game)} pending={isPending} />
     </form>
   );
 }

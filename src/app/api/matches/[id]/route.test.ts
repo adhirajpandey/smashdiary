@@ -6,7 +6,12 @@ jest.mock("@/lib/services/save-match", () => ({
   saveMatchFromJson: jest.fn(),
 }));
 
-import { GET, PUT } from "@/app/api/matches/[id]/route";
+jest.mock("@/lib/services/delete-match", () => ({
+  deleteMatchById: jest.fn(),
+}));
+
+import { DELETE, GET, PUT } from "@/app/api/matches/[id]/route";
+import { deleteMatchById } from "@/lib/services/delete-match";
 import { getMatchDetailData } from "@/lib/services/matches";
 import { saveMatchFromJson } from "@/lib/services/save-match";
 
@@ -55,5 +60,34 @@ describe("PUT /api/matches/[id]", () => {
       12,
     );
     expect(response.status).toBe(200);
+  });
+});
+
+describe("DELETE /api/matches/[id]", () => {
+  it("returns the deleted id on success", async () => {
+    (deleteMatchById as jest.Mock).mockResolvedValue(true);
+
+    const response = await DELETE(new Request("http://localhost/api/matches/12"), {
+      params: Promise.resolve({ id: "12" }),
+    });
+
+    expect(deleteMatchById).toHaveBeenCalledWith(12);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ data: { id: 12 } });
+  });
+
+  it("returns not found when the match does not exist", async () => {
+    (deleteMatchById as jest.Mock).mockResolvedValue(false);
+
+    const response = await DELETE(new Request("http://localhost/api/matches/12"), {
+      params: Promise.resolve({ id: "12" }),
+    });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({
+      error: {
+        code: "NOT_FOUND",
+      },
+    });
   });
 });

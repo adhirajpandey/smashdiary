@@ -1,0 +1,52 @@
+export type ToastVariant = "success" | "error" | "info";
+
+export type Toast = {
+  id: string;
+  variant: ToastVariant;
+  title: string;
+  description?: string;
+  durationMs: number | null;
+};
+
+export type ToastInput = {
+  variant: ToastVariant;
+  title: string;
+  description?: string;
+  durationMs?: number | null;
+};
+
+export const MAX_TOASTS = 3;
+export const SUCCESS_TOAST_DURATION_MS = 2800;
+export const INFO_TOAST_DURATION_MS = 4000;
+export const ERROR_TOAST_DURATION_MS = 6000;
+
+export function getToastDuration(variant: ToastVariant) {
+  switch (variant) {
+    case "success":
+      return SUCCESS_TOAST_DURATION_MS;
+    case "info":
+      return INFO_TOAST_DURATION_MS;
+    case "error":
+      return ERROR_TOAST_DURATION_MS;
+    default:
+      return INFO_TOAST_DURATION_MS;
+  }
+}
+
+export function appendToast(toasts: Toast[], toast: Toast) {
+  if (toasts.length < MAX_TOASTS) {
+    return [...toasts, toast];
+  }
+
+  const replaceIndex = toasts.findIndex((entry) => entry.variant !== "error");
+
+  if (replaceIndex >= 0) {
+    return [...toasts.slice(0, replaceIndex), ...toasts.slice(replaceIndex + 1), toast];
+  }
+
+  return [...toasts.slice(1), toast];
+}
+
+export function removeToast(toasts: Toast[], id: string) {
+  return toasts.filter((toast) => toast.id !== id);
+}

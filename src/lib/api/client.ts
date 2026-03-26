@@ -37,6 +37,13 @@ async function invalidateDiaryQueries(queryClient: QueryClient, matchId?: number
   ]);
 }
 
+async function clearDeletedMatchQueries(queryClient: QueryClient, matchId: number) {
+  await Promise.all([
+    invalidateDiaryQueries(queryClient),
+    queryClient.removeQueries({ queryKey: queryKeys.matchDetail(matchId) }),
+  ]);
+}
+
 async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
     cache: "no-store",
@@ -123,5 +130,17 @@ export function useUpdateMatchMutation(matchId: number) {
         body: JSON.stringify(input),
       }),
     onSuccess: async () => invalidateDiaryQueries(queryClient, matchId),
+  });
+}
+
+export function useDeleteMatchMutation(matchId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      fetchJson<MatchMutationResult>(`/api/matches/${matchId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: async () => clearDeletedMatchQueries(queryClient, matchId),
   });
 }

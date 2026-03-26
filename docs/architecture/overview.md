@@ -93,13 +93,14 @@ Examples:
 
 The normal write path is:
 
-1. The client form submits JSON to `POST /api/matches` or `PUT /api/matches/[id]`. The selected player from shell context is treated as the fixed "You" side in the form UI.
+1. The client form submits JSON to `POST /api/matches` or `PUT /api/matches/[id]`. Match detail actions can also call `DELETE /api/matches/[id]`. The selected player from shell context is treated as the fixed "You" side in the form UI.
 2. The route handler parses the JSON body and passes it to `saveMatchFromJson()`.
 3. The service validates the payload with `gameFormSchema` and derives `winnerSide`.
 4. The service calls the `saveMatch()` command.
 5. The command delegates to the active repository.
 6. The repository upserts players, writes the match, and writes participants in a transaction.
-7. The client invalidates affected queries and navigates to the destination screen.
+7. Delete requests flow through a matching service and command path before the repository removes participants and the match in a transaction.
+8. The client invalidates affected queries, shows an in-app toast notification, and navigates to the destination screen when appropriate.
 
 This keeps route handlers thin while moving dashboard, history, and stats derivation into the server-side service layer before JSON is returned.
 

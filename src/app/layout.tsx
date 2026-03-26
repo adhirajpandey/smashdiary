@@ -3,6 +3,7 @@ import { Lexend, Space_Grotesk } from "next/font/google";
 
 import { AppQueryProvider } from "@/app/_components/query-provider";
 import { SelectedPlayerProvider } from "@/app/_components/selected-player-provider";
+import { ToastProvider } from "@/app/_components/toast-provider";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${lexend.variable} ${spaceGrotesk.variable}`}>
       <body>
         <AppQueryProvider>
-          <SelectedPlayerProvider>{children}</SelectedPlayerProvider>
+          <SelectedPlayerProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </SelectedPlayerProvider>
         </AppQueryProvider>
       </body>
     </html>

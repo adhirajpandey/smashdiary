@@ -41,6 +41,7 @@ Current supported behavior:
 - create new players implicitly by typing names during submission
 - prefill the played-at field with the current local date and time for new entries
 - adjust scores with either number inputs or score stepper buttons
+- route to the saved match detail screen after a successful save
 
 The underlying JSON match API also supports update behavior when an ID is supplied, even though the primary documented workflow is new match entry.
 
@@ -56,6 +57,9 @@ It currently displays:
 - winning side
 - side A roster
 - side B roster
+- actions to edit or delete the saved match
+
+Delete uses an inline confirmation state on the detail screen. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications.
 
 Invalid or missing IDs resolve to the app's not-found behavior.
 
@@ -78,6 +82,8 @@ The product currently supports these main workflows:
 - viewing recent history for the selected player
 - reviewing dashboard and stats-derived player metrics
 - opening a match detail page for a specific saved match
+- editing a saved match from its detail screen
+- deleting a saved match from its detail screen
 
 ## Current Product Boundaries
 
