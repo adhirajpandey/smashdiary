@@ -1,13 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
-import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getDashboardMetrics, getPlayerStatsSummary, getTopPerformers } from "@/lib/match-selectors";
-import type { Player, ResolvedGame } from "@/lib/types";
+import type { PlayerDashboardMetrics, PlayerStanding, PlayerStatsSummary } from "@/lib/types";
 
 function formatPercent(value: number) {
   return `${Math.round(value * 10)}%`;
@@ -23,23 +19,14 @@ const resultsGrid = [
 ] as const;
 
 export function StatsPanel({
-  games,
-  players,
+  leaderboard,
+  metrics,
+  summary,
 }: Readonly<{
-  games: ResolvedGame[];
-  players: Player[];
+  leaderboard: PlayerStanding[];
+  metrics: PlayerDashboardMetrics | null;
+  summary: PlayerStatsSummary | null;
 }>) {
-  const { selectedPlayerId } = useSelectedPlayer();
-  const summary = useMemo(
-    () => (selectedPlayerId ? getPlayerStatsSummary(games, players, selectedPlayerId) : null),
-    [games, players, selectedPlayerId],
-  );
-  const metrics = useMemo(
-    () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
-    [games, players, selectedPlayerId],
-  );
-  const leaderboard = useMemo(() => getTopPerformers(games, players), [games, players]);
-
   if (!summary || !metrics) {
     return (
       <section className="stats-page">

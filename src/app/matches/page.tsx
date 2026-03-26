@@ -1,13 +1,10 @@
 import { AppShell } from "@/app/_components/app-shell";
-import { MatchesView } from "@/app/_components/matches-view";
-import { getMatchesPageData } from "@/lib/queries/page-data";
+import { MatchesPageClient } from "@/app/_components/matches-page-client";
 
-export default async function MatchesPage() {
-  const { matches, players } = await getMatchesPageData();
-
+export default function MatchesPage() {
   return (
     <AppShell activePath="/matches">
-      <MatchesView games={matches} players={players} />
+      <MatchesPageClient />
     </AppShell>
   );
 }

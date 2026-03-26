@@ -16,4 +16,5 @@ export type MatchRepository = {
   listMatches: () => Promise<ResolvedGame[]>;
   getMatchById: (id: number) => Promise<ResolvedGame | null>;
   saveMatch: (input: SaveMatchInput) => Promise<number>;
+  deleteMatch: (id: number) => Promise<boolean>;
 };

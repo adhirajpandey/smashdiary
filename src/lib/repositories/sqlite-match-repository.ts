@@ -212,4 +212,24 @@ export const sqliteMatchRepository: MatchRepository = {
 
     return run();
   },
+
+  async deleteMatch(id) {
+    const client = getClient();
+    logRepositoryEvent("deleteMatch:start", { id });
+
+    const run = client.transaction(() => {
+      client.prepare("DELETE FROM game_participants WHERE game_id = ?").run(id);
+      const deleted = client.prepare("DELETE FROM games WHERE id = ?").run(id);
+
+      if (!deleted.changes) {
+        logRepositoryEvent("deleteMatch:missing_match", { id });
+        return false;
+      }
+
+      logRepositoryEvent("deleteMatch:deleted", { id });
+      return true;
+    });
+
+    return run();
+  },
 };

@@ -184,4 +184,23 @@ export const postgresMatchRepository: MatchRepository = {
       return created.id;
     });
   },
+
+  async deleteMatch(id) {
+    const db = getDb();
+    logRepositoryEvent("deleteMatch:start", { id });
+
+    return db.transaction(async (tx) => {
+      await tx.delete(gameParticipants).where(eq(gameParticipants.gameId, id));
+
+      const deleted = await tx.delete(games).where(eq(games.id, id)).returning({ id: games.id });
+
+      if (!deleted[0]) {
+        logRepositoryEvent("deleteMatch:missing_match", { id });
+        return false;
+      }
+
+      logRepositoryEvent("deleteMatch:deleted", { id });
+      return true;
+    });
+  },
 };

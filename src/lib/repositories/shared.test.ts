@@ -2,14 +2,14 @@ import { buildParticipantValues, normalizePlayedAt, resolveMatches, sortPlayers 
 import type { Player } from "@/lib/types";
 
 describe("repository shared helpers", () => {
-  it("sorts players with Sagar first, then alphabetically", () => {
+  it("sorts players alphabetically", () => {
     const players: Player[] = [
       { id: 1, name: "Kabir", createdAt: "", updatedAt: "" },
       { id: 2, name: "sagar", createdAt: "", updatedAt: "" },
       { id: 3, name: "Aman", createdAt: "", updatedAt: "" },
     ];
 
-    expect(sortPlayers(players).map((player) => player.name)).toEqual(["sagar", "Aman", "Kabir"]);
+    expect(sortPlayers(players).map((player) => player.name)).toEqual(["Aman", "Kabir", "sagar"]);
   });
 
   it("resolves joined rows into matches with side rosters", () => {

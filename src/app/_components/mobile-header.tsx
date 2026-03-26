@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import { usePlayersQuery } from "@/lib/api/client";
 
 function getInitials(name: string) {
   return name
@@ -15,11 +15,9 @@ function getInitials(name: string) {
 }
 
 export function MobileHeader() {
-  const { players, selectedPlayerId, openPicker } = useSelectedPlayer();
-  const selectedPlayer = useMemo(
-    () => players.find((player) => player.id === selectedPlayerId) ?? null,
-    [players, selectedPlayerId],
-  );
+  const { selectedPlayerId, openPicker } = useSelectedPlayer();
+  const { data } = usePlayersQuery();
+  const selectedPlayer = data?.players.find((player) => player.id === selectedPlayerId) ?? null;
 
   return (
     <header className="mobile-header">

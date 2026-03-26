@@ -12,6 +12,7 @@ The app is built for quick local iteration: in normal mode it uses Postgres thro
 - Browse player-focused match history
 - View dashboard and stats for the selected player while keeping a global leaderboard view
 - Inspect a dedicated match detail screen
+- Edit or delete a saved match from its detail screen
 
 User-facing docs use the term "match". Some internal code still uses `game` in names and types.
 
@@ -24,6 +25,7 @@ User-facing docs use the term "match". Some internal code still uses `game` in n
 - Postgres in default mode
 - SQLite in local test mode
 - Jest + ts-jest
+- Playwright
 
 ## Quick Start
 
@@ -49,6 +51,8 @@ APP_MODE=test npm run dev
 - `APP_MODE`: set to `test` to use the local SQLite test repository
 
 The app shell always includes a player picker. Dashboard, match history, and player-specific stats content depend on that selected player context.
+Reads and writes now flow through internal JSON route handlers under `src/app/api`.
+Match save, update, delete, and validation-summary feedback are surfaced through in-app toast notifications.
 
 ## Runtime Modes
 
@@ -81,13 +85,17 @@ Schema changes should be accompanied by a matching migration in `drizzle/`.
 - `npm run lint`
 - `npm run test`
 - `npm run test:watch`
+- `npx playwright install chromium`
+- `npm run test:ui`
+- `npm run test:ui:headed`
 - `npm run build`
 
 Tests live beside source files as `*.test.ts` under `src/`.
+UI smoke tests live under `tests/ui` and run the app in `APP_MODE=test` against the seeded SQLite dataset.
 
 ## Project Layout
 
-- `src/app`: routes, server actions, and UI components
+- `src/app`: routes, JSON route handlers, thin pages, and UI components
 - `src/lib`: domain logic, validation, queries, repositories, DB access, metrics, and utilities
 - `src/data`: local seed and reference data
 - `drizzle`: SQL migrations and Drizzle metadata

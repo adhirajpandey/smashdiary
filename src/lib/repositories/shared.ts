@@ -24,17 +24,7 @@ export function normalizePlayedAt(dateTime: string) {
 }
 
 export function sortPlayers(players: Player[]) {
-  return players.slice().sort((a, b) => {
-    const aIsSagar = a.name.toLowerCase() === "sagar";
-    const bIsSagar = b.name.toLowerCase() === "sagar";
-    if (aIsSagar && !bIsSagar) {
-      return -1;
-    }
-    if (!aIsSagar && bIsSagar) {
-      return 1;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  return players.slice().sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function resolveMatches(rows: ResolvedMatchRow[]) {
