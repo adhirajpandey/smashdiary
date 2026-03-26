@@ -82,6 +82,7 @@ The app shell includes a persistent identity picker. Several screens intentional
 ### App lifecycle
 
 - `npm run dev`: start the Next.js development server
+- `npm run dev:test`: start the app in SQLite-backed test mode
 - `npm run build`: create a production build
 - `npm run start`: serve the production build
 
@@ -90,6 +91,9 @@ The app shell includes a persistent identity picker. Several screens intentional
 - `npm run lint`: run ESLint
 - `npm run test`: run Jest once
 - `npm run test:watch`: run Jest in watch mode
+- `npx playwright install chromium`: install the browser used by the UI suite
+- `npm run test:ui`: run the Playwright smoke suite
+- `npm run test:ui:headed`: run the Playwright smoke suite with a visible browser
 
 ### Database
 
@@ -131,6 +135,7 @@ If a schema-affecting change also impacts test mode, update `src/lib/db/test-sql
 ## Tests
 
 Tests live beside the source under `src/` as `*.test.ts`.
+Playwright UI smoke tests live under `tests/ui/`.
 
 Areas with meaningful existing test coverage include:
 
@@ -141,8 +146,10 @@ Areas with meaningful existing test coverage include:
 - screen-data services
 - repositories shared logic
 - utilities
+- mobile UI happy paths via Playwright
 
 When changing behavior, prefer focused test updates near the touched module before broadening scope.
+Run the UI suite in `APP_MODE=test`; it starts the app against the seeded SQLite dataset and does not require Postgres.
 
 ## Contribution Expectations
 

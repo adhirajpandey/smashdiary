@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:test": "cross-env APP_MODE=test next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -25,11 +28,13 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.2.1",

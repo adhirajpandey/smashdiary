@@ -26,7 +26,12 @@ export function MobileHeader() {
           SMASH DIARY
         </Link>
       </div>
-      <button className="mobile-header__profile" onClick={openPicker} type="button">
+      <button
+        aria-label={selectedPlayer ? `Open player identity picker for ${selectedPlayer.name}` : "Open player identity picker"}
+        className="mobile-header__profile"
+        onClick={openPicker}
+        type="button"
+      >
         {selectedPlayer ? getInitials(selectedPlayer.name) : "?"}
       </button>
     </header>
