@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { usePlayersQuery } from "@/lib/api/hooks";
 import type { Player } from "@/lib/types";
 
 type SelectedPlayerContextValue = {
@@ -11,38 +12,76 @@ type SelectedPlayerContextValue = {
   isPickerOpen: boolean;
   openPicker: () => void;
   closePicker: () => void;
+  isPlayersLoading: boolean;
+  playersError: string | null;
+  retryPlayers: () => void;
 };
 
-const STORAGE_KEY = "smash-diary:selected-player";
+const STORAGE_KEY = "smash-diary:selected-player:v1";
 
 const SelectedPlayerContext = createContext<SelectedPlayerContextValue | null>(null);
 
-export function SelectedPlayerProvider({
-  children,
-  players,
-}: Readonly<{
-  children: React.ReactNode;
-  players: Player[];
-}>) {
+function readStoredPlayerId() {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredPlayerId(value: string | null) {
+  try {
+    if (!value) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    // Ignore storage failures in private browsing or locked-down clients.
+  }
+}
+
+export function SelectedPlayerProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  const {
+    data: players = [],
+    isLoading: isPlayersLoading,
+    isError: isPlayersError,
+    error,
+    refetch,
+  } = usePlayersQuery();
   const [selectedPlayerId, setSelectedPlayerIdState] = useState<string | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const isValid = stored && players.some((player) => player.id === stored);
+    if (isPlayersLoading) {
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => {
+      if (isPlayersError) {
+        setSelectedPlayerIdState(null);
+        setIsPickerOpen(true);
+        setHasHydrated(true);
+        return;
+      }
+
+      const stored = readStoredPlayerId();
+      const isValid = stored && players.some((player) => player.id === stored);
       setSelectedPlayerIdState(isValid ? stored : null);
-      setIsPickerOpen(!isValid);
+      if (!isValid) {
+        writeStoredPlayerId(null);
+      }
+      setIsPickerOpen(Boolean(players.length) && !isValid);
       setHasHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [players]);
+  }, [isPlayersError, isPlayersLoading, players]);
 
   function setSelectedPlayerId(value: string) {
     setSelectedPlayerIdState(value);
-    window.localStorage.setItem(STORAGE_KEY, value);
+    writeStoredPlayerId(value);
   }
 
   const contextValue = useMemo(
@@ -53,8 +92,13 @@ export function SelectedPlayerProvider({
       isPickerOpen: hasHydrated && isPickerOpen,
       openPicker: () => setIsPickerOpen(true),
       closePicker: () => setIsPickerOpen(false),
+      isPlayersLoading,
+      playersError: isPlayersError ? error.message : null,
+      retryPlayers: () => {
+        void refetch();
+      },
     }),
-    [hasHydrated, isPickerOpen, players, selectedPlayerId],
+    [error?.message, hasHydrated, isPickerOpen, isPlayersError, isPlayersLoading, players, refetch, selectedPlayerId],
   );
 
   return <SelectedPlayerContext.Provider value={contextValue}>{children}</SelectedPlayerContext.Provider>;

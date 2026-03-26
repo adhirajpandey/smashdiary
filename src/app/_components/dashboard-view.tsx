@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { MatchFeed } from "@/app/_components/match-feed";
+import { StatusView } from "@/app/_components/status-view";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getDashboardMetrics, getTopPerformers } from "@/lib/diary-metrics";
+import { queryKeys } from "@/lib/api/query-keys";
+import { useDashboardQuery } from "@/lib/api/hooks";
 import { buildMatchReaction } from "@/lib/reaction-text";
-import type { Player, ResolvedGame } from "@/lib/types";
 
 function StatTile({
   label,
@@ -27,23 +28,17 @@ function StatTile({
   );
 }
 
-export function DashboardView({
-  games,
-  players,
-}: Readonly<{
-  games: ResolvedGame[];
-  players: Player[];
-}>) {
+export function DashboardView() {
   const { selectedPlayerId } = useSelectedPlayer();
-  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, error } = useDashboardQuery(selectedPlayerId);
   const [dismissedSavedGameId, setDismissedSavedGameId] = useState<string | null>(null);
-  const savedGameId = searchParams.get("savedGameId");
-  const metrics = useMemo(
-    () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
-    [games, players, selectedPlayerId],
+  const savedGameId = queryClient.getQueryData<string | null>(queryKeys.lastSavedGame()) ?? null;
+
+  const savedGame = useMemo(
+    () => data?.metrics?.recentMatches.find((game) => game.id === savedGameId) ?? null,
+    [data?.metrics?.recentMatches, savedGameId],
   );
-  const topPerformers = useMemo(() => getTopPerformers(games, players), [games, players]);
-  const savedGame = useMemo(() => games.find((game) => game.id === savedGameId) ?? null, [games, savedGameId]);
   const reaction = useMemo(() => {
     if (!savedGame || savedGame.id === dismissedSavedGameId) {
       return null;
@@ -51,8 +46,20 @@ export function DashboardView({
     return buildMatchReaction(savedGame, selectedPlayerId);
   }, [dismissedSavedGameId, savedGame, selectedPlayerId]);
 
-  if (!metrics) {
+  if (!selectedPlayerId) {
     return null;
+  }
+
+  if (isLoading) {
+    return <StatusView eyebrow="Dashboard" title="Loading your dashboard" description="Pulling your recent court activity." />;
+  }
+
+  if (isError) {
+    return <StatusView eyebrow="Dashboard" title="Could not load your dashboard" description={error.message} />;
+  }
+
+  if (!data?.metrics) {
+    return <StatusView eyebrow="Dashboard" title="Pick a player to continue" description="Select your identity to personalize the diary." />;
   }
 
   return (
@@ -63,7 +70,14 @@ export function DashboardView({
             <p className="reaction-card__eyebrow">Post-match</p>
             <p className="reaction-card__text">{reaction.text}</p>
           </div>
-          <button className="reaction-card__dismiss" onClick={() => setDismissedSavedGameId(savedGame?.id ?? null)} type="button">
+          <button
+            className="reaction-card__dismiss"
+            onClick={() => {
+              setDismissedSavedGameId(savedGame?.id ?? null);
+              queryClient.removeQueries({ queryKey: queryKeys.lastSavedGame(), exact: true });
+            }}
+            type="button"
+          >
             Dismiss
           </button>
         </section>
@@ -75,8 +89,8 @@ export function DashboardView({
       </Link>
 
       <section className="dashboard-grid">
-        <StatTile accent="lime" label="Win Score" value={metrics.winScore.toFixed(1)} />
-        <StatTile accent="blue" label="Player Rating" value={metrics.playerRating.toFixed(1)} />
+        <StatTile accent="lime" label="Win Score" value={data.metrics.winScore.toFixed(1)} />
+        <StatTile accent="blue" label="Player Rating" value={data.metrics.playerRating.toFixed(1)} />
       </section>
 
       <section className="dashboard-section">
@@ -84,11 +98,11 @@ export function DashboardView({
         <div className="activity-list">
           <div className="activity-list__row">
             <span>Singles Matches</span>
-            <strong>{metrics.singlesGames}</strong>
+            <strong>{data.metrics.singlesGames}</strong>
           </div>
           <div className="activity-list__row">
             <span>Doubles Matches</span>
-            <strong>{metrics.doublesGames}</strong>
+            <strong>{data.metrics.doublesGames}</strong>
           </div>
         </div>
       </section>
@@ -100,7 +114,7 @@ export function DashboardView({
             View all
           </Link>
         </div>
-        <MatchFeed games={metrics.recentMatches} playerId={metrics.playerId} />
+        <MatchFeed games={data.metrics.recentMatches} playerId={data.metrics.playerId} />
       </section>
 
       <section className="leaderboard">
@@ -108,7 +122,7 @@ export function DashboardView({
           Top Performance
         </h2>
         <div className="leaderboard__list">
-          {topPerformers.map((player, index) => (
+          {data.topPerformers.map((player, index) => (
             <div className="leaderboard__row" key={player.playerId}>
               <div className="leaderboard__left">
                 <span className="display leaderboard__rank">{index + 1}</span>

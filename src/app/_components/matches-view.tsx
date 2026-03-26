@@ -3,26 +3,29 @@
 import { useMemo } from "react";
 
 import { MatchFeed } from "@/app/_components/match-feed";
+import { StatusView } from "@/app/_components/status-view";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getPlayerGames } from "@/lib/diary-metrics";
-import type { Player, ResolvedGame } from "@/lib/types";
+import { useGamesQuery } from "@/lib/api/hooks";
 
-export function MatchesView({
-  games,
-  players,
-}: Readonly<{
-  games: ResolvedGame[];
-  players: Player[];
-}>) {
-  const { selectedPlayerId } = useSelectedPlayer();
+export function MatchesView() {
+  const { players, selectedPlayerId } = useSelectedPlayer();
+  const { data: games = [], isLoading, isError, error } = useGamesQuery(selectedPlayerId);
   const selectedPlayer = useMemo(
     () => players.find((player) => player.id === selectedPlayerId) ?? null,
     [players, selectedPlayerId],
   );
-  const selectedGames = useMemo(
-    () => (selectedPlayerId ? getPlayerGames(games, selectedPlayerId) : []),
-    [games, selectedPlayerId],
-  );
+
+  if (!selectedPlayerId) {
+    return null;
+  }
+
+  if (isLoading) {
+    return <StatusView eyebrow="Matches" title="Loading match history" description="Fetching your recent results." />;
+  }
+
+  if (isError) {
+    return <StatusView eyebrow="Matches" title="Could not load matches" description={error.message} />;
+  }
 
   return (
     <section className="dashboard-section">
@@ -37,7 +40,7 @@ export function MatchesView({
       </p>
 
       <div style={{ marginTop: "1.2rem" }}>
-        <MatchFeed games={selectedGames} playerId={selectedPlayerId} />
+        <MatchFeed games={games} playerId={selectedPlayerId} />
       </div>
     </section>
   );

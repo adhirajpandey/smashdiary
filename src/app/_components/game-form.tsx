@@ -1,17 +1,27 @@
 "use client";
 
-import { useActionState, useMemo, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import { initialUpsertGameActionState } from "@/app/action-state";
-import { upsertGameAction } from "@/app/actions";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import type { GameFormFieldErrors } from "@/lib/action-errors";
+import { ApiClientError } from "@/lib/api/client";
+import { useCreateGameMutation, useUpdateGameMutation } from "@/lib/api/hooks";
 import type { GameFormat, ResolvedGame } from "@/lib/types";
 import { toInputDateTimeValue } from "@/lib/utils";
 
 type GameFormProps = {
   game?: ResolvedGame;
-  playerSuggestions: string[];
+};
+
+type FormState = {
+  formError: string | null;
+  fieldErrors: GameFormFieldErrors;
+};
+
+const initialFormState: FormState = {
+  formError: null,
+  fieldErrors: {},
 };
 
 function buildInitialValues(values: string[]) {
@@ -35,10 +45,17 @@ function filterSuggestions(options: string[], query: string) {
     });
 }
 
+function FieldError({ message }: Readonly<{ message?: string }>) {
+  if (!message) {
+    return null;
+  }
+
+  return <p className="match-form__field-error">{message}</p>;
+}
+
 function PlayerField({
   icon,
   label,
-  name,
   onChange,
   placeholder,
   suggestions,
@@ -46,7 +63,6 @@ function PlayerField({
 }: Readonly<{
   icon: string;
   label: string;
-  name: string;
   onChange: (value: string) => void;
   placeholder: string;
   suggestions: string[];
@@ -73,7 +89,6 @@ function PlayerField({
           <input
             autoComplete="off"
             className="match-input-shell__input"
-            name={name}
             onChange={(event) => {
               onChange(event.target.value);
               setIsOpen(true);
@@ -134,37 +149,40 @@ function FormatCard({
   );
 }
 
-function SaveButton() {
-  const { pending } = useFormStatus();
-
+function SaveButton({ disabled, pending }: Readonly<{ disabled: boolean; pending: boolean }>) {
   return (
-    <button className="match-save-button" disabled={pending} type="submit">
+    <button className="match-save-button" disabled={disabled || pending} type="submit">
       {pending ? "Saving..." : "Save Match"}
     </button>
   );
 }
 
-export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
+export function GameForm({ game }: Readonly<GameFormProps>) {
+  const router = useRouter();
   const { players, selectedPlayerId } = useSelectedPlayer();
   const [format, setFormat] = useState<GameFormat>(game?.format ?? "singles");
+  const [playedAt, setPlayedAt] = useState(toInputDateTimeValue(game?.playedAt ?? new Date().toISOString()));
   const [sideAScore, setSideAScore] = useState<number>(game?.sideAScore ?? 20);
   const [sideBScore, setSideBScore] = useState<number>(game?.sideBScore ?? 20);
-  const allSuggestions = useMemo(
-    () => Array.from(new Set(playerSuggestions)).sort((a, b) => a.localeCompare(b)),
-    [playerSuggestions],
-  );
   const initialSideAValues = game?.sideAPlayers.map((player) => player.name) ?? [];
   const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? [];
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
-  const [state, formAction] = useActionState(upsertGameAction, initialUpsertGameActionState);
+  const [state, setState] = useState<FormState>(initialFormState);
   const lastScoreTapRef = useRef(0);
+  const createMutation = useCreateGameMutation(selectedPlayerId);
+  const updateMutation = useUpdateGameMutation(game?.id ?? "", selectedPlayerId);
+  const mutation = game ? updateMutation : createMutation;
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
   const primaryPlayerName = game ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
   const partnerName = sideAPlayers[1] ?? "";
   const opponentName = sideBPlayers[0] ?? "";
   const opponentPartnerName = sideBPlayers[1] ?? "";
+  const allSuggestions = useMemo(
+    () => Array.from(new Set(players.map((player) => player.name))).sort((a, b) => a.localeCompare(b)),
+    [players],
+  );
 
   function setPartnerName(value: string) {
     setSideAPlayers([primaryPlayerName, value]);
@@ -191,11 +209,48 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
     return true;
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setState(initialFormState);
+
+    if (!primaryPlayerName.trim()) {
+      setState({
+        formError: "Select your identity before saving a match.",
+        fieldErrors: {},
+      });
+      return;
+    }
+
+    const payload = {
+      playedAt,
+      format,
+      sideAScore,
+      sideBScore,
+      sideAPlayers: format === "doubles" ? [primaryPlayerName, partnerName] : [primaryPlayerName],
+      sideBPlayers: format === "doubles" ? [opponentName, opponentPartnerName] : [opponentName],
+    };
+
+    try {
+      const result = await mutation.mutateAsync(payload);
+      router.push(game ? `/matches/${result.id}` : "/");
+    } catch (error) {
+      if (error instanceof ApiClientError && error.payload) {
+        setState({
+          formError: error.payload.message,
+          fieldErrors: error.payload.fieldErrors ?? {},
+        });
+        return;
+      }
+
+      setState({
+        formError: "Could not save game. Please try again.",
+        fieldErrors: {},
+      });
+    }
+  }
+
   return (
-    <form action={formAction} className="match-form">
-      <input name="id" type="hidden" defaultValue={game?.id ?? ""} />
-      <input name="format" type="hidden" value={format} />
-      <input name="sideAPlayers" type="hidden" value={primaryPlayerName} />
+    <form className="match-form" onSubmit={handleSubmit}>
       {state.formError ? <p className="match-form__banner">{state.formError}</p> : null}
 
       <section className="match-form__section">
@@ -219,6 +274,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             onClick={() => setFormat("doubles")}
           />
         </div>
+        <FieldError message={state.fieldErrors.format} />
       </section>
 
       <section className="match-form__section">
@@ -236,18 +292,17 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
           <PlayerField
             icon="+"
             label="Partner (for doubles)"
-            name="sideAPlayers"
             onChange={setPartnerName}
             placeholder="Add a teammate..."
             suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== opponentName)}
             value={partnerName}
           />
         ) : null}
+        <FieldError message={state.fieldErrors.sideAPlayers} />
 
         <PlayerField
           icon="OP"
           label="Opponent"
-          name="sideBPlayers"
           onChange={setOpponentName}
           placeholder="Search by name or handle..."
           suggestions={allSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
@@ -258,7 +313,6 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
           <PlayerField
             icon="OP"
             label="Opponent Partner"
-            name="sideBPlayers"
             onChange={setOpponentPartnerName}
             placeholder="Add second opponent..."
             suggestions={allSuggestions.filter(
@@ -267,6 +321,7 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             value={opponentPartnerName}
           />
         ) : null}
+        <FieldError message={state.fieldErrors.sideBPlayers} />
 
         <label className="match-input-group">
           <span className="match-input-group__label">Played at</span>
@@ -276,13 +331,14 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </span>
             <input
               className="match-input-shell__input"
-              defaultValue={toInputDateTimeValue(game?.playedAt ?? new Date().toISOString())}
-              name="playedAt"
+              onChange={(event) => setPlayedAt(event.target.value)}
               required
               type="datetime-local"
+              value={playedAt}
             />
           </div>
         </label>
+        <FieldError message={state.fieldErrors.playedAt} />
       </section>
 
       <section className="score-panel">
@@ -306,9 +362,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               </button>
               <input
                 className="display score-panel__input"
-                min={0}
                 max={30}
-                name="sideAScore"
+                min={0}
                 onChange={(event) => setSideAScore(clampScore(Number(event.target.value) || 0))}
                 required
                 type="number"
@@ -352,9 +407,8 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
               </button>
               <input
                 className="display score-panel__input score-panel__input--alt"
-                min={0}
                 max={30}
-                name="sideBScore"
+                min={0}
                 onChange={(event) => setSideBScore(clampScore(Number(event.target.value) || 0))}
                 required
                 type="number"
@@ -376,9 +430,10 @@ export function GameForm({ game, playerSuggestions }: Readonly<GameFormProps>) {
             </div>
           </label>
         </div>
+        <FieldError message={state.fieldErrors.sideAScore ?? state.fieldErrors.sideBScore} />
       </section>
 
-      <SaveButton />
+      <SaveButton disabled={!primaryPlayerName} pending={mutation.isPending} />
     </form>
   );
 }

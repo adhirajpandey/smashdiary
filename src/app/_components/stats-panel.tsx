@@ -1,10 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-
+import { StatusView } from "@/app/_components/status-view";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { getPlayerStatsSummary } from "@/lib/diary-metrics";
-import type { Player, ResolvedGame } from "@/lib/types";
+import { useStatsQuery } from "@/lib/api/hooks";
 
 function StatTile({
   label,
@@ -33,20 +31,11 @@ function StatTile({
   );
 }
 
-export function StatsPanel({
-  games,
-  players,
-}: Readonly<{
-  games: ResolvedGame[];
-  players: Player[];
-}>) {
+export function StatsPanel() {
   const { selectedPlayerId } = useSelectedPlayer();
-  const stats = useMemo(
-    () => (selectedPlayerId ? getPlayerStatsSummary(games, players, selectedPlayerId) : null),
-    [games, players, selectedPlayerId],
-  );
+  const { data: stats, isLoading, isError, error } = useStatsQuery(selectedPlayerId);
 
-  if (!stats) {
+  if (!selectedPlayerId) {
     return (
       <section className="section-block page-stack">
         <p className="eyebrow" style={{ margin: 0 }}>
@@ -55,6 +44,18 @@ export function StatsPanel({
         <p style={{ margin: 0, color: "var(--text-secondary)" }}>Choose a player to load match stats.</p>
       </section>
     );
+  }
+
+  if (isLoading) {
+    return <StatusView eyebrow="Stats" title="Loading stats" description="Calculating the latest form line." />;
+  }
+
+  if (isError) {
+    return <StatusView eyebrow="Stats" title="Could not load stats" description={error.message} />;
+  }
+
+  if (!stats) {
+    return <StatusView eyebrow="Stats" title="No stats yet" description="Choose a player with recorded matches." />;
   }
 
   return (

@@ -1,15 +1,21 @@
+import "server-only";
+
 import { desc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { games, players } from "@/lib/db/schema";
-import { logger } from "@/lib/logger";
-import { isTestMode } from "@/lib/runtime-mode";
-import { getGameByIdSqlite, listGamesSqlite, listPlayersSqlite, saveGameSqlite } from "@/lib/store-sqlite";
-import type { DiaryStore, Game, Player, ResolvedGame } from "@/lib/types";
+import type { Game, Player, ResolvedGame } from "@/lib/types";
 
-function logStoreEvent(event: string, payload?: Record<string, unknown>) {
-  logger.info("store", event, payload);
-}
+export type SaveGameInput = {
+  id?: string;
+  playedAt: string;
+  format: Game["format"];
+  sideAPlayers: string[];
+  sideBPlayers: string[];
+  sideAScore: number;
+  sideBScore: number;
+  winnerSide: Game["winnerSide"];
+};
 
 function makeId(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -28,43 +34,38 @@ function toIsoDateTime(dateTime: string) {
   return parsed.toISOString();
 }
 
-function resolveGames(store: DiaryStore): ResolvedGame[] {
-  return store.games
+function resolveGames(allGames: Game[], allPlayers: Player[]): ResolvedGame[] {
+  return allGames
     .slice()
     .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
     .map((game) => ({
       ...game,
-      sideAPlayers: game.sideAPlayerIds.map((id) => store.players.find((player) => player.id === id)).filter(Boolean) as Player[],
-      sideBPlayers: game.sideBPlayerIds.map((id) => store.players.find((player) => player.id === id)).filter(Boolean) as Player[],
+      sideAPlayers: game.sideAPlayerIds.map((id) => allPlayers.find((player) => player.id === id)).filter(Boolean) as Player[],
+      sideBPlayers: game.sideBPlayerIds.map((id) => allPlayers.find((player) => player.id === id)).filter(Boolean) as Player[],
     }));
 }
 
-async function readStore(): Promise<DiaryStore> {
-  const db = getDb();
-  const [playerRows, gameRows] = await Promise.all([
-    db.select().from(players),
-    db.select().from(games).orderBy(desc(games.playedAt)),
-  ]);
-
+function mapPlayer(row: typeof players.$inferSelect): Player {
   return {
-    players: playerRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })),
-    games: gameRows.map((row) => ({
-      id: row.id,
-      playedAt: row.playedAt,
-      format: row.format as Game["format"],
-      sideAPlayerIds: row.sideAPlayerIds,
-      sideBPlayerIds: row.sideBPlayerIds,
-      sideAScore: row.sideAScore,
-      sideBScore: row.sideBScore,
-      winnerSide: row.winnerSide as Game["winnerSide"],
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })),
+    id: row.id,
+    name: row.name,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapGame(row: typeof games.$inferSelect): Game {
+  return {
+    id: row.id,
+    playedAt: row.playedAt,
+    format: row.format as Game["format"],
+    sideAPlayerIds: row.sideAPlayerIds,
+    sideBPlayerIds: row.sideBPlayerIds,
+    sideAScore: row.sideAScore,
+    sideBScore: row.sideBScore,
+    winnerSide: row.winnerSide as Game["winnerSide"],
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -129,13 +130,11 @@ async function upsertPlayers(names: string[], client: WriteClient) {
   return ids;
 }
 
-export async function listPlayers() {
-  if (isTestMode()) {
-    return listPlayersSqlite();
-  }
+export async function listPlayersRepo() {
+  const db = getDb();
+  const rows = await db.select().from(players);
 
-  const store = await readStore();
-  return store.players.slice().sort((a, b) => {
+  return rows.map(mapPlayer).sort((a, b) => {
     const aIsSagar = a.name.toLowerCase() === "sagar";
     const bIsSagar = b.name.toLowerCase() === "sagar";
     if (aIsSagar && !bIsSagar) {
@@ -148,83 +147,32 @@ export async function listPlayers() {
   });
 }
 
-export async function listGames() {
-  if (isTestMode()) {
-    return listGamesSqlite();
-  }
+export async function listGamesRepo() {
+  const db = getDb();
+  const [playerRows, gameRows] = await Promise.all([
+    db.select().from(players),
+    db.select().from(games).orderBy(desc(games.playedAt)),
+  ]);
 
-  const store = await readStore();
-  return resolveGames(store);
+  return resolveGames(gameRows.map(mapGame), playerRows.map(mapPlayer));
 }
 
-export async function getGameById(id: string) {
-  if (isTestMode()) {
-    return getGameByIdSqlite(id);
-  }
-
+export async function getGameByIdRepo(id: string) {
   const db = getDb();
-  const [gameRow, playerRows] = await Promise.all([
-    db
-      .select()
-      .from(games)
-      .where(eq(games.id, id))
-      .limit(1),
+  const [gameRows, playerRows] = await Promise.all([
+    db.select().from(games).where(eq(games.id, id)).limit(1),
     db.select().from(players),
   ]);
 
-  if (!gameRow[0]) {
+  if (!gameRows[0]) {
     return null;
   }
 
-  const store: DiaryStore = {
-    players: playerRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    })),
-    games: [
-      {
-        id: gameRow[0].id,
-        playedAt: gameRow[0].playedAt,
-        format: gameRow[0].format as Game["format"],
-        sideAPlayerIds: gameRow[0].sideAPlayerIds,
-        sideBPlayerIds: gameRow[0].sideBPlayerIds,
-        sideAScore: gameRow[0].sideAScore,
-        sideBScore: gameRow[0].sideBScore,
-        winnerSide: gameRow[0].winnerSide as Game["winnerSide"],
-        createdAt: gameRow[0].createdAt,
-        updatedAt: gameRow[0].updatedAt,
-      },
-    ],
-  };
-
-  return resolveGames(store)[0] ?? null;
+  return resolveGames([mapGame(gameRows[0])], playerRows.map(mapPlayer))[0] ?? null;
 }
 
-type SaveGameInput = {
-  id?: string;
-  playedAt: string;
-  format: Game["format"];
-  sideAPlayers: string[];
-  sideBPlayers: string[];
-  sideAScore: number;
-  sideBScore: number;
-  winnerSide: Game["winnerSide"];
-};
-
-export async function saveGame(input: SaveGameInput) {
-  if (isTestMode()) {
-    return saveGameSqlite(input);
-  }
-
+export async function saveGameRepo(input: SaveGameInput) {
   const db = getDb();
-  logStoreEvent("saveGame:start", {
-    mode: input.id ? "update" : "create",
-    format: input.format,
-    sideAPlayers: input.sideAPlayers.length,
-    sideBPlayers: input.sideBPlayers.length,
-  });
 
   return db.transaction(async (tx) => {
     const timestamp = new Date().toISOString();
@@ -249,16 +197,13 @@ export async function saveGame(input: SaveGameInput) {
         .returning({ id: games.id });
 
       if (!updated[0]) {
-        logStoreEvent("saveGame:missing_game", { id: input.id });
-        throw new Error("Game not found.");
+        return null;
       }
 
-      logStoreEvent("saveGame:updated", { id: updated[0].id });
       return updated[0].id;
     }
 
     const id = makeId("g");
-
     await tx.insert(games).values({
       id,
       playedAt,
@@ -272,7 +217,6 @@ export async function saveGame(input: SaveGameInput) {
       updatedAt: timestamp,
     });
 
-    logStoreEvent("saveGame:created", { id });
     return id;
   });
 }

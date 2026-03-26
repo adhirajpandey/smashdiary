@@ -810,6 +810,12 @@ img {
   font-size: 0.86rem;
 }
 
+.match-form__field-error {
+  margin: -0.35rem 0 0;
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
 .match-form__section {
   display: grid;
   gap: 1rem;
@@ -1196,4 +1202,3 @@ img {
     padding-right: 0.1rem;
   }
 }
-
