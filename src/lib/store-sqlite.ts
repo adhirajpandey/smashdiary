@@ -2,10 +2,11 @@ import type Database from "better-sqlite3";
 
 import { getTestSqliteClient } from "@/lib/db/test-sqlite";
 import { logger } from "@/lib/logger";
-import type { Game, Player, ResolvedGame } from "@/lib/types";
+import type { Game, GameParticipant, Player, ResolvedGame } from "@/lib/types";
+import { normalizePlayerName, normalizePlayerNameKey } from "@/lib/utils";
 
 type SaveGameInput = {
-  id?: string;
+  id?: number;
   playedAt: string;
   format: Game["format"];
   sideAPlayers: string[];
@@ -16,35 +17,32 @@ type SaveGameInput = {
 };
 
 type PlayerRow = {
-  id: string;
+  id: number;
   name: string;
   createdAt: string;
   updatedAt: string;
 };
 
-type GameRow = {
-  id: string;
+type JoinedGameRow = {
+  gameId: number;
   playedAt: string;
-  format: string;
-  sideAPlayerIds: string;
-  sideBPlayerIds: string;
+  format: Game["format"];
   sideAScore: number;
   sideBScore: number;
-  winnerSide: string;
-  createdAt: string;
-  updatedAt: string;
+  winnerSide: Game["winnerSide"];
+  gameCreatedAt: string;
+  gameUpdatedAt: string;
+  participantId: number | null;
+  side: GameParticipant["side"] | null;
+  slot: number | null;
+  playerId: number | null;
+  playerName: string | null;
+  playerCreatedAt: string | null;
+  playerUpdatedAt: string | null;
 };
 
 function logStoreEvent(event: string, payload?: Record<string, unknown>) {
   logger.info("store-sqlite", event, payload);
-}
-
-function makeId(prefix: string) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function normalizeName(name: string) {
-  return name.trim().replace(/\s+/g, " ");
 }
 
 function toIsoDateTime(dateTime: string) {
@@ -56,20 +54,46 @@ function toIsoDateTime(dateTime: string) {
   return parsed.toISOString();
 }
 
-function parsePlayerIdList(raw: string) {
-  const parsed = JSON.parse(raw);
-  return Array.isArray(parsed) ? parsed.map((value) => String(value)) : [];
-}
+function resolveGames(rows: JoinedGameRow[]) {
+  const resolvedById = new Map<number, ResolvedGame>();
 
-function resolveGames(games: Game[], players: Player[]): ResolvedGame[] {
-  return games
-    .slice()
-    .sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime())
-    .map((game) => ({
-      ...game,
-      sideAPlayers: game.sideAPlayerIds.map((id) => players.find((player) => player.id === id)).filter(Boolean) as Player[],
-      sideBPlayers: game.sideBPlayerIds.map((id) => players.find((player) => player.id === id)).filter(Boolean) as Player[],
-    }));
+  for (const row of rows) {
+    let game = resolvedById.get(row.gameId);
+    if (!game) {
+      game = {
+        id: row.gameId,
+        playedAt: row.playedAt,
+        format: row.format,
+        sideAScore: row.sideAScore,
+        sideBScore: row.sideBScore,
+        winnerSide: row.winnerSide,
+        createdAt: row.gameCreatedAt,
+        updatedAt: row.gameUpdatedAt,
+        sideAPlayers: [],
+        sideBPlayers: [],
+      };
+      resolvedById.set(row.gameId, game);
+    }
+
+    if (!row.playerId || !row.playerName || !row.playerCreatedAt || !row.playerUpdatedAt || !row.side) {
+      continue;
+    }
+
+    const player: Player = {
+      id: row.playerId,
+      name: row.playerName,
+      createdAt: row.playerCreatedAt,
+      updatedAt: row.playerUpdatedAt,
+    };
+
+    if (row.side === "A") {
+      game.sideAPlayers.push(player);
+    } else {
+      game.sideBPlayers.push(player);
+    }
+  }
+
+  return Array.from(resolvedById.values());
 }
 
 function getClient() {
@@ -94,85 +118,95 @@ function readPlayers(client: Database.Database): Player[] {
   }));
 }
 
-function readGames(client: Database.Database): Game[] {
-  const gameRows = client
-    .prepare(
-      [
-        "SELECT",
-        "id,",
-        "played_at AS playedAt,",
-        "format,",
-        "side_a_player_ids AS sideAPlayerIds,",
-        "side_b_player_ids AS sideBPlayerIds,",
-        "side_a_score AS sideAScore,",
-        "side_b_score AS sideBScore,",
-        "winner_side AS winnerSide,",
-        "created_at AS createdAt,",
-        "updated_at AS updatedAt",
-        "FROM games",
-        "ORDER BY played_at DESC",
-      ].join(" "),
-    )
-    .all() as GameRow[];
+function readResolvedGames(client: Database.Database, id?: number) {
+  const statement = client.prepare(
+    [
+      "SELECT",
+      "g.id AS gameId,",
+      "g.played_at AS playedAt,",
+      "g.format AS format,",
+      "g.side_a_score AS sideAScore,",
+      "g.side_b_score AS sideBScore,",
+      "g.winner_side AS winnerSide,",
+      "g.created_at AS gameCreatedAt,",
+      "g.updated_at AS gameUpdatedAt,",
+      "gp.id AS participantId,",
+      "gp.side AS side,",
+      "gp.slot AS slot,",
+      "p.id AS playerId,",
+      "p.name AS playerName,",
+      "p.created_at AS playerCreatedAt,",
+      "p.updated_at AS playerUpdatedAt",
+      "FROM games g",
+      "LEFT JOIN game_participants gp ON gp.game_id = g.id",
+      "LEFT JOIN players p ON p.id = gp.player_id",
+      id ? "WHERE g.id = ?" : "",
+      "ORDER BY g.played_at DESC, gp.side ASC, gp.slot ASC",
+    ].filter(Boolean).join(" "),
+  );
 
-  return gameRows.map((row) => ({
-    id: row.id,
-    playedAt: row.playedAt,
-    format: row.format as Game["format"],
-    sideAPlayerIds: parsePlayerIdList(row.sideAPlayerIds),
-    sideBPlayerIds: parsePlayerIdList(row.sideBPlayerIds),
-    sideAScore: row.sideAScore,
-    sideBScore: row.sideBScore,
-    winnerSide: row.winnerSide as Game["winnerSide"],
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  }));
+  const rows = (id ? statement.all(id) : statement.all()) as JoinedGameRow[];
+  return resolveGames(rows);
 }
 
 function upsertPlayersSqlite(names: string[], client: Database.Database) {
-  const ids: string[] = [];
-  const knownByLowerName = new Map<string, string>();
-  const findByName = client.prepare("SELECT id FROM players WHERE lower(name) = lower(?) LIMIT 1");
+  const ids: number[] = [];
+  const knownByNameKey = new Map<string, number>();
+  const findByNameKey = client.prepare("SELECT id FROM players WHERE name_key = ? LIMIT 1");
   const insertPlayer = client.prepare(
-    "INSERT INTO players (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+    "INSERT INTO players (name, name_key, created_at, updated_at) VALUES (?, ?, ?, ?)",
   );
 
   for (const rawName of names) {
-    const name = normalizeName(rawName);
-    const lowerName = name.toLowerCase();
+    const name = normalizePlayerName(rawName);
+    const nameKey = normalizePlayerNameKey(rawName);
+    const cachedId = knownByNameKey.get(nameKey);
 
-    const cachedId = knownByLowerName.get(lowerName);
     if (cachedId) {
       ids.push(cachedId);
       continue;
     }
 
-    const existing = findByName.get(name) as { id: string } | undefined;
+    const existing = findByNameKey.get(nameKey) as { id: number } | undefined;
     if (existing) {
-      knownByLowerName.set(lowerName, existing.id);
+      knownByNameKey.set(nameKey, existing.id);
       ids.push(existing.id);
       continue;
     }
 
     const timestamp = new Date().toISOString();
-    const id = makeId("p");
 
     try {
-      insertPlayer.run(id, name, timestamp, timestamp);
-      knownByLowerName.set(lowerName, id);
+      const inserted = insertPlayer.run(name, nameKey, timestamp, timestamp);
+      const id = Number(inserted.lastInsertRowid);
+      knownByNameKey.set(nameKey, id);
       ids.push(id);
       continue;
     } catch {
-      const concurrent = findByName.get(name) as { id: string } | undefined;
+      const concurrent = findByNameKey.get(nameKey) as { id: number } | undefined;
       if (!concurrent) {
         throw new Error("Could not save player.");
       }
-      knownByLowerName.set(lowerName, concurrent.id);
+      knownByNameKey.set(nameKey, concurrent.id);
       ids.push(concurrent.id);
     }
   }
 
   return ids;
+}
+
+function insertParticipants(client: Database.Database, gameId: number, sideAPlayerIds: number[], sideBPlayerIds: number[], createdAt: string) {
+  const insertParticipant = client.prepare(
+    "INSERT INTO game_participants (game_id, player_id, side, slot, created_at) VALUES (?, ?, ?, ?, ?)",
+  );
+
+  sideAPlayerIds.forEach((playerId, index) => {
+    insertParticipant.run(gameId, playerId, "A", index + 1, createdAt);
+  });
+
+  sideBPlayerIds.forEach((playerId, index) => {
+    insertParticipant.run(gameId, playerId, "B", index + 1, createdAt);
+  });
 }
 
 export async function listPlayersSqlite() {
@@ -191,53 +225,12 @@ export async function listPlayersSqlite() {
 }
 
 export async function listGamesSqlite() {
-  const client = getClient();
-  const players = readPlayers(client);
-  const games = readGames(client);
-  return resolveGames(games, players);
+  return readResolvedGames(getClient());
 }
 
-export async function getGameByIdSqlite(id: string) {
-  const client = getClient();
-  const gameRow = client
-    .prepare(
-      [
-        "SELECT",
-        "id,",
-        "played_at AS playedAt,",
-        "format,",
-        "side_a_player_ids AS sideAPlayerIds,",
-        "side_b_player_ids AS sideBPlayerIds,",
-        "side_a_score AS sideAScore,",
-        "side_b_score AS sideBScore,",
-        "winner_side AS winnerSide,",
-        "created_at AS createdAt,",
-        "updated_at AS updatedAt",
-        "FROM games",
-        "WHERE id = ? LIMIT 1",
-      ].join(" "),
-    )
-    .get(id) as GameRow | undefined;
-
-  if (!gameRow) {
-    return null;
-  }
-
-  const players = readPlayers(client);
-  const game: Game = {
-    id: gameRow.id,
-    playedAt: gameRow.playedAt,
-    format: gameRow.format as Game["format"],
-    sideAPlayerIds: parsePlayerIdList(gameRow.sideAPlayerIds),
-    sideBPlayerIds: parsePlayerIdList(gameRow.sideBPlayerIds),
-    sideAScore: gameRow.sideAScore,
-    sideBScore: gameRow.sideBScore,
-    winnerSide: gameRow.winnerSide as Game["winnerSide"],
-    createdAt: gameRow.createdAt,
-    updatedAt: gameRow.updatedAt,
-  };
-
-  return resolveGames([game], players)[0] ?? null;
+export async function getGameByIdSqlite(id: number) {
+  const games = readResolvedGames(getClient(), id);
+  return games[0] ?? null;
 }
 
 export async function saveGameSqlite(input: SaveGameInput) {
@@ -260,16 +253,13 @@ export async function saveGameSqlite(input: SaveGameInput) {
         .prepare(
           [
             "UPDATE games",
-            "SET played_at = ?, format = ?, side_a_player_ids = ?, side_b_player_ids = ?,",
-            "side_a_score = ?, side_b_score = ?, winner_side = ?, updated_at = ?",
+            "SET played_at = ?, format = ?, side_a_score = ?, side_b_score = ?, winner_side = ?, updated_at = ?",
             "WHERE id = ?",
           ].join(" "),
         )
         .run(
           playedAt,
           input.format,
-          JSON.stringify(sideAPlayerIds),
-          JSON.stringify(sideBPlayerIds),
           input.sideAScore,
           input.sideBScore,
           input.winnerSide,
@@ -282,25 +272,24 @@ export async function saveGameSqlite(input: SaveGameInput) {
         throw new Error("Game not found.");
       }
 
+      client.prepare("DELETE FROM game_participants WHERE game_id = ?").run(input.id);
+      insertParticipants(client, input.id, sideAPlayerIds, sideBPlayerIds, timestamp);
+
       logStoreEvent("saveGame:updated", { id: input.id });
       return input.id;
     }
 
-    const id = makeId("g");
-    client
+    const inserted = client
       .prepare(
         [
           "INSERT INTO games",
-          "(id, played_at, format, side_a_player_ids, side_b_player_ids, side_a_score, side_b_score, winner_side, created_at, updated_at)",
-          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "(played_at, format, side_a_score, side_b_score, winner_side, created_at, updated_at)",
+          "VALUES (?, ?, ?, ?, ?, ?, ?)",
         ].join(" "),
       )
       .run(
-        id,
         playedAt,
         input.format,
-        JSON.stringify(sideAPlayerIds),
-        JSON.stringify(sideBPlayerIds),
         input.sideAScore,
         input.sideBScore,
         input.winnerSide,
@@ -308,24 +297,12 @@ export async function saveGameSqlite(input: SaveGameInput) {
         timestamp,
       );
 
-    logStoreEvent("saveGame:created", { id });
-    return id;
+    const gameId = Number(inserted.lastInsertRowid);
+    insertParticipants(client, gameId, sideAPlayerIds, sideBPlayerIds, timestamp);
+
+    logStoreEvent("saveGame:created", { id: gameId });
+    return gameId;
   });
 
   return run();
-}
-
-export async function deleteGameSqlite(id: string) {
-  const client = getClient();
-  logStoreEvent("deleteGame:start", { id });
-
-  const result = client.prepare("DELETE FROM games WHERE id = ?").run(id);
-
-  if (!result.changes) {
-    logStoreEvent("deleteGame:missing_game", { id });
-    return false;
-  }
-
-  logStoreEvent("deleteGame:deleted", { id });
-  return true;
 }

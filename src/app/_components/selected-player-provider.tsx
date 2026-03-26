@@ -2,86 +2,48 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { usePlayersQuery } from "@/lib/api/hooks";
 import type { Player } from "@/lib/types";
 
 type SelectedPlayerContextValue = {
   players: Player[];
-  selectedPlayerId: string | null;
-  setSelectedPlayerId: (value: string) => void;
+  selectedPlayerId: number | null;
+  setSelectedPlayerId: (value: number) => void;
   isPickerOpen: boolean;
   openPicker: () => void;
   closePicker: () => void;
-  isPlayersLoading: boolean;
-  playersError: string | null;
-  retryPlayers: () => void;
 };
 
-const STORAGE_KEY = "smash-diary:selected-player:v1";
+const STORAGE_KEY = "smash-diary:selected-player";
 
 const SelectedPlayerContext = createContext<SelectedPlayerContextValue | null>(null);
 
-function readStoredPlayerId() {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredPlayerId(value: string | null) {
-  try {
-    if (!value) {
-      window.localStorage.removeItem(STORAGE_KEY);
-      return;
-    }
-    window.localStorage.setItem(STORAGE_KEY, value);
-  } catch {
-    // Ignore storage failures in private browsing or locked-down clients.
-  }
-}
-
-export function SelectedPlayerProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const {
-    data: players = [],
-    isLoading: isPlayersLoading,
-    isError: isPlayersError,
-    error,
-    refetch,
-  } = usePlayersQuery();
-  const [selectedPlayerId, setSelectedPlayerIdState] = useState<string | null>(null);
+export function SelectedPlayerProvider({
+  children,
+  players,
+}: Readonly<{
+  children: React.ReactNode;
+  players: Player[];
+}>) {
+  const [selectedPlayerId, setSelectedPlayerIdState] = useState<number | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (isPlayersLoading) {
-      return;
-    }
-
+    const storedValue = window.localStorage.getItem(STORAGE_KEY);
+    const stored = storedValue ? Number(storedValue) : null;
+    const isValid = stored !== null && Number.isInteger(stored) && players.some((player) => player.id === stored);
     const timeoutId = window.setTimeout(() => {
-      if (isPlayersError) {
-        setSelectedPlayerIdState(null);
-        setIsPickerOpen(true);
-        setHasHydrated(true);
-        return;
-      }
-
-      const stored = readStoredPlayerId();
-      const isValid = stored && players.some((player) => player.id === stored);
       setSelectedPlayerIdState(isValid ? stored : null);
-      if (!isValid) {
-        writeStoredPlayerId(null);
-      }
-      setIsPickerOpen(Boolean(players.length) && !isValid);
+      setIsPickerOpen(!isValid);
       setHasHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [isPlayersError, isPlayersLoading, players]);
+  }, [players]);
 
-  function setSelectedPlayerId(value: string) {
+  function setSelectedPlayerId(value: number) {
     setSelectedPlayerIdState(value);
-    writeStoredPlayerId(value);
+    window.localStorage.setItem(STORAGE_KEY, String(value));
   }
 
   const contextValue = useMemo(
@@ -92,13 +54,8 @@ export function SelectedPlayerProvider({ children }: Readonly<{ children: React.
       isPickerOpen: hasHydrated && isPickerOpen,
       openPicker: () => setIsPickerOpen(true),
       closePicker: () => setIsPickerOpen(false),
-      isPlayersLoading,
-      playersError: isPlayersError ? error.message : null,
-      retryPlayers: () => {
-        void refetch();
-      },
     }),
-    [error?.message, hasHydrated, isPickerOpen, isPlayersError, isPlayersLoading, players, refetch, selectedPlayerId],
+    [hasHydrated, isPickerOpen, players, selectedPlayerId],
   );
 
   return <SelectedPlayerContext.Provider value={contextValue}>{children}</SelectedPlayerContext.Provider>;

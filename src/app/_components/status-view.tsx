@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { SectionHeading } from "@/app/_components/section-heading";
+
 type StatusViewProps = {
   eyebrow: string;
   title: string;
@@ -11,11 +13,13 @@ export function StatusView({ eyebrow, title, description, action }: Readonly<Sta
   return (
     <section className="status-view">
       <div className="status-view__panel glass">
-        <p className="eyebrow" style={{ margin: 0 }}>
-          {eyebrow}
-        </p>
-        <h1 className="display status-view__title">{title}</h1>
-        {description ? <p className="status-view__description">{description}</p> : null}
+        <SectionHeading
+          align="compact"
+          eyebrow={eyebrow}
+          title={title}
+          titleClassName="status-view__title"
+          description={description}
+        />
         {action ? <div className="status-view__action">{action}</div> : null}
       </div>
     </section>

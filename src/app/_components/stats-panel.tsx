@@ -1,114 +1,106 @@
 "use client";
 
-import { StatusView } from "@/app/_components/status-view";
-import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
-import { useStatsQuery } from "@/lib/api/hooks";
+import { useMemo } from "react";
 
-function StatTile({
-  label,
-  value,
-  accent,
-}: Readonly<{
-  label: string;
-  value: string | number;
-  accent?: string;
-}>) {
-  return (
-    <div
-      style={{
-        padding: "1rem",
-        borderRadius: "1.25rem",
-        background: "linear-gradient(180deg, rgba(32,32,31,0.94), rgba(23,23,23,0.94))",
-      }}
-    >
-      <p className="section-title" style={{ marginBottom: "0.45rem" }}>
-        {label}
-      </p>
-      <p className="display" style={{ margin: 0, fontSize: "2rem", color: accent }}>
-        {value}
-      </p>
-    </div>
-  );
+import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
+import { SectionHeading } from "@/app/_components/section-heading";
+import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
+import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import { getDashboardMetrics, getPlayerStatsSummary, getTopPerformers } from "@/lib/match-selectors";
+import type { Player, ResolvedGame } from "@/lib/types";
+
+function formatPercent(value: number) {
+  return `${Math.round(value * 10)}%`;
 }
 
-export function StatsPanel() {
-  const { selectedPlayerId } = useSelectedPlayer();
-  const { data: stats, isLoading, isError, error } = useStatsQuery(selectedPlayerId);
+const resultsGrid = [
+  { key: "singlesWins", label: "Singles Wins", accent: "default" },
+  { key: "singlesLosses", label: "Singles Losses", accent: "default" },
+  { key: "doublesWins", label: "Doubles Wins", accent: "default" },
+  { key: "doublesLosses", label: "Doubles Losses", accent: "default" },
+  { key: "wins", label: "Total Wins", accent: "primary" },
+  { key: "losses", label: "Total Losses", accent: "danger" },
+] as const;
 
-  if (!selectedPlayerId) {
+export function StatsPanel({
+  games,
+  players,
+}: Readonly<{
+  games: ResolvedGame[];
+  players: Player[];
+}>) {
+  const { selectedPlayerId } = useSelectedPlayer();
+  const summary = useMemo(
+    () => (selectedPlayerId ? getPlayerStatsSummary(games, players, selectedPlayerId) : null),
+    [games, players, selectedPlayerId],
+  );
+  const metrics = useMemo(
+    () => (selectedPlayerId ? getDashboardMetrics(games, players, selectedPlayerId) : null),
+    [games, players, selectedPlayerId],
+  );
+  const leaderboard = useMemo(() => getTopPerformers(games, players), [games, players]);
+
+  if (!summary || !metrics) {
     return (
-      <section className="section-block page-stack">
-        <p className="eyebrow" style={{ margin: 0 }}>
-          Stats
-        </p>
-        <p style={{ margin: 0, color: "var(--text-secondary)" }}>Choose a player to load match stats.</p>
+      <section className="stats-page">
+        <div className="stats-page__header">
+          <SectionHeading
+            eyebrow="Stats"
+            title="Performance sheet"
+            description="Choose a player to load ratings, records, and leaderboard context."
+            titleClassName="page-title stats-page__title"
+          />
+        </div>
+
+        <div className="stats-page__empty">
+          <p className="stats-page__empty-title">Player context needed</p>
+          <p className="muted-copy">Pick a player from the header to load personal ratings and results breakdown.</p>
+        </div>
+
+        <LeaderboardPanel players={leaderboard} />
       </section>
     );
   }
 
-  if (isLoading) {
-    return <StatusView eyebrow="Stats" title="Loading stats" description="Calculating the latest form line." />;
-  }
-
-  if (isError) {
-    return <StatusView eyebrow="Stats" title="Could not load stats" description={error.message} />;
-  }
-
-  if (!stats) {
-    return <StatusView eyebrow="Stats" title="No stats yet" description="Choose a player with recorded matches." />;
-  }
-
   return (
-    <section className="page-stack">
-      <div className="section-block glass page-stack">
-        <div>
-          <p className="eyebrow" style={{ margin: 0 }}>
-            Form line
-          </p>
-          <h2 className="display" style={{ margin: "0.25rem 0 0", fontSize: "2.2rem" }}>
-            {stats.playerName}&apos;s court pulse.
-          </h2>
-        </div>
-
-        <div style={{ display: "grid", gap: "0.85rem", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}>
-          <StatTile label="Total matches" value={stats.totalMatches} />
-          <StatTile label="Wins" value={stats.wins} accent="var(--primary-deep)" />
-          <StatTile label="Losses" value={stats.losses} accent="var(--secondary)" />
-          <StatTile label="Singles" value={stats.singlesGames} />
-          <StatTile label="Doubles" value={stats.doublesGames} />
-        </div>
+    <section className="stats-page">
+      <div className="stats-page__header">
+        <SectionHeading
+          eyebrow="Performance sheet"
+          title={`${summary.playerName}'s stats`}
+          description={`${summary.totalMatches} matches across singles and doubles.`}
+          titleClassName="page-title stats-page__title"
+        />
       </div>
 
-      <section className="section-block page-stack">
-        <p className="section-title" style={{ margin: 0 }}>
-          Recent form
-        </p>
-        <div style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap" }}>
-          {stats.recentForm.length ? (
-            stats.recentForm.map((result, index) => (
-              <div
-                key={`${result}-${index}`}
-                style={{
-                  minWidth: "3rem",
-                  padding: "0.95rem 0.85rem",
-                  borderRadius: "999px",
-                  textAlign: "center",
-                  background:
-                    result === "W"
-                      ? "linear-gradient(45deg, rgba(243,255,202,0.95), rgba(202,253,0,0.92))"
-                      : "linear-gradient(45deg, rgba(125,152,255,0.95), rgba(0,77,234,0.92))",
-                  color: result === "W" ? "var(--on-primary)" : "white",
-                  fontWeight: 800,
-                }}
+      <section className="dashboard-grid stats-page__metrics">
+        <SummaryStatTile accent="primary" label="Win rate" value={formatPercent(metrics.winScore)} />
+        <SummaryStatTile accent="secondary" label="Player rating" value={metrics.playerRating.toFixed(1)} />
+      </section>
+
+      <section className="stats-results">
+        <div className="dashboard-section__row">
+          <h2 className="dashboard-section__title">Results Breakdown</h2>
+          <p className="stats-results__meta">{summary.totalMatches} matches</p>
+        </div>
+
+        <div className="stats-results__grid">
+          {resultsGrid.map((item) => (
+            <div className="stats-results__card" key={item.key}>
+              <span className="stats-results__label">{item.label}</span>
+              <strong
+                className={`display stats-results__value ${
+                  item.accent !== "default" ? `stats-results__value--${item.accent}` : ""
+                }`}
               >
-                {result}
-              </div>
-            ))
-          ) : (
-            <p style={{ margin: 0, color: "var(--text-secondary)" }}>No recent matches yet.</p>
-          )}
+                {summary[item.key]}
+              </strong>
+            </div>
+          ))}
         </div>
       </section>
+
+      <LeaderboardPanel players={leaderboard} title="Leaderboard" />
     </section>
   );
 }

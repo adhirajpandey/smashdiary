@@ -3,18 +3,16 @@ export type GameFormat = "singles" | "doubles";
 export type WinnerSide = "A" | "B";
 
 export type Player = {
-  id: string;
+  id: number;
   name: string;
   createdAt: string;
   updatedAt: string;
 };
 
 export type Game = {
-  id: string;
+  id: number;
   playedAt: string;
   format: GameFormat;
-  sideAPlayerIds: string[];
-  sideBPlayerIds: string[];
   sideAScore: number;
   sideBScore: number;
   winnerSide: WinnerSide;
@@ -22,9 +20,19 @@ export type Game = {
   updatedAt: string;
 };
 
+export type GameParticipant = {
+  id: number;
+  gameId: number;
+  playerId: number;
+  side: WinnerSide;
+  slot: 1 | 2;
+  createdAt: string;
+};
+
 export type DiaryStore = {
   players: Player[];
   games: Game[];
+  gameParticipants: GameParticipant[];
 };
 
 export type ResolvedGame = Game & {
@@ -33,7 +41,7 @@ export type ResolvedGame = Game & {
 };
 
 export type PlayerStatsSummary = {
-  playerId: string;
+  playerId: number;
   playerName: string;
   totalMatches: number;
   wins: number;
@@ -41,10 +49,14 @@ export type PlayerStatsSummary = {
   recentForm: Array<"W" | "L">;
   singlesGames: number;
   doublesGames: number;
+  singlesWins: number;
+  singlesLosses: number;
+  doublesWins: number;
+  doublesLosses: number;
 };
 
 export type PlayerDashboardMetrics = {
-  playerId: string;
+  playerId: number;
   playerName: string;
   winScore: number;
   playerRating: number;
@@ -56,7 +68,7 @@ export type PlayerDashboardMetrics = {
 };
 
 export type PlayerStanding = {
-  playerId: string;
+  playerId: number;
   playerName: string;
   wins: number;
   rating: number;
