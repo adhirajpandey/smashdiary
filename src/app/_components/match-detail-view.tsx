@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { MatchActionsMenu } from "@/app/_components/match-actions-menu";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useToast } from "@/app/_components/toast-provider";
 import { ApiClientError, useDeleteMatchMutation } from "@/lib/api/client";
@@ -132,9 +132,7 @@ export function MatchDetailView({ match }: Readonly<{ match: ResolvedGame }>) {
 
       <section className="detail-actions">
         <div className="detail-actions__row">
-          <Link className="secondary-button detail-actions__button" href={`/matches/${match.id}/edit`}>
-            Edit match
-          </Link>
+          <MatchActionsMenu className="detail-actions__menu" matchId={match.id} />
           <button
             className="danger-button detail-actions__button"
             onClick={() => {

@@ -23,7 +23,7 @@ export const queryKeys = {
   players: ["players"] as const,
   dashboard: (playerId: number | null) => ["dashboard", playerId] as const,
   matches: (playerId: number | null) => ["matches", playerId] as const,
-  matchDetail: (matchId: number) => ["matches", matchId] as const,
+  matchDetail: (matchId: number | null) => ["match-detail", matchId] as const,
   stats: (playerId: number | null) => ["stats", playerId] as const,
 };
 
@@ -93,10 +93,11 @@ export function useMatchesQuery(playerId: number | null) {
   });
 }
 
-export function useMatchDetailQuery(matchId: number) {
+export function useMatchDetailQuery(matchId: number | null, enabled = true) {
   return useQuery({
     queryKey: queryKeys.matchDetail(matchId),
     queryFn: () => fetchJson<MatchDetailData>(`/api/matches/${matchId}`),
+    enabled: enabled && matchId !== null,
     placeholderData: (previousData) => previousData,
   });
 }

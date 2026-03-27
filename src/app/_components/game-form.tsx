@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type Point
 import { useRouter } from "next/navigation";
 
 import type { GameFormFieldErrors } from "@/lib/action-errors";
+import type { CloneMatchSeed } from "@/lib/clone-match";
 import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
@@ -13,6 +14,8 @@ import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils"
 
 type GameFormProps = {
   game?: ResolvedGame;
+  cloneSeed?: CloneMatchSeed;
+  cloneError?: string | null;
   players: Player[];
 };
 
@@ -250,13 +253,13 @@ const initialFormState: GameFormState = {
   fieldErrors: {},
 };
 
-export function GameForm({ game, players }: Readonly<GameFormProps>) {
+export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<GameFormProps>) {
   const router = useRouter();
   const { pushToast } = useToast();
   const { selectedPlayerId } = useSelectedPlayer();
   const createMatchMutation = useCreateMatchMutation();
   const updateMatchMutation = useUpdateMatchMutation(game?.id ?? 0);
-  const [format, setFormat] = useState<GameFormat>(game?.format ?? "singles");
+  const [format, setFormat] = useState<GameFormat>(game?.format ?? cloneSeed?.format ?? "singles");
   const [playedAt, setPlayedAt] = useState(game ? toInputDateTimeValue(game.playedAt) : getCurrentInputDateTimeValue());
   const [sideAScore, setSideAScore] = useState<number>(game?.sideAScore ?? 20);
   const [sideBScore, setSideBScore] = useState<number>(game?.sideBScore ?? 20);
@@ -265,14 +268,14 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
     () => Array.from(new Set(players.map((player) => player.name))).sort((a, b) => a.localeCompare(b)),
     [players],
   );
-  const initialSideAValues = game?.sideAPlayers.map((player) => player.name) ?? [];
-  const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? [];
+  const initialSideAValues = game?.sideAPlayers.map((player) => player.name) ?? cloneSeed?.sideAPlayers ?? [];
+  const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? cloneSeed?.sideBPlayers ?? [];
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
   const lastScoreTapRef = useRef(0);
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
-  const primaryPlayerName = game ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
+  const primaryPlayerName = game || cloneSeed ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
   const partnerName = sideAPlayers[1] ?? "";
   const opponentName = sideBPlayers[0] ?? "";
   const opponentPartnerName = sideBPlayers[1] ?? "";
@@ -356,6 +359,8 @@ export function GameForm({ game, players }: Readonly<GameFormProps>) {
 
   return (
     <form className="match-form" onSubmit={(event) => void handleSubmit(event)}>
+      {cloneError ? <p className="match-form__notice">{cloneError}</p> : null}
+
       <section className="match-form__section">
         <SectionHeading align="compact" eyebrow="Select format" />
 

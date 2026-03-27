@@ -108,9 +108,21 @@ export async function submitMatchAndExpectDetail(page: Page, details: MatchDetai
 }
 
 export async function openEditMatchForm(page: Page) {
-  await page.getByRole("link", { name: "Edit match" }).click();
+  await page.getByRole("button", { name: "Open match actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit" }).click();
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();
+}
+
+export async function cloneMatchFromDetail(page: Page) {
+  await page.getByRole("button", { name: "Open match actions" }).click();
+  await page.getByRole("menuitem", { name: "Clone" }).click();
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("button", { name: "Save Match" })).toBeVisible();
+}
+
+export async function openFirstMatchCardActions(page: Page) {
+  await page.locator(".match-feed .dashboard-match").first().getByRole("button", { name: "Open match actions" }).click();
 }
 
 export async function updateMatchAndExpectDetail(page: Page, details: MatchDetails) {
