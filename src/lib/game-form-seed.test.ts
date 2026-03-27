@@ -1,4 +1,4 @@
-import { buildCloneMatchSeed } from "@/lib/clone-match";
+import { buildGameFormSeed } from "@/lib/game-form-seed";
 import type { ResolvedGame } from "@/lib/types";
 
 const match: ResolvedGame = {
@@ -20,37 +20,46 @@ const match: ResolvedGame = {
   ],
 };
 
-describe("buildCloneMatchSeed", () => {
-  it("keeps the original side order when the selected player is on side A", () => {
-    expect(buildCloneMatchSeed(match, 1)).toEqual({
+describe("buildGameFormSeed", () => {
+  it("rotates a selected side A slot 2 player into the primary slot", () => {
+    expect(buildGameFormSeed(match, 2)).toEqual({
       format: "doubles",
-      sideAPlayers: ["Adhiraj", "Aman"],
-      sideBPlayers: ["Riya", "Sara"],
-      mode: "personalized",
-    });
-  });
-
-  it("swaps sides when the selected player is on side B", () => {
-    expect(buildCloneMatchSeed(match, 3)).toEqual({
-      format: "doubles",
-      sideAPlayers: ["Riya", "Sara"],
-      sideBPlayers: ["Adhiraj", "Aman"],
-      mode: "personalized",
-    });
-  });
-
-  it("rotates the selected slot 2 player into side A slot 1", () => {
-    expect(buildCloneMatchSeed(match, 2)).toEqual({
-      format: "doubles",
+      playedAt: "2026-03-22 12:00:00",
+      sideAScore: 21,
+      sideBScore: 19,
       sideAPlayers: ["Aman", "Adhiraj"],
       sideBPlayers: ["Riya", "Sara"],
       mode: "personalized",
     });
   });
 
-  it("falls back to the original side order when the selected player is absent", () => {
-    expect(buildCloneMatchSeed(match, 99)).toEqual({
+  it("swaps sides and scores when the selected player is on side B slot 2", () => {
+    expect(buildGameFormSeed(match, 4)).toEqual({
       format: "doubles",
+      playedAt: "2026-03-22 12:00:00",
+      sideAScore: 19,
+      sideBScore: 21,
+      sideAPlayers: ["Sara", "Riya"],
+      sideBPlayers: ["Adhiraj", "Aman"],
+      mode: "personalized",
+    });
+  });
+
+  it("returns a neutral seed when the selected player is missing or unset", () => {
+    expect(buildGameFormSeed(match, 99)).toEqual({
+      format: "doubles",
+      playedAt: "2026-03-22 12:00:00",
+      sideAScore: 21,
+      sideBScore: 19,
+      sideAPlayers: ["Adhiraj", "Aman"],
+      sideBPlayers: ["Riya", "Sara"],
+      mode: "neutral",
+    });
+    expect(buildGameFormSeed(match, null)).toEqual({
+      format: "doubles",
+      playedAt: "2026-03-22 12:00:00",
+      sideAScore: 21,
+      sideBScore: 19,
       sideAPlayers: ["Adhiraj", "Aman"],
       sideBPlayers: ["Riya", "Sara"],
       mode: "neutral",

@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 
 import type { GameFormFieldErrors } from "@/lib/action-errors";
 import type { CloneMatchSeed } from "@/lib/clone-match";
+import type { GameFormSeed } from "@/lib/game-form-seed";
 import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import { useToast } from "@/app/_components/toast-provider";
-import type { GameFormat, Player, ResolvedGame } from "@/lib/types";
+import type { GameFormat, Player } from "@/lib/types";
 import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
 
 type GameFormProps = {
-  game?: ResolvedGame;
+  initialSeed?: GameFormSeed;
+  matchId?: number;
   cloneSeed?: CloneMatchSeed;
   cloneError?: string | null;
   players: Player[];
@@ -253,36 +255,50 @@ const initialFormState: GameFormState = {
   fieldErrors: {},
 };
 
-export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<GameFormProps>) {
+export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players }: Readonly<GameFormProps>) {
   const router = useRouter();
   const { pushToast } = useToast();
   const { selectedPlayerId } = useSelectedPlayer();
   const createMatchMutation = useCreateMatchMutation();
-  const updateMatchMutation = useUpdateMatchMutation(game?.id ?? 0);
-  const [format, setFormat] = useState<GameFormat>(game?.format ?? cloneSeed?.format ?? "singles");
-  const [playedAt, setPlayedAt] = useState(game ? toInputDateTimeValue(game.playedAt) : getCurrentInputDateTimeValue());
-  const [sideAScore, setSideAScore] = useState<number>(game?.sideAScore ?? 20);
-  const [sideBScore, setSideBScore] = useState<number>(game?.sideBScore ?? 20);
+  const updateMatchMutation = useUpdateMatchMutation(matchId ?? 0);
+  const [format, setFormat] = useState<GameFormat>(initialSeed?.format ?? cloneSeed?.format ?? "singles");
+  const [playedAt, setPlayedAt] = useState(initialSeed ? toInputDateTimeValue(initialSeed.playedAt) : getCurrentInputDateTimeValue());
+  const [sideAScore, setSideAScore] = useState<number>(initialSeed?.sideAScore ?? 20);
+  const [sideBScore, setSideBScore] = useState<number>(initialSeed?.sideBScore ?? 20);
   const [formState, setFormState] = useState(initialFormState);
   const playerSuggestions = useMemo(
     () => Array.from(new Set(players.map((player) => player.name))).sort((a, b) => a.localeCompare(b)),
     [players],
   );
-  const initialSideAValues = game?.sideAPlayers.map((player) => player.name) ?? cloneSeed?.sideAPlayers ?? [];
-  const initialSideBValues = game?.sideBPlayers.map((player) => player.name) ?? cloneSeed?.sideBPlayers ?? [];
+  const mode = initialSeed?.mode ?? cloneSeed?.mode ?? "personalized";
+  const initialSideAValues = initialSeed?.sideAPlayers ?? cloneSeed?.sideAPlayers ?? [];
+  const initialSideBValues = initialSeed?.sideBPlayers ?? cloneSeed?.sideBPlayers ?? [];
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
   const lastScoreTapRef = useRef(0);
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
-  const primaryPlayerName = game || cloneSeed ? sideAPlayers[0] ?? "" : selectedPlayer?.name ?? sideAPlayers[0] ?? "";
+  const isPersonalizedMode = mode === "personalized";
+  const primaryPlayerName =
+    isPersonalizedMode && !initialSeed && !cloneSeed ? selectedPlayer?.name ?? sideAPlayers[0] ?? "" : sideAPlayers[0] ?? "";
   const partnerName = sideAPlayers[1] ?? "";
   const opponentName = sideBPlayers[0] ?? "";
   const opponentPartnerName = sideBPlayers[1] ?? "";
   const isPending = createMatchMutation.isPending || updateMatchMutation.isPending;
+  const isEdit = matchId !== undefined;
+  const primaryPlayerLabel = isPersonalizedMode ? "You" : "Side A";
+  const partnerLabel = isPersonalizedMode ? "Your Partner" : "Side A Partner";
+  const opponentLabel = isPersonalizedMode ? "Opponent" : "Side B";
+  const opponentPartnerLabel = isPersonalizedMode ? "Opponent's Partner" : "Side B Partner";
+  const ownScoreLabel = isPersonalizedMode ? "Your score" : "Side A score";
+  const opponentScoreLabel = isPersonalizedMode ? "Opponent score" : "Side B score";
+
+  function setPrimaryPlayerName(value: string) {
+    setSideAPlayers((current) => [value, current[1] ?? ""]);
+  }
 
   function setPartnerName(value: string) {
-    setSideAPlayers([primaryPlayerName, value]);
+    setSideAPlayers((current) => [current[0] ?? primaryPlayerName, value]);
   }
 
   function setOpponentName(value: string) {
@@ -320,14 +336,14 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
     };
 
     try {
-      const result = game
+      const result = matchId !== undefined
         ? await updateMatchMutation.mutateAsync(payload)
         : await createMatchMutation.mutateAsync(payload);
 
       pushToast({
         variant: "success",
-        title: game ? "Match updated" : "Match saved",
-        description: game
+        title: matchId !== undefined ? "Match updated" : "Match saved",
+        description: matchId !== undefined
           ? "The refreshed scoreline is live in your diary."
           : "The scoreline has been added to your diary.",
       });
@@ -383,26 +399,43 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
       </section>
 
       <section className="match-form__section">
-        <label className="match-input-group">
-          <span className="match-input-group__label">You</span>
-          <div className="match-input-shell is-readonly">
-            <span className="match-input-shell__icon" aria-hidden="true">
-              ME
-            </span>
-            <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
-          </div>
-        </label>
-        {formState.fieldErrors.sideAPlayers ? (
+        {isPersonalizedMode ? (
+          <label className="match-input-group">
+            <span className="match-input-group__label">{primaryPlayerLabel}</span>
+            <div className="match-input-shell is-readonly">
+              <span className="match-input-shell__icon" aria-hidden="true">
+                ME
+              </span>
+              <span className="match-input-shell__value">{primaryPlayerName || "Select your identity first"}</span>
+            </div>
+          </label>
+        ) : (
+          <PlayerField
+            error={formState.fieldErrors.sideAPlayers}
+            icon="A1"
+            label={primaryPlayerLabel}
+            onChange={setPrimaryPlayerName}
+            placeholder="Add the first player on side A..."
+            suggestions={playerSuggestions.filter(
+              (option) => option !== partnerName && option !== opponentName && option !== opponentPartnerName,
+            )}
+            value={primaryPlayerName}
+          />
+        )}
+        {isPersonalizedMode && formState.fieldErrors.sideAPlayers ? (
           <p className="match-form__field-error">{formState.fieldErrors.sideAPlayers}</p>
         ) : null}
 
         {format === "doubles" ? (
           <PlayerField
             icon="+"
-            label="Your Partner"
+            label={partnerLabel}
             onChange={setPartnerName}
-            placeholder="Add a teammate..."
-            suggestions={playerSuggestions.filter((option) => option !== primaryPlayerName && option !== opponentName)}
+            placeholder={isPersonalizedMode ? "Add a teammate..." : "Add the second player on side A..."}
+            suggestions={playerSuggestions.filter(
+              (option) =>
+                option !== primaryPlayerName && option !== opponentName && option !== opponentPartnerName,
+            )}
             value={partnerName}
           />
         ) : null}
@@ -410,9 +443,9 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
         <PlayerField
           error={formState.fieldErrors.sideBPlayers}
           icon="OP"
-          label="Opponent"
+          label={opponentLabel}
           onChange={setOpponentName}
-          placeholder="Search by name or handle..."
+          placeholder={isPersonalizedMode ? "Search by name or handle..." : "Add the first player on side B..."}
           suggestions={playerSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
           value={opponentName}
         />
@@ -421,9 +454,9 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
           <PlayerField
             error={formState.fieldErrors.sideBPlayers}
             icon="OP"
-            label="Opponent's Partner"
+            label={opponentPartnerLabel}
             onChange={setOpponentPartnerName}
-            placeholder="Add second opponent..."
+            placeholder={isPersonalizedMode ? "Add second opponent..." : "Add the second player on side B..."}
             suggestions={playerSuggestions.filter(
               (option) => option !== primaryPlayerName && option !== partnerName && option !== opponentName,
             )}
@@ -455,10 +488,10 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
         <p className="score-panel__label">Final Match Score</p>
         <div className="score-panel__grid">
           <label className="score-panel__side">
-            <span className="score-panel__side-label">You</span>
+            <span className="score-panel__side-label">{isPersonalizedMode ? "You" : "Side A"}</span>
             <div className="score-stepper">
               <button
-                aria-label="Decrease your score"
+                aria-label={`Decrease ${ownScoreLabel.toLowerCase()}`}
                 className="score-stepper__button"
                 onClick={() => {
                   if (!canAdjustScore()) {
@@ -471,7 +504,7 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
                 -
               </button>
               <input
-                aria-label="Your score"
+                aria-label={ownScoreLabel}
                 className="display score-panel__input"
                 max={30}
                 min={0}
@@ -481,7 +514,7 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
                 value={sideAScore}
               />
               <button
-                aria-label="Increase your score"
+                aria-label={`Increase ${ownScoreLabel.toLowerCase()}`}
                 className="score-stepper__button"
                 onClick={() => {
                   if (!canAdjustScore()) {
@@ -501,10 +534,10 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
           </div>
 
           <label className="score-panel__side">
-            <span className="score-panel__side-label">Opp</span>
+            <span className="score-panel__side-label">{isPersonalizedMode ? "Opp" : "Side B"}</span>
             <div className="score-stepper">
               <button
-                aria-label="Decrease opponent score"
+                aria-label={`Decrease ${opponentScoreLabel.toLowerCase()}`}
                 className="score-stepper__button"
                 onClick={() => {
                   if (!canAdjustScore()) {
@@ -517,7 +550,7 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
                 -
               </button>
               <input
-                aria-label="Opponent score"
+                aria-label={opponentScoreLabel}
                 className="display score-panel__input score-panel__input--alt"
                 max={30}
                 min={0}
@@ -527,7 +560,7 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
                 value={sideBScore}
               />
               <button
-                aria-label="Increase opponent score"
+                aria-label={`Increase ${opponentScoreLabel.toLowerCase()}`}
                 className="score-stepper__button"
                 onClick={() => {
                   if (!canAdjustScore()) {
@@ -547,7 +580,7 @@ export function GameForm({ game, cloneSeed, cloneError, players }: Readonly<Game
         ) : null}
       </section>
 
-      <SaveButton isEdit={Boolean(game)} pending={isPending} />
+      <SaveButton isEdit={isEdit} pending={isPending} />
     </form>
   );
 }

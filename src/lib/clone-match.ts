@@ -1,26 +1,20 @@
+import { buildGameFormSeed, type GameFormSeedMode } from "@/lib/game-form-seed";
 import type { GameFormat, ResolvedGame } from "@/lib/types";
 
 export type CloneMatchSeed = {
   format: GameFormat;
   sideAPlayers: string[];
   sideBPlayers: string[];
+  mode: GameFormSeedMode;
 };
 
 export function buildCloneMatchSeed(match: ResolvedGame, selectedPlayerId: number | null): CloneMatchSeed {
-  const selectedPlayerIsOnSideA = match.sideAPlayers.some((player) => player.id === selectedPlayerId);
-  const selectedPlayerIsOnSideB = match.sideBPlayers.some((player) => player.id === selectedPlayerId);
-
-  if (selectedPlayerIsOnSideB && !selectedPlayerIsOnSideA) {
-    return {
-      format: match.format,
-      sideAPlayers: match.sideBPlayers.map((player) => player.name),
-      sideBPlayers: match.sideAPlayers.map((player) => player.name),
-    };
-  }
+  const seed = buildGameFormSeed(match, selectedPlayerId);
 
   return {
-    format: match.format,
-    sideAPlayers: match.sideAPlayers.map((player) => player.name),
-    sideBPlayers: match.sideBPlayers.map((player) => player.name),
+    format: seed.format,
+    sideAPlayers: seed.sideAPlayers,
+    sideBPlayers: seed.sideBPlayers,
+    mode: seed.mode,
   };
 }

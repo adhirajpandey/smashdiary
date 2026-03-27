@@ -1,14 +1,17 @@
 "use client";
 
 import { GameForm } from "@/app/_components/game-form";
+import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import { StatusView } from "@/app/_components/status-view";
 import { ApiClientError, useMatchDetailQuery, usePlayersQuery } from "@/lib/api/client";
+import { buildGameFormSeed } from "@/lib/game-form-seed";
 
 export function EditMatchPageClient({ matchId }: Readonly<{ matchId: number }>) {
+  const { isHydrated, selectedPlayerId } = useSelectedPlayer();
   const matchQuery = useMatchDetailQuery(matchId);
   const playersQuery = usePlayersQuery();
 
-  if (matchQuery.isPending || playersQuery.isPending) {
+  if (!isHydrated || matchQuery.isPending || playersQuery.isPending) {
     return (
       <StatusView
         eyebrow="Loading"
@@ -38,5 +41,7 @@ export function EditMatchPageClient({ matchId }: Readonly<{ matchId: number }>) 
     );
   }
 
-  return <GameForm game={matchQuery.data.match} players={playersQuery.data.players} />;
+  const initialSeed = buildGameFormSeed(matchQuery.data.match, selectedPlayerId);
+
+  return <GameForm initialSeed={initialSeed} matchId={matchId} players={playersQuery.data.players} />;
 }
