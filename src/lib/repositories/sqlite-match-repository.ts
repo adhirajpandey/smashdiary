@@ -2,6 +2,7 @@ import type Database from "better-sqlite3";
 
 import { getTestSqliteClient } from "@/lib/db/test-sqlite";
 import { logger } from "@/lib/logger";
+import { MatchNotFoundError } from "@/lib/match-errors";
 import { buildParticipantValues, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
 
@@ -175,7 +176,7 @@ export const sqliteMatchRepository: MatchRepository = {
 
         if (!updated.changes) {
           logRepositoryEvent("saveMatch:missing_match", { id: input.id });
-          throw new Error("Match not found.");
+          throw new MatchNotFoundError();
         }
 
         client.prepare("DELETE FROM game_participants WHERE game_id = ?").run(input.id);

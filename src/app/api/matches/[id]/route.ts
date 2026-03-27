@@ -41,11 +41,16 @@ export async function PUT(
     const body = await request.json();
     const result = await saveMatchFromJson(body, matchId);
 
-    if (!result.ok) {
-      return jsonValidationError(result.errors.formError, result.errors.fieldErrors);
+    switch (result.type) {
+      case "success":
+        return jsonSuccess({ id: result.id });
+      case "validation_error":
+        return jsonValidationError(result.errors.formError, result.errors.fieldErrors);
+      case "not_found":
+        return jsonNotFound(result.message);
+      case "internal_error":
+        return jsonServerError(result.message);
     }
-
-    return jsonSuccess({ id: result.id });
   } catch {
     return jsonValidationError("Invalid request payload.");
   }

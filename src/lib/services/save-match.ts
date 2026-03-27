@@ -1,17 +1,20 @@
 import { normalizeGameFormErrors, type NormalizedGameFormErrors } from "@/lib/action-errors";
 import { saveMatch } from "@/lib/commands/save-match";
+import { MatchNotFoundError } from "@/lib/match-errors";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 
-type SaveMatchResult =
-  | { ok: true; id: number }
-  | { ok: false; errors: NormalizedGameFormErrors };
+export type SaveMatchResult =
+  | { type: "success"; id: number }
+  | { type: "validation_error"; errors: NormalizedGameFormErrors }
+  | { type: "not_found"; message: string }
+  | { type: "internal_error"; message: string };
 
 export async function saveMatchFromJson(input: unknown, id?: number): Promise<SaveMatchResult> {
   const parsed = gameFormSchema.safeParse(input);
 
   if (!parsed.success) {
     return {
-      ok: false,
+      type: "validation_error",
       errors: normalizeGameFormErrors(parsed.error),
     };
   }
@@ -23,14 +26,18 @@ export async function saveMatchFromJson(input: unknown, id?: number): Promise<Sa
       winnerSide: deriveWinnerSide(parsed.data.sideAScore, parsed.data.sideBScore),
     });
 
-    return { ok: true, id: savedId };
-  } catch {
+    return { type: "success", id: savedId };
+  } catch (error) {
+    if (error instanceof MatchNotFoundError) {
+      return {
+        type: "not_found",
+        message: error.message,
+      };
+    }
+
     return {
-      ok: false,
-      errors: {
-        formError: "Could not save game. Please try again.",
-        fieldErrors: {},
-      },
+      type: "internal_error",
+      message: "Could not save match. Please try again.",
     };
   }
 }

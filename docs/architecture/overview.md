@@ -103,6 +103,8 @@ The normal write path is:
 7. Delete requests flow through a matching service and command path before the repository removes participants and the match in a transaction.
 8. The client invalidates affected queries, shows an in-app toast notification, and navigates to the destination screen when appropriate.
 
+Mutation handlers return `400` for malformed or schema-invalid payloads, `404` when an update targets a missing match, and `500` for unexpected persistence failures.
+
 This keeps route handlers thin while moving dashboard, history, and stats derivation into the server-side service layer before JSON is returned.
 
 ## Runtime Modes

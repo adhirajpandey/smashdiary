@@ -3,6 +3,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { gameParticipants, games, players } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
+import { MatchNotFoundError } from "@/lib/match-errors";
 import { buildParticipantValues, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
 
@@ -144,7 +145,7 @@ export const postgresMatchRepository: MatchRepository = {
 
         if (!updated[0]) {
           logRepositoryEvent("saveMatch:missing_match", { id: input.id });
-          throw new Error("Match not found.");
+          throw new MatchNotFoundError();
         }
 
         await tx.delete(gameParticipants).where(eq(gameParticipants.gameId, input.id));

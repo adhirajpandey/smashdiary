@@ -182,6 +182,7 @@ When changing schema or persistence behavior:
 When changing match-entry behavior:
 
 - keep JSON API mutations aligned with the shared validation and command path
+- keep mutation error mapping aligned with the current contract: invalid JSON and validation errors return `400`, missing update targets return `404`, and unexpected save failures return `500`
 - keep the Postgres and SQLite repository behavior aligned where persistence overlaps
 
 For UI changes, keep the established visual language and refer to [system.md](../design/system.md) instead of duplicating design rules into feature docs.

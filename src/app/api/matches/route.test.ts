@@ -54,7 +54,7 @@ describe("POST /api/matches", () => {
 
   it("returns normalized validation errors from the save service", async () => {
     (saveMatchFromJson as jest.Mock).mockResolvedValue({
-      ok: false,
+      type: "validation_error",
       errors: {
         formError: "Please fix the highlighted input and try again.",
         fieldErrors: { sideAScore: "Extended games must still end with a 2-point lead." },
@@ -80,8 +80,31 @@ describe("POST /api/matches", () => {
     });
   });
 
+  it("returns an internal error when save execution fails", async () => {
+    (saveMatchFromJson as jest.Mock).mockResolvedValue({
+      type: "internal_error",
+      message: "Could not save match. Please try again.",
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/matches", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Could not save match. Please try again.",
+      },
+    });
+  });
+
   it("returns a created match id on success", async () => {
-    (saveMatchFromJson as jest.Mock).mockResolvedValue({ ok: true, id: 55 });
+    (saveMatchFromJson as jest.Mock).mockResolvedValue({ type: "success", id: 55 });
 
     const response = await POST(
       new Request("http://localhost/api/matches", {
