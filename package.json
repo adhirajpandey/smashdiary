@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:test": "cross-env APP_MODE=test next dev",
+    "dev:test:ui": "cross-env APP_MODE=test NEXT_DIST_DIR=.next-playwright PORT=3101 next dev --port 3101",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

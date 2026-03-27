@@ -1,14 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const uiTestPort = Number(process.env.PLAYWRIGHT_UI_PORT ?? "3101");
+const uiTestBaseUrl = `http://127.0.0.1:${uiTestPort}`;
+const shouldReuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === "1";
+
 export default defineConfig({
   testDir: "./tests/ui",
   fullyParallel: false,
   timeout: 60 * 1000,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: 3,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: uiTestBaseUrl,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -16,7 +20,7 @@ export default defineConfig({
     {
       name: "mobile-chromium",
       use: {
-        ...devices["Pixel 5"],
+        ...devices["Pixel 6"],
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
         isMobile: true,
@@ -25,9 +29,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev:test",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    command: `cross-env APP_MODE=test NEXT_DIST_DIR=.next-playwright PORT=${uiTestPort} next dev --port ${uiTestPort}`,
+    url: uiTestBaseUrl,
+    reuseExistingServer: shouldReuseExistingServer,
     timeout: 120 * 1000,
   },
 });

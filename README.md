@@ -92,6 +92,7 @@ Schema changes should be accompanied by a matching migration in `drizzle/`.
 
 Tests live beside source files as `*.test.ts` under `src/`.
 UI smoke tests live under `tests/ui` and run the app in `APP_MODE=test` against the seeded SQLite dataset.
+Playwright uses an isolated local server on `127.0.0.1:3101` by default so it does not attach to an existing app already running on port `3000`.
 
 ## Project Layout
 

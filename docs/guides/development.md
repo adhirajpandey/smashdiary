@@ -92,6 +92,7 @@ The app shell includes a persistent identity picker. Several screens intentional
 - `npm run test`: run Jest once
 - `npm run test:watch`: run Jest in watch mode
 - `npx playwright install chromium`: install the browser used by the UI suite
+- `npm run dev:test:ui`: start the isolated SQLite-backed server used by Playwright on port `3101`
 - `npm run test:ui`: run the Playwright smoke suite
 - `npm run test:ui:headed`: run the Playwright smoke suite with a visible browser
 
@@ -150,6 +151,8 @@ Areas with meaningful existing test coverage include:
 
 When changing behavior, prefer focused test updates near the touched module before broadening scope.
 Run the UI suite in `APP_MODE=test`; it starts the app against the seeded SQLite dataset and does not require Postgres.
+By default Playwright starts its own isolated server on `127.0.0.1:3101` and does not reuse an existing process, which prevents accidental attachment to a server already running on `3000`.
+If you intentionally want Playwright to reuse an already-running test server on that same port, set `PLAYWRIGHT_REUSE_SERVER=1`.
 
 ## Contribution Expectations
 
