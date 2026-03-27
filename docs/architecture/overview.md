@@ -13,6 +13,7 @@ Current route surfaces:
 - `/`: dashboard view
 - `/matches`: match history
 - `/matches/new`: new match form
+- `/matches/[id]/edit`: edit form for an existing match
 - shared shell controls: mobile header, bottom navigation, and persistent identity picker
 - `/matches/[id]`: match detail
 - `/stats`: player stats
@@ -26,7 +27,7 @@ Current route surfaces:
 
 - Route files stay thin and mostly render page shells for dashboard, history, stats, and form flows
 - Client containers and presentational components such as dashboard, history, stats, forms, and shell controls live under `src/app/_components`
-- Route handlers under `src/app/api` expose the app's internal JSON read and write endpoints
+- Route handlers under `src/app/api` expose the app's internal JSON read and write endpoints (`/api/matches` with `/api/games` aliases for compatibility)
 
 ### Query layer
 
@@ -93,7 +94,7 @@ Examples:
 
 The normal write path is:
 
-1. The client form submits JSON to `POST /api/matches` or `PUT /api/matches/[id]`. Match detail actions can also call `DELETE /api/matches/[id]`. The selected player from shell context is treated as the fixed "You" side in the form UI.
+1. The client form submits JSON to `POST /api/matches` (or `POST /api/games`) for create and `PUT /api/matches/[id]` (or `PUT /api/games/[id]`) for edit. Match detail actions can also call `DELETE /api/matches/[id]` or `DELETE /api/games/[id]`. The selected player from shell context is treated as the fixed "You" side in the form UI.
 2. The route handler parses the JSON body and passes it to `saveMatchFromJson()`.
 3. The service validates the payload with `gameFormSchema` and derives `winnerSide`.
 4. The service calls the `saveMatch()` command.

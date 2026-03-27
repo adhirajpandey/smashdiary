@@ -59,7 +59,7 @@ It currently displays:
 - side B roster
 - actions to edit or delete the saved match
 
-Delete uses an inline confirmation state on the detail screen. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications.
+Edit routes to `/matches/[id]/edit` and pre-fills the form with the saved match. Delete uses an inline confirmation state on the detail screen. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications.
 
 Invalid or missing IDs resolve to the app's not-found behavior.
 
