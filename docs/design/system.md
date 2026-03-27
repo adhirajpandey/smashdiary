@@ -54,8 +54,9 @@ We eschew traditional drop shadows for **Tonal Layering**.
 ## 5. Components
 
 ### Buttons (The Kinetic Trigger)
-- **Primary:** Rounded `full` (9999px). Background: `primary` to `primary-container` gradient. Label: `on-primary` (#516700), Bold Lexend.
+- **Primary:** Rounded `lg` (roughly `0.8rem` to `1rem`), not full-pill by default. Background: `primary` to `primary-container` gradient. Label: `on-primary` (#516700), Bold Lexend.
 - **Secondary:** Surface-tinted glass. `outline-variant` at 20% opacity. 
+- **Shape rule:** Match buttons should feel like molded control surfaces, not floating pills. Reserve fully rounded shapes for chips or tiny utility controls only.
 - **Interaction:** On press, the button should scale to 96% to provide tactile feedback of "hitting" the shuttlecock.
 
 ### Cards (The Data Suite)

@@ -1,4 +1,15 @@
-import { cn, ensureArray, formatCompactDate, formatGameDate, formatPlayerName, fromInputDateTimeValue, getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
+import {
+  cn,
+  ensureArray,
+  formatCompactDate,
+  formatGameDate,
+  formatPlayerName,
+  formatScore,
+  formatScoreline,
+  fromInputDateTimeValue,
+  getCurrentInputDateTimeValue,
+  toInputDateTimeValue,
+} from "@/lib/utils";
 
 describe("utils", () => {
   it("wraps non-array values and preserves arrays", () => {
@@ -35,5 +46,17 @@ describe("utils", () => {
     expect(formatPlayerName("  Adhiraj   Pandey  ")).toBe("Adhiraj Pandey");
     expect(formatPlayerName("Adhiraj Pandey", "stacked")).toEqual(["Adhiraj", "Pandey"]);
     expect(formatPlayerName("Mary Jane Watson", "stacked")).toEqual(["Mary", "Jane", "Watson"]);
+  });
+
+  it("formats scores as two digits", () => {
+    expect(formatScore(0)).toBe("00");
+    expect(formatScore(7)).toBe("07");
+    expect(formatScore(21)).toBe("21");
+  });
+
+  it("formats scorelines with padded values and preserved separators", () => {
+    expect(formatScoreline(21, 7, "-")).toBe("21-07");
+    expect(formatScoreline(21, 7, "/")).toBe("21/07");
+    expect(formatScoreline(21, 7, ":")).toBe("21:07");
   });
 });

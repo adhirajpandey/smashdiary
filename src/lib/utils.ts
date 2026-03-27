@@ -94,6 +94,14 @@ export function formatCompactDate(value: string) {
   return formatMatchDate(value, "compact");
 }
 
+export function formatScore(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+export function formatScoreline(scoreA: number, scoreB: number, separator: string) {
+  return `${formatScore(scoreA)}${separator}${formatScore(scoreB)}`;
+}
+
 export function normalizePlayedAtValue(value: string) {
   const parts = buildMatchDateParts(value);
   return [

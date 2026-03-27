@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { MatchActionsMenu } from "@/app/_components/match-actions-menu";
-import { formatCompactDate } from "@/lib/utils";
+import { formatCompactDate, formatScoreline } from "@/lib/utils";
 import type { MatchFeedItem } from "@/lib/view-models";
 
 function joinNames(names: string[]) {
@@ -16,8 +16,9 @@ function formatSideLabel(names: string[]) {
 
 function getMatchLinkLabel(match: MatchFeedItem) {
   const formatLabel = match.format === "singles" ? "Singles match" : "Doubles match";
+  const scoreline = formatScoreline(match.scoreFor, match.scoreAgainst, "-");
 
-  return `${formatLabel}: ${formatSideLabel(match.ownSideNames)} versus ${formatSideLabel(match.opposingSideNames)}, score ${match.scoreFor}-${match.scoreAgainst}`;
+  return `${formatLabel}: ${formatSideLabel(match.ownSideNames)} versus ${formatSideLabel(match.opposingSideNames)}, score ${scoreline}`;
 }
 
 export function MatchFeed({ matches }: Readonly<{ matches: MatchFeedItem[] }>) {
@@ -57,7 +58,7 @@ export function MatchFeed({ matches }: Readonly<{ matches: MatchFeedItem[] }>) {
                   </div>
 
                   <p className="display dashboard-match__score">
-                    {match.scoreFor}-{match.scoreAgainst}
+                    {formatScoreline(match.scoreFor, match.scoreAgainst, "-")}
                   </p>
                 </div>
               </Link>
