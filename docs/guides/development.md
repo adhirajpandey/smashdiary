@@ -146,7 +146,7 @@ Areas with meaningful existing test coverage include:
 - screen-data services
 - repositories shared logic
 - utilities
-- mobile UI happy paths via Playwright
+- mobile UI workflows via Playwright (create singles, create doubles, edit, delete, and validation messaging)
 
 When changing behavior, prefer focused test updates near the touched module before broadening scope.
 Run the UI suite in `APP_MODE=test`; it starts the app against the seeded SQLite dataset and does not require Postgres.
