@@ -1209,6 +1209,35 @@ img {
   scrollbar-color: rgb(214 255 0 / 0.4) transparent;
 }
 
+.autocomplete__search-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.15rem 0.2rem 0.45rem;
+  border-bottom: 1px solid rgb(72 72 71 / 0.18);
+}
+
+.autocomplete__search-icon {
+  align-self: center;
+}
+
+.autocomplete__search-input {
+  border: 0;
+  padding: 0.8rem 0 0.7rem;
+  box-shadow: none;
+}
+
+.autocomplete__search-input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.autocomplete__options {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .autocomplete__option {
   width: 100%;
   display: flex;
@@ -1237,6 +1266,14 @@ img {
   color: var(--text-secondary);
   font-size: 0.82rem;
   white-space: nowrap;
+}
+
+.autocomplete__empty {
+  margin: 0;
+  padding: 0.95rem 0.9rem 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
 .bottom-nav {
@@ -1541,6 +1578,19 @@ img {
   border-bottom: 1px solid rgb(118 117 117 / 0.34);
 }
 
+.match-input-shell__trigger {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.match-input-shell__trigger:focus-visible {
+  border-bottom: 2px solid var(--secondary);
+  box-shadow: 0 3px 12px rgb(125 152 255 / 0.16);
+  outline: none;
+}
+
 .match-input-shell.is-readonly {
   padding-bottom: 0.7rem;
 }
@@ -1572,6 +1622,14 @@ img {
 .match-input-shell__value {
   color: var(--text-primary);
   padding: 0.8rem 0 0.7rem;
+}
+
+.match-input-shell__value.is-placeholder {
+  color: var(--text-secondary);
+}
+
+.match-input-shell__value.is-selected {
+  color: var(--text-primary);
 }
 
 .score-panel {

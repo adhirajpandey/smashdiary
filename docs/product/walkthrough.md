@@ -37,7 +37,7 @@ Current supported behavior:
 - treat the currently selected player as the fixed "You" slot
 - enter final scores
 - assign players to side A and side B
-- use existing player suggestions
+- use existing player suggestions through a two-step picker that opens the list first and only starts typing after tapping the search area
 - create new players implicitly by typing names during submission
 - prefill the date field with the current local date and default the slot dropdown to `8 PM` for new entries
 - adjust scores with either number inputs or score stepper buttons

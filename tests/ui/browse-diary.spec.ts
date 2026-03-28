@@ -2,6 +2,27 @@ import { expect, test } from "@playwright/test";
 
 import { navigatePrimary, openAppAndSelectPlayer, openExistingMatchDetail } from "./helpers";
 
+test("opens the identity player list before focusing search", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+
+  const pickerToggle = page.getByRole("button", { name: /select player/i });
+  await expect(pickerToggle).toBeVisible();
+
+  await pickerToggle.click();
+
+  const searchInput = page.getByRole("textbox", { name: "Player search", exact: true });
+  await expect(page.getByRole("option", { name: "Adhiraj", exact: true })).toBeVisible();
+  await expect(searchInput).not.toBeFocused();
+
+  await searchInput.click();
+  await searchInput.fill("Adhiraj");
+  await page.getByRole("option", { name: "Adhiraj", exact: true }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page.getByRole("button", { name: "Open player identity picker for Adhiraj" })).toBeVisible();
+});
+
 test("lets me browse my diary and open a saved match", async ({ page }) => {
   await openAppAndSelectPlayer(page);
 

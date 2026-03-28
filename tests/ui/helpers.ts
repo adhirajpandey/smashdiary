@@ -59,15 +59,27 @@ export async function fillPlayerField(
   value: string,
   options?: { selectSuggestion?: boolean },
 ) {
-  const field = page.getByRole("combobox", { name: label, exact: true });
-  await field.fill(value);
+  const fieldGroup = page.locator(".match-input-group").filter({ has: page.getByText(label, { exact: true }) }).first();
+  const trigger = fieldGroup.getByRole("button");
+  await trigger.click();
+  const searchInput = page.getByRole("textbox", { name: `${label} search`, exact: true });
+  await searchInput.fill(value);
 
   if (options?.selectSuggestion === false) {
-    await field.press("Tab");
+    await searchInput.press("Tab");
     return;
   }
 
   await page.getByRole("option").filter({ hasText: value }).first().click();
+}
+
+export async function expectPlayerFieldValue(
+  page: Page,
+  label: "Your Partner" | "Opponent" | "Opponent's Partner",
+  value: string,
+) {
+  const fieldGroup = page.locator(".match-input-group").filter({ has: page.getByText(label, { exact: true }) }).first();
+  await expect(fieldGroup.getByRole("button")).toContainText(value);
 }
 
 export async function fillMatchScores(page: Page, scores: { yours: number; opponent: number }) {

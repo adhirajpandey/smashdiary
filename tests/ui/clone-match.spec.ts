@@ -5,6 +5,7 @@ import {
   createUniquePlayerName,
   expectDashboardMatchCardMenuNotClipped,
   expectDeleteMatchModal,
+  expectPlayerFieldValue,
   fillMatchScores,
   fillPlayerField,
   navigatePrimary,
@@ -34,7 +35,7 @@ test("clones a saved match into a new prefilled entry", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/matches\/new\?cloneFrom=\d+$/);
   await expect(page.getByText("Adhiraj", { exact: true })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Opponent", exact: true })).toHaveValue(opponent);
+  await expectPlayerFieldValue(page, "Opponent", opponent);
   await expect(page.getByRole("spinbutton", { name: "Your score" })).toHaveValue("20");
   await expect(page.getByRole("spinbutton", { name: "Opponent score" })).toHaveValue("20");
 
@@ -57,9 +58,9 @@ test("keeps a selected doubles slot-2 player as You when cloning a saved match",
 
   await expect(page).toHaveURL(/\/matches\/new\?cloneFrom=14$/);
   await expect(page.locator(".match-input-shell.is-readonly .match-input-shell__value")).toHaveText("Sachi");
-  await expect(page.getByRole("combobox", { name: "Your Partner", exact: true })).toHaveValue("Adhiraj");
-  await expect(page.getByRole("combobox", { name: "Opponent", exact: true })).toHaveValue("EASGuy A");
-  await expect(page.getByRole("combobox", { name: "Opponent's Partner", exact: true })).toHaveValue("Abhilasha");
+  await expectPlayerFieldValue(page, "Your Partner", "Adhiraj");
+  await expectPlayerFieldValue(page, "Opponent", "EASGuy A");
+  await expectPlayerFieldValue(page, "Opponent's Partner", "Abhilasha");
 
   await fillMatchScores(page, { yours: 21, opponent: 19 });
 
@@ -103,7 +104,7 @@ test("opens edit from the match card overflow menu", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/matches\/\d+\/edit$/);
   await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();
-  await expect(page.getByRole("combobox", { name: "Opponent", exact: true })).toHaveValue(opponent);
+  await expectPlayerFieldValue(page, "Opponent", opponent);
 });
 
 test("opens edit from dashboard recent matches without clipping the overflow menu", async ({ page }) => {

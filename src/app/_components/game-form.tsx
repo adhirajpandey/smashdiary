@@ -64,8 +64,9 @@ function PlayerField({
   value: string;
 }>) {
   const [isOpen, setIsOpen] = useState(false);
-  const inputId = useId();
+  const labelId = useId();
   const listboxId = useId();
+  const selectedValueId = useId();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const internalPointerRef = useRef(false);
   const clearInternalPointerTimeoutRef = useRef<number | null>(null);
@@ -143,11 +144,13 @@ function PlayerField({
     }, 250);
   }
 
+  const displayValue = value || placeholder;
+
   return (
     <div className="match-input-group">
-      <label className="match-input-group__label" htmlFor={inputId}>
+      <span className="match-input-group__label" id={labelId}>
         {label}
-      </label>
+      </span>
       <div
         className="autocomplete"
         ref={rootRef}
@@ -160,57 +163,98 @@ function PlayerField({
           }
         }}
       >
-        <div className="match-input-shell">
+        <button
+          aria-controls={listboxId}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-labelledby={`${labelId} ${selectedValueId}`}
+          className="match-input-shell match-input-shell__trigger"
+          onClick={() => setIsOpen((current) => !current)}
+          type="button"
+        >
           <span className="match-input-shell__icon" aria-hidden="true">
             {icon}
           </span>
-          <input
-            aria-autocomplete="list"
-            aria-controls={listboxId}
-            aria-expanded={isOpen}
-            aria-haspopup="listbox"
-            autoComplete="off"
-            className="match-input-shell__input"
-            id={inputId}
-            onChange={(event) => {
-              onChange(event.target.value);
-              setIsOpen(true);
-            }}
-            onFocus={() => setIsOpen(true)}
-            placeholder={placeholder}
-            required
-            role="combobox"
-            value={value}
-          />
-        </div>
+          <span
+            className={`match-input-shell__value ${value ? "is-selected" : "is-placeholder"}`}
+            id={selectedValueId}
+          >
+            {displayValue}
+          </span>
+        </button>
 
         {isOpen && filteredSuggestions.length ? (
           <div
             className="autocomplete__dropdown"
-            id={listboxId}
             onPointerCancel={clearInternalPointerInteraction}
             onPointerDownCapture={markInternalPointerInteraction}
             onPointerUp={clearInternalPointerInteraction}
-            role="listbox"
           >
-            {filteredSuggestions.map((option) => (
-              <button
-                aria-selected={option.toLowerCase() === normalizedValue}
-                className="autocomplete__option"
-                data-autocomplete-option="true"
-                key={option}
-                onClick={() => {
-                  selectOption(option);
+            <div className="autocomplete__search-row">
+              <span className="match-input-shell__icon autocomplete__search-icon" aria-hidden="true">
+                {icon}
+              </span>
+              <input
+                aria-autocomplete="list"
+                aria-controls={listboxId}
+                aria-label={`${label} search`}
+                autoComplete="off"
+                className="autocomplete__search-input"
+                onChange={(event) => {
+                  onChange(event.target.value);
                 }}
-                role="option"
-                type="button"
-              >
-                <span>{option}</span>
-                {option.toLowerCase() === normalizedValue ? (
-                  <span className="autocomplete__hint">Selected</span>
-                ) : null}
-              </button>
-            ))}
+                placeholder={placeholder}
+                value={value}
+              />
+            </div>
+            <div className="autocomplete__options" id={listboxId} role="listbox">
+              {filteredSuggestions.map((option) => (
+                <button
+                  aria-selected={option.toLowerCase() === normalizedValue}
+                  className="autocomplete__option"
+                  data-autocomplete-option="true"
+                  key={option}
+                  onClick={() => {
+                    selectOption(option);
+                  }}
+                  role="option"
+                  type="button"
+                >
+                  <span>{option}</span>
+                  {option.toLowerCase() === normalizedValue ? (
+                    <span className="autocomplete__hint">Selected</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : isOpen ? (
+          <div
+            className="autocomplete__dropdown"
+            onPointerCancel={clearInternalPointerInteraction}
+            onPointerDownCapture={markInternalPointerInteraction}
+            onPointerUp={clearInternalPointerInteraction}
+          >
+            <div className="autocomplete__search-row">
+              <span className="match-input-shell__icon autocomplete__search-icon" aria-hidden="true">
+                {icon}
+              </span>
+              <input
+                aria-autocomplete="list"
+                aria-controls={listboxId}
+                aria-label={`${label} search`}
+                autoComplete="off"
+                className="autocomplete__search-input"
+                onChange={(event) => {
+                  onChange(event.target.value);
+                }}
+                placeholder={placeholder}
+                value={value}
+              />
+            </div>
+            <div className="autocomplete__options" id={listboxId} role="listbox">
+              <p className="autocomplete__empty">No matches yet. Keep typing to add a player.</p>
+            </div>
           </div>
         ) : null}
       </div>
@@ -417,7 +461,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
             icon="A1"
             label={primaryPlayerLabel}
             onChange={setPrimaryPlayerName}
-            placeholder="Add the first player on side A..."
+            placeholder="Choose or type player"
             suggestions={playerSuggestions.filter(
               (option) => option !== partnerName && option !== opponentName && option !== opponentPartnerName,
             )}
@@ -433,7 +477,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
             icon="+"
             label={partnerLabel}
             onChange={setPartnerName}
-            placeholder={isPersonalizedMode ? "Add a teammate..." : "Add the second player on side A..."}
+            placeholder={isPersonalizedMode ? "Choose or type teammate" : "Choose or type player"}
             suggestions={playerSuggestions.filter(
               (option) =>
                 option !== primaryPlayerName && option !== opponentName && option !== opponentPartnerName,
@@ -447,7 +491,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
           icon="OP"
           label={opponentLabel}
           onChange={setOpponentName}
-          placeholder={isPersonalizedMode ? "Search by name or handle..." : "Add the first player on side B..."}
+          placeholder={isPersonalizedMode ? "Choose or type opponent" : "Choose or type player"}
           suggestions={playerSuggestions.filter((option) => option !== primaryPlayerName && option !== partnerName)}
           value={opponentName}
         />
@@ -458,7 +502,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
             icon="OP"
             label={opponentPartnerLabel}
             onChange={setOpponentPartnerName}
-            placeholder={isPersonalizedMode ? "Add second opponent..." : "Add the second player on side B..."}
+            placeholder={isPersonalizedMode ? "Choose or type opponent" : "Choose or type player"}
             suggestions={playerSuggestions.filter(
               (option) => option !== primaryPlayerName && option !== partnerName && option !== opponentName,
             )}
