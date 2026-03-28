@@ -66,7 +66,6 @@ function PlayerField({
   const [isOpen, setIsOpen] = useState(false);
   const labelId = useId();
   const listboxId = useId();
-  const selectedValueId = useId();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const internalPointerRef = useRef(false);
   const clearInternalPointerTimeoutRef = useRef<number | null>(null);
@@ -144,8 +143,6 @@ function PlayerField({
     }, 250);
   }
 
-  const displayValue = value || placeholder;
-
   return (
     <div className="match-input-group">
       <span className="match-input-group__label" id={labelId}>
@@ -163,25 +160,35 @@ function PlayerField({
           }
         }}
       >
-        <button
-          aria-controls={listboxId}
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-          aria-labelledby={`${labelId} ${selectedValueId}`}
-          className="match-input-shell match-input-shell__trigger"
-          onClick={() => setIsOpen((current) => !current)}
-          type="button"
-        >
+        <div className="match-input-shell">
           <span className="match-input-shell__icon" aria-hidden="true">
             {icon}
           </span>
-          <span
-            className={`match-input-shell__value ${value ? "is-selected" : "is-placeholder"}`}
-            id={selectedValueId}
-          >
-            {displayValue}
-          </span>
-        </button>
+          <input
+            aria-autocomplete="list"
+            aria-controls={listboxId}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-labelledby={labelId}
+            autoComplete="off"
+            className="match-input-shell__input"
+            onChange={(event) => {
+              onChange(event.target.value);
+              if (!isOpen) {
+                setIsOpen(true);
+              }
+            }}
+            onPointerDown={(event) => {
+              if (!isOpen) {
+                event.preventDefault();
+                setIsOpen(true);
+              }
+            }}
+            placeholder={placeholder}
+            role="combobox"
+            value={value}
+          />
+        </div>
 
         {isOpen && filteredSuggestions.length ? (
           <div
@@ -190,23 +197,6 @@ function PlayerField({
             onPointerDownCapture={markInternalPointerInteraction}
             onPointerUp={clearInternalPointerInteraction}
           >
-            <div className="autocomplete__search-row">
-              <span className="match-input-shell__icon autocomplete__search-icon" aria-hidden="true">
-                {icon}
-              </span>
-              <input
-                aria-autocomplete="list"
-                aria-controls={listboxId}
-                aria-label={`${label} search`}
-                autoComplete="off"
-                className="autocomplete__search-input"
-                onChange={(event) => {
-                  onChange(event.target.value);
-                }}
-                placeholder={placeholder}
-                value={value}
-              />
-            </div>
             <div className="autocomplete__options" id={listboxId} role="listbox">
               {filteredSuggestions.map((option) => (
                 <button
@@ -235,23 +225,6 @@ function PlayerField({
             onPointerDownCapture={markInternalPointerInteraction}
             onPointerUp={clearInternalPointerInteraction}
           >
-            <div className="autocomplete__search-row">
-              <span className="match-input-shell__icon autocomplete__search-icon" aria-hidden="true">
-                {icon}
-              </span>
-              <input
-                aria-autocomplete="list"
-                aria-controls={listboxId}
-                aria-label={`${label} search`}
-                autoComplete="off"
-                className="autocomplete__search-input"
-                onChange={(event) => {
-                  onChange(event.target.value);
-                }}
-                placeholder={placeholder}
-                value={value}
-              />
-            </div>
             <div className="autocomplete__options" id={listboxId} role="listbox">
               <p className="autocomplete__empty">No matches yet. Keep typing to add a player.</p>
             </div>

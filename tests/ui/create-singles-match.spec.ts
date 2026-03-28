@@ -12,11 +12,9 @@ test("opens the player list before focusing the search input", async ({ page }) 
   await openAppAndSelectPlayer(page);
   await openNewMatchForm(page);
 
-  const fieldGroup = page.locator(".match-input-group").filter({ has: page.getByText("Opponent", { exact: true }) }).first();
-  const trigger = fieldGroup.getByRole("button");
-  const searchInput = page.getByRole("textbox", { name: "Opponent search", exact: true });
+  const searchInput = page.getByRole("combobox", { name: "Opponent", exact: true });
 
-  await trigger.click();
+  await searchInput.click();
   await expect(page.getByRole("option").first()).toBeVisible();
   await expect(searchInput).not.toBeFocused();
 

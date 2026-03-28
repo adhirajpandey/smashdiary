@@ -6,12 +6,10 @@ test("opens the identity player list before focusing search", async ({ page }) =
   await page.goto("/");
   await page.waitForLoadState("networkidle");
 
-  const pickerToggle = page.getByRole("button", { name: /select player/i });
-  await expect(pickerToggle).toBeVisible();
+  const searchInput = page.getByRole("combobox", { name: "Select player", exact: true });
+  await expect(searchInput).toBeVisible();
 
-  await pickerToggle.click();
-
-  const searchInput = page.getByRole("textbox", { name: "Player search", exact: true });
+  await searchInput.click();
   await expect(page.getByRole("option", { name: "Adhiraj", exact: true })).toBeVisible();
   await expect(searchInput).not.toBeFocused();
 

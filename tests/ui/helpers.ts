@@ -19,17 +19,15 @@ export async function openAppAndSelectPlayer(page: Page, playerName = "Adhiraj")
   await page.goto("/");
   await page.waitForLoadState("networkidle");
 
-  const pickerToggle = page.getByRole("button", { name: /select player/i });
-
   try {
-    await expect(pickerToggle).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Who are you?")).toBeVisible({ timeout: 10_000 });
   } catch {
     await page.getByRole("button", { name: "Open player identity picker" }).click();
-    await expect(pickerToggle).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText("Who are you?")).toBeVisible({ timeout: 5_000 });
   }
 
-  await page.getByText("Who are you?").waitFor({ state: "visible" });
-  await pickerToggle.click();
+  const pickerField = page.getByRole("combobox", { name: "Select player", exact: true });
+  await pickerField.click();
   await page.getByRole("option", { name: playerName, exact: true }).click();
   await page.getByRole("button", { name: "Continue" }).click();
 
@@ -59,10 +57,8 @@ export async function fillPlayerField(
   value: string,
   options?: { selectSuggestion?: boolean },
 ) {
-  const fieldGroup = page.locator(".match-input-group").filter({ has: page.getByText(label, { exact: true }) }).first();
-  const trigger = fieldGroup.getByRole("button");
-  await trigger.click();
-  const searchInput = page.getByRole("textbox", { name: `${label} search`, exact: true });
+  const searchInput = page.getByRole("combobox", { name: label, exact: true });
+  await searchInput.click();
   await searchInput.fill(value);
 
   if (options?.selectSuggestion === false) {
@@ -78,8 +74,7 @@ export async function expectPlayerFieldValue(
   label: "Your Partner" | "Opponent" | "Opponent's Partner",
   value: string,
 ) {
-  const fieldGroup = page.locator(".match-input-group").filter({ has: page.getByText(label, { exact: true }) }).first();
-  await expect(fieldGroup.getByRole("button")).toContainText(value);
+  await expect(page.getByRole("combobox", { name: label, exact: true })).toHaveValue(value);
 }
 
 export async function fillMatchScores(page: Page, scores: { yours: number; opponent: number }) {

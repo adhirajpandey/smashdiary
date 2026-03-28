@@ -147,30 +147,55 @@ export function IdentityPicker() {
                   }
                 }}
               >
-                <button
-                  aria-controls={listboxId}
-                  aria-expanded={isOpen}
-                  aria-haspopup="listbox"
-                  aria-labelledby={`${fieldLabelId} ${selectedValueId}`}
-                  className="identity-select"
-                  onClick={() =>
-                    setIsOpen((current) => {
-                      const next = !current;
-                      if (!next) {
-                        setQuery("");
-                      }
-                      return next;
-                    })
-                  }
-                  type="button"
-                >
-                  <span className="identity-select__value" id={selectedValueId}>
-                    {selectedPlayer?.name ?? "Choose a player"}
-                  </span>
-                  <span className={`identity-select__chevron ${isOpen ? "is-open" : ""}`} aria-hidden="true">
-                    ^
-                  </span>
-                </button>
+                {isOpen ? (
+                  <div className="identity-select">
+                    <input
+                      aria-autocomplete="list"
+                      aria-controls={listboxId}
+                      aria-expanded={isOpen}
+                      aria-haspopup="listbox"
+                      aria-labelledby={fieldLabelId}
+                      autoComplete="off"
+                      className="identity-select__input"
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Choose a player"
+                      role="combobox"
+                      value={query}
+                    />
+                    <span className={`identity-select__chevron ${isOpen ? "is-open" : ""}`} aria-hidden="true">
+                      ^
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    aria-controls={listboxId}
+                    className="identity-select"
+                  >
+                    <input
+                      aria-autocomplete="list"
+                      aria-controls={listboxId}
+                      aria-expanded={isOpen}
+                      aria-haspopup="listbox"
+                      aria-labelledby={fieldLabelId}
+                      autoComplete="off"
+                      className="identity-select__input"
+                      id={selectedValueId}
+                      onPointerDown={(event) => {
+                        if (!isOpen) {
+                          event.preventDefault();
+                          setIsOpen(true);
+                        }
+                      }}
+                      placeholder="Choose a player"
+                      readOnly
+                      role="combobox"
+                      value={selectedPlayer?.name ?? ""}
+                    />
+                    <span className={`identity-select__chevron ${isOpen ? "is-open" : ""}`} aria-hidden="true">
+                      ^
+                    </span>
+                  </div>
+                )}
 
                 {isOpen ? (
                   <div
@@ -179,21 +204,6 @@ export function IdentityPicker() {
                     onPointerDownCapture={markInternalPointerInteraction}
                     onPointerUp={clearInternalPointerInteraction}
                   >
-                    <div className="autocomplete__search-row">
-                      <span className="match-input-shell__icon autocomplete__search-icon" aria-hidden="true">
-                        ID
-                      </span>
-                      <input
-                        aria-autocomplete="list"
-                        aria-controls={listboxId}
-                        aria-label="Player search"
-                        autoComplete="off"
-                        className="autocomplete__search-input"
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Choose a player"
-                        value={query}
-                      />
-                    </div>
                     <div aria-labelledby={fieldLabelId} className="autocomplete__options" id={listboxId} role="listbox">
                       {filteredPlayers.length ? (
                         filteredPlayers.map((player) => (
