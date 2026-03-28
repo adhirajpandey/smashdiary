@@ -99,8 +99,8 @@ The normal write path is:
 3. The service validates the payload with `gameFormSchema` and derives `winnerSide`.
 4. The service calls the `saveMatch()` command.
 5. The command delegates to the active repository.
-6. The repository upserts players, writes the match, and writes participants in a transaction.
-7. Delete requests flow through a matching service and command path before the repository removes participants and the match in a transaction.
+6. The repository upserts players, resolves the four roster slots, and writes the match in a transaction.
+7. Delete requests flow through a matching service and command path before the repository removes the match.
 8. The client invalidates affected queries, shows an in-app toast notification, and navigates to the destination screen when appropriate.
 
 Mutation handlers return `400` for malformed or schema-invalid payloads, `404` when an update targets a missing match, and `500` for unexpected persistence failures.
@@ -131,7 +131,6 @@ The core domain types live in `src/lib/types.ts`.
 
 - `Player`: persisted player record
 - `Game`: persisted match record; internal naming still uses `game`
-- `GameParticipant`: join record between a match and a player, including side and slot
 - `ResolvedGame`: a UI-facing match shape with `sideAPlayers` and `sideBPlayers` attached
 - `PlayerStatsSummary`, `PlayerDashboardMetrics`, `PlayerStanding`: derived metrics used by dashboard and stats views
 
@@ -141,6 +140,6 @@ Rules are enforced in more than one place by design:
 
 - Form and domain validation reject invalid match input before persistence
 - Postgres schema constraints enforce score validity and core invariants at the database level
-- SQLite test mode recreates equivalent constraints and trigger checks locally
+- SQLite test mode recreates equivalent constraints locally
 
 That duplication is intentional. It keeps invalid input out early while still protecting stored data if an invalid write path bypasses the UI.

@@ -53,6 +53,7 @@ APP_MODE=test npm run dev
 The app shell always includes a player picker. Dashboard, match history, and player-specific stats content depend on that selected player context.
 Reads and writes now flow through internal JSON route handlers under `src/app/api`.
 Match save, update, delete, and validation-summary feedback are surfaced through in-app toast notifications.
+Persisted player identity is deduplicated case-insensitively by normalized `name`, without a separate stored lookup column.
 
 ## Runtime Modes
 

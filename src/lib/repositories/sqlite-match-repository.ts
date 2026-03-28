@@ -3,8 +3,9 @@ import type Database from "better-sqlite3";
 import { getTestSqliteClient } from "@/lib/db/test-sqlite";
 import { logger } from "@/lib/logger";
 import { MatchNotFoundError } from "@/lib/match-errors";
-import { buildParticipantValues, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
+import { buildGamePlayerColumns, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
+import { normalizePlayerNameKey } from "@/lib/utils";
 
 type PlayerRow = {
   id: number;
@@ -53,18 +54,29 @@ function readResolvedMatches(client: Database.Database, id?: number) {
       "g.winner_side AS winnerSide,",
       "g.created_at AS gameCreatedAt,",
       "g.updated_at AS gameUpdatedAt,",
-      "gp.id AS participantId,",
-      "gp.side AS side,",
-      "gp.slot AS slot,",
-      "p.id AS playerId,",
-      "p.name AS playerName,",
-      "p.created_at AS playerCreatedAt,",
-      "p.updated_at AS playerUpdatedAt",
+      "sap1.id AS sideAPlayer1Id,",
+      "sap1.name AS sideAPlayer1Name,",
+      "sap1.created_at AS sideAPlayer1CreatedAt,",
+      "sap1.updated_at AS sideAPlayer1UpdatedAt,",
+      "sap2.id AS sideAPlayer2Id,",
+      "sap2.name AS sideAPlayer2Name,",
+      "sap2.created_at AS sideAPlayer2CreatedAt,",
+      "sap2.updated_at AS sideAPlayer2UpdatedAt,",
+      "sbp1.id AS sideBPlayer1Id,",
+      "sbp1.name AS sideBPlayer1Name,",
+      "sbp1.created_at AS sideBPlayer1CreatedAt,",
+      "sbp1.updated_at AS sideBPlayer1UpdatedAt,",
+      "sbp2.id AS sideBPlayer2Id,",
+      "sbp2.name AS sideBPlayer2Name,",
+      "sbp2.created_at AS sideBPlayer2CreatedAt,",
+      "sbp2.updated_at AS sideBPlayer2UpdatedAt",
       "FROM games g",
-      "LEFT JOIN game_participants gp ON gp.game_id = g.id",
-      "LEFT JOIN players p ON p.id = gp.player_id",
+      "LEFT JOIN players sap1 ON sap1.id = g.side_a_player_1_id",
+      "LEFT JOIN players sap2 ON sap2.id = g.side_a_player_2_id",
+      "LEFT JOIN players sbp1 ON sbp1.id = g.side_b_player_1_id",
+      "LEFT JOIN players sbp2 ON sbp2.id = g.side_b_player_2_id",
       id ? "WHERE g.id = ?" : "",
-      "ORDER BY g.played_at DESC, gp.side ASC, gp.slot ASC",
+      "ORDER BY g.played_at DESC, g.id DESC",
     ].filter(Boolean).join(" "),
   );
 
@@ -75,12 +87,13 @@ function readResolvedMatches(client: Database.Database, id?: number) {
 function upsertPlayers(names: string[], client: Database.Database) {
   const ids: number[] = [];
   const knownByNameKey = new Map<string, number>();
-  const findByNameKey = client.prepare("SELECT id FROM players WHERE name_key = ? LIMIT 1");
+  const findByNameKey = client.prepare("SELECT id FROM players WHERE lower(name) = ? LIMIT 1");
   const insertPlayer = client.prepare(
-    "INSERT INTO players (name, name_key, created_at, updated_at) VALUES (?, ?, ?, ?)",
+    "INSERT INTO players (name, created_at, updated_at) VALUES (?, ?, ?)",
   );
 
-  for (const { name, nameKey } of normalizePlayerNames(names)) {
+  for (const name of normalizePlayerNames(names)) {
+    const nameKey = normalizePlayerNameKey(name);
     const cachedId = knownByNameKey.get(nameKey);
 
     if (cachedId) {
@@ -98,7 +111,7 @@ function upsertPlayers(names: string[], client: Database.Database) {
     const timestamp = new Date().toISOString();
 
     try {
-      const inserted = insertPlayer.run(name, nameKey, timestamp, timestamp);
+      const inserted = insertPlayer.run(name, timestamp, timestamp);
       const id = Number(inserted.lastInsertRowid);
       knownByNameKey.set(nameKey, id);
       ids.push(id);
@@ -114,16 +127,6 @@ function upsertPlayers(names: string[], client: Database.Database) {
   }
 
   return ids;
-}
-
-function insertParticipants(client: Database.Database, gameId: number, sideAPlayerIds: number[], sideBPlayerIds: number[], createdAt: string) {
-  const insertParticipant = client.prepare(
-    "INSERT INTO game_participants (game_id, player_id, side, slot, created_at) VALUES (?, ?, ?, ?, ?)",
-  );
-
-  for (const participant of buildParticipantValues(gameId, sideAPlayerIds, sideBPlayerIds, createdAt)) {
-    insertParticipant.run(participant.gameId, participant.playerId, participant.side, participant.slot, participant.createdAt);
-  }
 }
 
 export const sqliteMatchRepository: MatchRepository = {
@@ -153,6 +156,7 @@ export const sqliteMatchRepository: MatchRepository = {
       const timestamp = new Date().toISOString();
       const sideAPlayerIds = upsertPlayers(input.sideAPlayers, client);
       const sideBPlayerIds = upsertPlayers(input.sideBPlayers, client);
+      const gamePlayerColumns = buildGamePlayerColumns(sideAPlayerIds, sideBPlayerIds);
       const playedAt = normalizePlayedAt(input.playedAt);
 
       if (input.id) {
@@ -160,13 +164,21 @@ export const sqliteMatchRepository: MatchRepository = {
           .prepare(
             [
               "UPDATE games",
-              "SET played_at = ?, format = ?, side_a_score = ?, side_b_score = ?, winner_side = ?, updated_at = ?",
+              [
+                "SET played_at = ?, format = ?, side_a_player_1_id = ?, side_a_player_2_id = ?,",
+                "side_b_player_1_id = ?, side_b_player_2_id = ?, side_a_score = ?, side_b_score = ?,",
+                "winner_side = ?, updated_at = ?",
+              ].join(" "),
               "WHERE id = ?",
             ].join(" "),
           )
           .run(
             playedAt,
             input.format,
+            gamePlayerColumns.sideAPlayer1Id,
+            gamePlayerColumns.sideAPlayer2Id,
+            gamePlayerColumns.sideBPlayer1Id,
+            gamePlayerColumns.sideBPlayer2Id,
             input.sideAScore,
             input.sideBScore,
             input.winnerSide,
@@ -179,9 +191,6 @@ export const sqliteMatchRepository: MatchRepository = {
           throw new MatchNotFoundError();
         }
 
-        client.prepare("DELETE FROM game_participants WHERE game_id = ?").run(input.id);
-        insertParticipants(client, input.id, sideAPlayerIds, sideBPlayerIds, timestamp);
-
         logRepositoryEvent("saveMatch:updated", { id: input.id });
         return input.id;
       }
@@ -190,13 +199,21 @@ export const sqliteMatchRepository: MatchRepository = {
         .prepare(
           [
             "INSERT INTO games",
-            "(played_at, format, side_a_score, side_b_score, winner_side, created_at, updated_at)",
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [
+              "(played_at, format, side_a_player_1_id, side_a_player_2_id,",
+              "side_b_player_1_id, side_b_player_2_id, side_a_score, side_b_score,",
+              "winner_side, created_at, updated_at)",
+            ].join(" "),
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           ].join(" "),
         )
         .run(
           playedAt,
           input.format,
+          gamePlayerColumns.sideAPlayer1Id,
+          gamePlayerColumns.sideAPlayer2Id,
+          gamePlayerColumns.sideBPlayer1Id,
+          gamePlayerColumns.sideBPlayer2Id,
           input.sideAScore,
           input.sideBScore,
           input.winnerSide,
@@ -205,7 +222,6 @@ export const sqliteMatchRepository: MatchRepository = {
         );
 
       const matchId = Number(inserted.lastInsertRowid);
-      insertParticipants(client, matchId, sideAPlayerIds, sideBPlayerIds, timestamp);
 
       logRepositoryEvent("saveMatch:created", { id: matchId });
       return matchId;
@@ -219,7 +235,6 @@ export const sqliteMatchRepository: MatchRepository = {
     logRepositoryEvent("deleteMatch:start", { id });
 
     const run = client.transaction(() => {
-      client.prepare("DELETE FROM game_participants WHERE game_id = ?").run(id);
       const deleted = client.prepare("DELETE FROM games WHERE id = ?").run(id);
 
       if (!deleted.changes) {

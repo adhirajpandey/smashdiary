@@ -20,19 +20,9 @@ export type Game = {
   updatedAt: string;
 };
 
-export type GameParticipant = {
-  id: number;
-  gameId: number;
-  playerId: number;
-  side: WinnerSide;
-  slot: 1 | 2;
-  createdAt: string;
-};
-
 export type DiaryStore = {
   players: Player[];
   games: Game[];
-  gameParticipants: GameParticipant[];
 };
 
 export type ResolvedGame = Game & {

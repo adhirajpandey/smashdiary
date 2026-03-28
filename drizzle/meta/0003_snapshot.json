@@ -1,0 +1,254 @@
+{
+  "id": "a7ca4659-62df-4f8d-bda3-17574105993a",
+  "prevId": "6a1c9190-d6b6-4770-9f2c-930a86f5cab0",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.games": {
+      "name": "games",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "played_at": {
+          "name": "played_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata'"
+        },
+        "format": {
+          "name": "format",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side_a_player_1_id": {
+          "name": "side_a_player_1_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side_a_player_2_id": {
+          "name": "side_a_player_2_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "side_b_player_1_id": {
+          "name": "side_b_player_1_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side_b_player_2_id": {
+          "name": "side_b_player_2_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "side_a_score": {
+          "name": "side_a_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side_b_score": {
+          "name": "side_b_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "winner_side": {
+          "name": "winner_side",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "games_side_a_player_1_id_players_id_fk": {
+          "name": "games_side_a_player_1_id_players_id_fk",
+          "tableFrom": "games",
+          "tableTo": "players",
+          "columnsFrom": [
+            "side_a_player_1_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "games_side_a_player_2_id_players_id_fk": {
+          "name": "games_side_a_player_2_id_players_id_fk",
+          "tableFrom": "games",
+          "tableTo": "players",
+          "columnsFrom": [
+            "side_a_player_2_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "games_side_b_player_1_id_players_id_fk": {
+          "name": "games_side_b_player_1_id_players_id_fk",
+          "tableFrom": "games",
+          "tableTo": "players",
+          "columnsFrom": [
+            "side_b_player_1_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "games_side_b_player_2_id_players_id_fk": {
+          "name": "games_side_b_player_2_id_players_id_fk",
+          "tableFrom": "games",
+          "tableTo": "players",
+          "columnsFrom": [
+            "side_b_player_2_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "games_format_check": {
+          "name": "games_format_check",
+          "value": "\"games\".\"format\" in ('singles', 'doubles')"
+        },
+        "games_winner_side_check": {
+          "name": "games_winner_side_check",
+          "value": "\"games\".\"winner_side\" in ('A', 'B')"
+        },
+        "games_roster_shape_check": {
+          "name": "games_roster_shape_check",
+          "value": "\n        (\"games\".\"format\" = 'singles' and \"games\".\"side_a_player_2_id\" is null and \"games\".\"side_b_player_2_id\" is null)\n        or\n        (\"games\".\"format\" = 'doubles' and \"games\".\"side_a_player_2_id\" is not null and \"games\".\"side_b_player_2_id\" is not null)\n      "
+        },
+        "games_unique_players_check": {
+          "name": "games_unique_players_check",
+          "value": "\n        (\"games\".\"side_a_player_2_id\" is null or \"games\".\"side_a_player_1_id\" <> \"games\".\"side_a_player_2_id\")\n        and \"games\".\"side_a_player_1_id\" <> \"games\".\"side_b_player_1_id\"\n        and (\"games\".\"side_b_player_2_id\" is null or \"games\".\"side_a_player_1_id\" <> \"games\".\"side_b_player_2_id\")\n        and (\"games\".\"side_a_player_2_id\" is null or \"games\".\"side_a_player_2_id\" <> \"games\".\"side_b_player_1_id\")\n        and (\"games\".\"side_a_player_2_id\" is null or \"games\".\"side_b_player_2_id\" is null or \"games\".\"side_a_player_2_id\" <> \"games\".\"side_b_player_2_id\")\n        and (\"games\".\"side_b_player_2_id\" is null or \"games\".\"side_b_player_1_id\" <> \"games\".\"side_b_player_2_id\")\n      "
+        },
+        "games_score_bounds_check": {
+          "name": "games_score_bounds_check",
+          "value": "\"games\".\"side_a_score\" between 0 and 30 and \"games\".\"side_b_score\" between 0 and 30"
+        },
+        "games_no_tie_check": {
+          "name": "games_no_tie_check",
+          "value": "\"games\".\"side_a_score\" <> \"games\".\"side_b_score\""
+        },
+        "games_winner_consistency_check": {
+          "name": "games_winner_consistency_check",
+          "value": "(\"games\".\"winner_side\" = 'A' and \"games\".\"side_a_score\" > \"games\".\"side_b_score\") or (\"games\".\"winner_side\" = 'B' and \"games\".\"side_b_score\" > \"games\".\"side_a_score\")"
+        },
+        "games_finish_rule_check": {
+          "name": "games_finish_rule_check",
+          "value": "\n        greatest(\"games\".\"side_a_score\", \"games\".\"side_b_score\") >= 21\n        and (\n          (greatest(\"games\".\"side_a_score\", \"games\".\"side_b_score\") = 21 and least(\"games\".\"side_a_score\", \"games\".\"side_b_score\") <= 19)\n          or (\n            greatest(\"games\".\"side_a_score\", \"games\".\"side_b_score\") between 22 and 29\n            and greatest(\"games\".\"side_a_score\", \"games\".\"side_b_score\") - least(\"games\".\"side_a_score\", \"games\".\"side_b_score\") = 2\n          )\n          or (\n            greatest(\"games\".\"side_a_score\", \"games\".\"side_b_score\") = 30\n            and least(\"games\".\"side_a_score\", \"games\".\"side_b_score\") = 29\n          )\n        )\n      "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.players": {
+      "name": "players",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_key": {
+          "name": "name_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "players_name_key_idx": {
+          "name": "players_name_key_idx",
+          "columns": [
+            {
+              "expression": "name_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

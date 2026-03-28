@@ -1,6 +1,6 @@
 # Data Model
 
-Smash Diary stores badminton matches using three core tables: players, games, and game participants. In user-facing docs we call them matches, but the current schema and some TypeScript types still use the term `game`.
+Smash Diary stores badminton matches using two core tables: `players` and `games`. In user-facing docs we call them matches, but the current schema and some TypeScript types still use the term `game`.
 
 ## Tables and Relationships
 
@@ -14,12 +14,11 @@ Fields of note:
 
 - `id`: numeric primary key
 - `name`: display name
-- `name_key`: normalized lookup key used to prevent duplicates
 - `created_at`, `updated_at`: timestamps
 
 Constraint:
 
-- unique index on `name_key`
+- unique case-insensitive index on `lower(name)`
 
 ### `games`
 
@@ -30,6 +29,8 @@ Fields of note:
 - `id`: numeric primary key
 - `played_at`: match timestamp stored as an Asia/Kolkata wall-clock value
 - `format`: `singles` or `doubles`
+- `side_a_player_1_id`, `side_b_player_1_id`: required player references for the first slot on each side
+- `side_a_player_2_id`, `side_b_player_2_id`: optional second-slot player references used only for doubles
 - `side_a_score`, `side_b_score`: final scores
 - `winner_side`: `A` or `B`
 - `created_at`, `updated_at`: timestamps
@@ -37,44 +38,31 @@ Fields of note:
 Key constraints:
 
 - format must be `singles` or `doubles`
+- singles rows must leave both second-slot player columns empty
+- doubles rows must populate both second-slot player columns
+- a player cannot appear more than once in the four occupied roster slots
 - winner side must be `A` or `B`
 - scores must stay between 0 and 30
 - ties are not allowed
 - winner side must match the higher score
 - the final score must satisfy badminton finish rules
 
-### `game_participants`
-
-Connects players to a match and records side membership.
-
-Fields of note:
-
-- `game_id`: foreign key to `games`
-- `player_id`: foreign key to `players`
-- `side`: `A` or `B`
-- `slot`: `1` or `2`
-- `created_at`: timestamp
-
-Key constraints:
-
-- each side uses slots `1` or `2`
-- a slot can only be used once per side per match
-- the same player cannot appear twice in the same match
-
 ## Match Composition
 
-Participants are stored separately from the match row.
+Participants are stored directly on the match row.
 
-- side A players are stored as `game_participants` rows with `side = 'A'`
-- side B players are stored as `game_participants` rows with `side = 'B'`
-- `slot` preserves player order within a side
+- side A slot 1 is stored in `games.side_a_player_1_id`
+- side A slot 2 is stored in `games.side_a_player_2_id`
+- side B slot 1 is stored in `games.side_b_player_1_id`
+- side B slot 2 is stored in `games.side_b_player_2_id`
+- slot columns preserve player order within each side
 
 Expected roster size by match format:
 
 - singles: one player per side
 - doubles: two players per side
 
-That rule is enforced in the application validation layer and also protected in the SQLite test-mode schema through triggers. The Postgres repository writes participants based on already-validated input.
+That rule is enforced in the application validation layer and also protected by Postgres and SQLite table checks. The repositories write slot IDs based on already-validated input.
 
 ## Score Rules
 
@@ -105,7 +93,6 @@ These are the raw storage-oriented records reflected in `src/lib/types.ts`.
 
 - `Player`
 - `Game`
-- `GameParticipant`
 
 ### Resolved shape
 
@@ -115,7 +102,7 @@ The UI primarily consumes `ResolvedGame`, which combines:
 - `sideAPlayers: Player[]`
 - `sideBPlayers: Player[]`
 
-Repositories build this resolved shape by joining match rows, participant rows, and player rows, then grouping them by match ID.
+Repositories build this resolved shape by joining the four game slot columns back to `players`, then assembling side arrays in slot order.
 
 ## Derived Metrics
 

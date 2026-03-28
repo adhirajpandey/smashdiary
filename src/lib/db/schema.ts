@@ -2,7 +2,6 @@ import {
   bigint,
   bigserial,
   check,
-  index,
   integer,
   pgTable,
   text,
@@ -16,11 +15,10 @@ export const players = pgTable(
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
     name: text("name").notNull(),
-    nameKey: text("name_key").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
-  (table) => [uniqueIndex("players_name_key_idx").on(table.nameKey)],
+  (table) => [uniqueIndex("players_name_lower_idx").on(sql`lower(${table.name})`)],
 );
 
 export const games = pgTable(
@@ -31,6 +29,16 @@ export const games = pgTable(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata'`),
     format: text("format").notNull(),
+    sideAPlayer1Id: bigint("side_a_player_1_id", { mode: "number" })
+      .notNull()
+      .references(() => players.id, { onDelete: "restrict" }),
+    sideAPlayer2Id: bigint("side_a_player_2_id", { mode: "number" })
+      .references(() => players.id, { onDelete: "restrict" }),
+    sideBPlayer1Id: bigint("side_b_player_1_id", { mode: "number" })
+      .notNull()
+      .references(() => players.id, { onDelete: "restrict" }),
+    sideBPlayer2Id: bigint("side_b_player_2_id", { mode: "number" })
+      .references(() => players.id, { onDelete: "restrict" }),
     sideAScore: integer("side_a_score").notNull(),
     sideBScore: integer("side_b_score").notNull(),
     winnerSide: text("winner_side").notNull(),
@@ -40,6 +48,25 @@ export const games = pgTable(
   (table) => [
     check("games_format_check", sql`${table.format} in ('singles', 'doubles')`),
     check("games_winner_side_check", sql`${table.winnerSide} in ('A', 'B')`),
+    check(
+      "games_roster_shape_check",
+      sql`
+        (${table.format} = 'singles' and ${table.sideAPlayer2Id} is null and ${table.sideBPlayer2Id} is null)
+        or
+        (${table.format} = 'doubles' and ${table.sideAPlayer2Id} is not null and ${table.sideBPlayer2Id} is not null)
+      `,
+    ),
+    check(
+      "games_unique_players_check",
+      sql`
+        (${table.sideAPlayer2Id} is null or ${table.sideAPlayer1Id} <> ${table.sideAPlayer2Id})
+        and ${table.sideAPlayer1Id} <> ${table.sideBPlayer1Id}
+        and (${table.sideBPlayer2Id} is null or ${table.sideAPlayer1Id} <> ${table.sideBPlayer2Id})
+        and (${table.sideAPlayer2Id} is null or ${table.sideAPlayer2Id} <> ${table.sideBPlayer1Id})
+        and (${table.sideAPlayer2Id} is null or ${table.sideBPlayer2Id} is null or ${table.sideAPlayer2Id} <> ${table.sideBPlayer2Id})
+        and (${table.sideBPlayer2Id} is null or ${table.sideBPlayer1Id} <> ${table.sideBPlayer2Id})
+      `,
+    ),
     check("games_score_bounds_check", sql`${table.sideAScore} between 0 and 30 and ${table.sideBScore} between 0 and 30`),
     check("games_no_tie_check", sql`${table.sideAScore} <> ${table.sideBScore}`),
     check(
@@ -63,29 +90,5 @@ export const games = pgTable(
         )
       `,
     ),
-  ],
-);
-
-export const gameParticipants = pgTable(
-  "game_participants",
-  {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
-    gameId: bigint("game_id", { mode: "number" })
-      .notNull()
-      .references(() => games.id, { onDelete: "restrict" }),
-    playerId: bigint("player_id", { mode: "number" })
-      .notNull()
-      .references(() => players.id, { onDelete: "restrict" }),
-    side: text("side").notNull(),
-    slot: integer("slot").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-  },
-  (table) => [
-    check("game_participants_side_check", sql`${table.side} in ('A', 'B')`),
-    check("game_participants_slot_check", sql`${table.slot} in (1, 2)`),
-    uniqueIndex("game_participants_game_side_slot_idx").on(table.gameId, table.side, table.slot),
-    uniqueIndex("game_participants_game_player_idx").on(table.gameId, table.playerId),
-    index("game_participants_game_idx").on(table.gameId),
-    index("game_participants_player_idx").on(table.playerId),
   ],
 );

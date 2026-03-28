@@ -1,4 +1,4 @@
-import { buildParticipantValues, normalizePlayedAt, resolveMatches, sortPlayers } from "@/lib/repositories/shared";
+import { buildGamePlayerColumns, normalizePlayedAt, resolveMatches, sortPlayers } from "@/lib/repositories/shared";
 import type { Player } from "@/lib/types";
 
 describe("repository shared helpers", () => {
@@ -23,30 +23,22 @@ describe("repository shared helpers", () => {
         winnerSide: "A",
         gameCreatedAt: "2026-03-20T10:00:00.000Z",
         gameUpdatedAt: "2026-03-20T10:00:00.000Z",
-        participantId: 1,
-        side: "A",
-        slot: 1,
-        playerId: 100,
-        playerName: "Aman",
-        playerCreatedAt: "2026-03-20T10:00:00.000Z",
-        playerUpdatedAt: "2026-03-20T10:00:00.000Z",
-      },
-      {
-        gameId: 12,
-        playedAt: "2026-03-20T10:00:00.000Z",
-        format: "doubles",
-        sideAScore: 21,
-        sideBScore: 18,
-        winnerSide: "A",
-        gameCreatedAt: "2026-03-20T10:00:00.000Z",
-        gameUpdatedAt: "2026-03-20T10:00:00.000Z",
-        participantId: 2,
-        side: "B",
-        slot: 1,
-        playerId: 101,
-        playerName: "Riya",
-        playerCreatedAt: "2026-03-20T10:00:00.000Z",
-        playerUpdatedAt: "2026-03-20T10:00:00.000Z",
+        sideAPlayer1Id: 100,
+        sideAPlayer1Name: "Aman",
+        sideAPlayer1CreatedAt: "2026-03-20T10:00:00.000Z",
+        sideAPlayer1UpdatedAt: "2026-03-20T10:00:00.000Z",
+        sideAPlayer2Id: null,
+        sideAPlayer2Name: null,
+        sideAPlayer2CreatedAt: null,
+        sideAPlayer2UpdatedAt: null,
+        sideBPlayer1Id: 101,
+        sideBPlayer1Name: "Riya",
+        sideBPlayer1CreatedAt: "2026-03-20T10:00:00.000Z",
+        sideBPlayer1UpdatedAt: "2026-03-20T10:00:00.000Z",
+        sideBPlayer2Id: null,
+        sideBPlayer2Name: null,
+        sideBPlayer2CreatedAt: null,
+        sideBPlayer2UpdatedAt: null,
       },
     ]);
 
@@ -55,12 +47,13 @@ describe("repository shared helpers", () => {
     expect(matches[0]?.sideBPlayers.map((player) => player.name)).toEqual(["Riya"]);
   });
 
-  it("builds participant rows with stable side and slot ordering", () => {
-    expect(buildParticipantValues(5, [11, 12], [21], "2026-03-20T10:00:00.000Z")).toEqual([
-      { gameId: 5, playerId: 11, side: "A", slot: 1, createdAt: "2026-03-20T10:00:00.000Z" },
-      { gameId: 5, playerId: 12, side: "A", slot: 2, createdAt: "2026-03-20T10:00:00.000Z" },
-      { gameId: 5, playerId: 21, side: "B", slot: 1, createdAt: "2026-03-20T10:00:00.000Z" },
-    ]);
+  it("builds game player columns with stable slot ordering", () => {
+    expect(buildGamePlayerColumns([11, 12], [21])).toEqual({
+      sideAPlayer1Id: 11,
+      sideAPlayer2Id: 12,
+      sideBPlayer1Id: 21,
+      sideBPlayer2Id: null,
+    });
   });
 
   it("normalizes playedAt values to IST wall-clock storage", () => {

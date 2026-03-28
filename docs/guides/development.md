@@ -130,6 +130,7 @@ For match-entry changes, check both of these places:
 
 - `src/lib/domain/matches.ts`: roster rules and score validity
 - `src/lib/db/schema.ts`: database-level constraints
+- player identity is deduplicated case-insensitively from normalized `name`; there is no separate persisted lookup column
 
 If a schema-affecting change also impacts test mode, update `src/lib/db/test-sqlite.ts` to keep local behavior aligned.
 
