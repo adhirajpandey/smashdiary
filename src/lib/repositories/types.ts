@@ -1,8 +1,9 @@
-import type { Player, ResolvedGame } from "@/lib/types";
+import type { MatchSlot, Player, ResolvedGame } from "@/lib/types";
 
 export type SaveMatchInput = {
   id?: number;
-  playedAt: string;
+  playedOn: string;
+  slot: MatchSlot;
   format: ResolvedGame["format"];
   sideAPlayers: string[];
   sideBPlayers: string[];

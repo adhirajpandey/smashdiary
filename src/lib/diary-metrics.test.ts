@@ -19,7 +19,8 @@ const players: Player[] = [
 const games: ResolvedGame[] = [
   {
     id: 3,
-    playedAt: "2026-03-20T19:30:00.000Z",
+    playedOn: "2026-03-20",
+    slot: "8 PM",
     format: "doubles",
     sideAScore: 18,
     sideBScore: 21,
@@ -31,7 +32,8 @@ const games: ResolvedGame[] = [
   },
   {
     id: 2,
-    playedAt: "2026-03-20T18:00:00.000Z",
+    playedOn: "2026-03-20",
+    slot: "6 PM",
     format: "singles",
     sideAScore: 22,
     sideBScore: 20,
@@ -43,7 +45,8 @@ const games: ResolvedGame[] = [
   },
   {
     id: 1,
-    playedAt: "2026-03-19T18:30:00.000Z",
+    playedOn: "2026-03-19",
+    slot: "7 PM",
     format: "singles",
     sideAScore: 21,
     sideBScore: 17,

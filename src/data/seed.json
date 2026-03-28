@@ -28,27 +28,39 @@
   "games": [
     {
       "id": "g1",
-      "playedAt": "2026-03-19T18:30:00.000Z",
       "format": "singles",
-      "sideAPlayerIds": ["p1"],
-      "sideBPlayerIds": ["p2"],
+      "sideAPlayerIds": [
+        "p1"
+      ],
+      "sideBPlayerIds": [
+        "p2"
+      ],
       "sideAScore": 21,
       "sideBScore": 17,
       "winnerSide": "A",
       "createdAt": "2026-03-19T18:45:00.000Z",
-      "updatedAt": "2026-03-19T18:45:00.000Z"
+      "updatedAt": "2026-03-19T18:45:00.000Z",
+      "playedOn": "2026-03-19",
+      "slot": "8 PM"
     },
     {
       "id": "g2",
-      "playedAt": "2026-03-20T19:10:00.000Z",
       "format": "doubles",
-      "sideAPlayerIds": ["p1", "p3"],
-      "sideBPlayerIds": ["p2", "p4"],
+      "sideAPlayerIds": [
+        "p1",
+        "p3"
+      ],
+      "sideBPlayerIds": [
+        "p2",
+        "p4"
+      ],
       "sideAScore": 18,
       "sideBScore": 21,
       "winnerSide": "B",
       "createdAt": "2026-03-20T19:22:00.000Z",
-      "updatedAt": "2026-03-20T19:22:00.000Z"
+      "updatedAt": "2026-03-20T19:22:00.000Z",
+      "playedOn": "2026-03-20",
+      "slot": "8 PM"
     }
   ]
 }

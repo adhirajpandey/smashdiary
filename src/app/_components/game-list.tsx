@@ -28,7 +28,7 @@ export function GameList({ games }: Readonly<{ games: ResolvedGame[] }>) {
                 <p className="eyebrow section-heading__eyebrow">
                   {game.format} game
                 </p>
-                <p className="match-card__date">{formatCompactDate(game.playedAt)}</p>
+                <p className="match-card__date">{formatCompactDate(game.playedOn, game.slot)}</p>
               </div>
               <span className="match-card__winner-tag">Winner: {winnerLabel}</span>
             </div>

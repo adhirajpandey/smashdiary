@@ -24,7 +24,8 @@ export function buildMatchFeedItems(matches: ResolvedGame[], playerId?: number |
 
     return {
       id: match.id,
-      playedAt: match.playedAt,
+      playedOn: match.playedOn,
+      slot: match.slot,
       format: match.format,
       result,
       ownSideNames: perspective.ownSide.map((player) => player.name),

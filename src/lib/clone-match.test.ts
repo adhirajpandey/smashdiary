@@ -3,7 +3,8 @@ import type { ResolvedGame } from "@/lib/types";
 
 const match: ResolvedGame = {
   id: 12,
-  playedAt: "2026-03-22 12:00:00",
+  playedOn: "2026-03-22",
+  slot: "12 PM",
   format: "doubles",
   sideAScore: 21,
   sideBScore: 19,

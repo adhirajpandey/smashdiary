@@ -1,5 +1,5 @@
 import type { GameFormFieldErrors } from "@/lib/action-errors";
-import type { ResolvedGame } from "@/lib/types";
+import type { MatchSlot, ResolvedGame } from "@/lib/types";
 
 export type ApiErrorCode = "INTERNAL_ERROR" | "NOT_FOUND" | "VALIDATION_ERROR";
 
@@ -13,7 +13,8 @@ export type ApiError = {
 export type ApiResponse<T> = { data: T } | { error: ApiError };
 
 export type MatchMutationInput = {
-  playedAt: string;
+  playedOn: string;
+  slot: MatchSlot;
   format: ResolvedGame["format"];
   sideAPlayers: string[];
   sideBPlayers: string[];

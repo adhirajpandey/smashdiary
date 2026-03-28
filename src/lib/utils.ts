@@ -1,6 +1,9 @@
 import clsx, { type ClassValue } from "clsx";
 
+import { MATCH_SLOTS, type MatchSlot } from "@/lib/types";
+
 export const MATCH_TIME_ZONE = "Asia/Kolkata";
+export const DEFAULT_MATCH_SLOT: MatchSlot = "8 PM";
 
 export type MatchDateFormatVariant = "compact" | "detail";
 
@@ -8,12 +11,11 @@ type MatchDateParts = {
   year: number;
   month: number;
   day: number;
-  hour: number;
-  minute: number;
-  second: number;
 };
 
+const wallClockDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
 const wallClockDateTimePattern = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/;
+const slotOrder = new Map(MATCH_SLOTS.map((slot, index) => [slot, index]));
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -25,16 +27,22 @@ function padDateSegment(value: number) {
 
 function buildMatchDateParts(value: string): MatchDateParts {
   const trimmed = value.trim();
+  const wallClockDateMatch = trimmed.match(wallClockDatePattern);
   const wallClockMatch = trimmed.match(wallClockDateTimePattern);
+
+  if (wallClockDateMatch) {
+    return {
+      year: Number(wallClockDateMatch[1]),
+      month: Number(wallClockDateMatch[2]),
+      day: Number(wallClockDateMatch[3]),
+    };
+  }
 
   if (wallClockMatch) {
     return {
       year: Number(wallClockMatch[1]),
       month: Number(wallClockMatch[2]),
       day: Number(wallClockMatch[3]),
-      hour: Number(wallClockMatch[4]),
-      minute: Number(wallClockMatch[5]),
-      second: Number(wallClockMatch[6] ?? "0"),
     };
   }
 
@@ -47,22 +55,19 @@ function buildMatchDateParts(value: string): MatchDateParts {
     year: parsed.getUTCFullYear(),
     month: parsed.getUTCMonth() + 1,
     day: parsed.getUTCDate(),
-    hour: parsed.getUTCHours(),
-    minute: parsed.getUTCMinutes(),
-    second: parsed.getUTCSeconds(),
   };
 }
 
-function createUtcWallClockDate(value: string) {
+function createUtcDate(value: string) {
   const parts = buildMatchDateParts(value);
-  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second));
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
 }
 
-function formatMatchDateTime(value: string, options: Intl.DateTimeFormatOptions) {
+function formatMatchDateValue(value: string, options: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat("en-IN", {
     ...options,
     timeZone: "UTC",
-  }).format(createUtcWallClockDate(value));
+  }).format(createUtcDate(value));
 }
 
 export function formatMatchDate(value: string, variant: MatchDateFormatVariant): string;
@@ -71,27 +76,38 @@ export function formatMatchDate(value: string, first: MatchDateFormatVariant | s
   const variant = second ?? (first as MatchDateFormatVariant);
 
   if (variant === "compact") {
-    return formatMatchDateTime(value, {
+    return formatMatchDateValue(value, {
       day: "numeric",
       month: "short",
     });
   }
 
-  return formatMatchDateTime(value, {
+  return formatMatchDateValue(value, {
     weekday: "short",
     day: "numeric",
     month: "short",
-    hour: "numeric",
-    minute: "2-digit",
   });
 }
 
-export function formatGameDate(value: string) {
-  return formatMatchDate(value, "detail");
+export function isMatchSlot(value: string): value is MatchSlot {
+  return slotOrder.has(value as MatchSlot);
 }
 
-export function formatCompactDate(value: string) {
-  return formatMatchDate(value, "compact");
+export function getMatchSlotOrder(slot: MatchSlot) {
+  return slotOrder.get(slot) ?? -1;
+}
+
+export function formatMatchDateWithSlot(value: string, slot: MatchSlot, variant: MatchDateFormatVariant) {
+  return `${formatMatchDate(value, variant)} • ${slot}`;
+}
+
+export function formatGameDate(value: string, slot: MatchSlot) {
+  return formatMatchDateWithSlot(value, slot, "detail");
+}
+
+export function formatCompactDate(value: string, slot?: MatchSlot) {
+  const formattedDate = formatMatchDate(value, "compact");
+  return slot ? `${formattedDate} • ${slot}` : formattedDate;
 }
 
 export function formatScore(value: number) {
@@ -102,40 +118,30 @@ export function formatScoreline(scoreA: number, scoreB: number, separator: strin
   return `${formatScore(scoreA)}${separator}${formatScore(scoreB)}`;
 }
 
-export function normalizePlayedAtValue(value: string) {
+export function normalizePlayedOnValue(value: string) {
   const parts = buildMatchDateParts(value);
-  return [
-    `${parts.year}-${padDateSegment(parts.month)}-${padDateSegment(parts.day)}`,
-    `${padDateSegment(parts.hour)}:${padDateSegment(parts.minute)}:${padDateSegment(parts.second)}`,
-  ].join(" ");
+  return `${parts.year}-${padDateSegment(parts.month)}-${padDateSegment(parts.day)}`;
 }
 
-export function toInputDateTimeValue(value: string) {
-  const parts = buildMatchDateParts(value);
-  return [
-    `${parts.year}-${padDateSegment(parts.month)}-${padDateSegment(parts.day)}`,
-    `${padDateSegment(parts.hour)}:${padDateSegment(parts.minute)}`,
-  ].join("T");
+export function toInputDateValue(value: string) {
+  return normalizePlayedOnValue(value);
 }
 
-export function fromInputDateTimeValue(value: string) {
-  return normalizePlayedAtValue(value);
+export function fromInputDateValue(value: string) {
+  return normalizePlayedOnValue(value);
 }
 
-export function getCurrentInputDateTimeValue(now = new Date()) {
+export function getCurrentInputDateValue(now = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: MATCH_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
   });
   const parts = formatter.formatToParts(now);
   const getPart = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
 
-  return `${getPart("year")}-${getPart("month")}-${getPart("day")}T${getPart("hour")}:${getPart("minute")}`;
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
 }
 
 export function ensureArray<T>(value: T | T[]) {

@@ -40,7 +40,8 @@ describe("sqliteMatchRepository player deduplication", () => {
     const beforeCount = countPlayers();
 
     const matchId = await sqliteMatchRepository.saveMatch({
-      playedAt: "2026-03-29T09:30",
+      playedOn: "2026-03-29",
+      slot: "9 AM",
       format: "singles",
       sideAScore: 21,
       sideBScore: 18,
@@ -60,7 +61,8 @@ describe("sqliteMatchRepository player deduplication", () => {
     const beforeCount = countPlayers();
 
     const matchId = await sqliteMatchRepository.saveMatch({
-      playedAt: "2026-03-29T10:00",
+      playedOn: "2026-03-29",
+      slot: "10 AM",
       format: "singles",
       sideAScore: 21,
       sideBScore: 16,

@@ -28,7 +28,7 @@ export function MatchDetailView({ match }: Readonly<{ match: ResolvedGame }>) {
           <SectionHeading
             eyebrow="Match detail"
             title={getFormatTitle(match.format)}
-            description={formatGameDate(match.playedAt)}
+            description={formatGameDate(match.playedOn, match.slot)}
             titleClassName="page-title detail-page__title"
           />
           <MatchActionsMenu className="detail-page__actions" deleteRedirectHref="/matches" matchId={match.id} />

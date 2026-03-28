@@ -2,6 +2,7 @@ import {
   bigint,
   bigserial,
   check,
+  date,
   integer,
   pgTable,
   text,
@@ -25,9 +26,8 @@ export const games = pgTable(
   "games",
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
-    playedAt: timestamp("played_at", { mode: "string" })
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata'`),
+    playedOn: date("played_on", { mode: "string" }).notNull(),
+    slot: text("slot").notNull(),
     format: text("format").notNull(),
     sideAPlayer1Id: bigint("side_a_player_1_id", { mode: "number" })
       .notNull()
@@ -46,6 +46,10 @@ export const games = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
   (table) => [
+    check(
+      "games_slot_check",
+      sql`${table.slot} in ('12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM')`,
+    ),
     check("games_format_check", sql`${table.format} in ('singles', 'doubles')`),
     check("games_winner_side_check", sql`${table.winnerSide} in ('A', 'B')`),
     check(

@@ -4,7 +4,8 @@ import path from "node:path";
 import Database from "better-sqlite3";
 
 import seedData from "@/data/diary.json";
-import { normalizePlayedAtValue } from "@/lib/utils";
+import { MATCH_SLOTS } from "@/lib/types";
+import { normalizePlayedOnValue } from "@/lib/utils";
 
 type LegacySeedPlayer = {
   id: string;
@@ -15,7 +16,8 @@ type LegacySeedPlayer = {
 
 type LegacySeedGame = {
   id: string;
-  playedAt: string;
+  playedOn: string;
+  slot: (typeof MATCH_SLOTS)[number];
   format: "singles" | "doubles";
   sideAPlayerIds: string[];
   sideBPlayerIds: string[];
@@ -58,7 +60,8 @@ function ensureSchema(client: Database.Database) {
 
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      played_at TEXT NOT NULL,
+      played_on TEXT NOT NULL,
+      slot TEXT NOT NULL CHECK(slot IN ('12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM')),
       format TEXT NOT NULL CHECK(format IN ('singles', 'doubles')),
       side_a_player_1_id INTEGER NOT NULL REFERENCES players(id) ON DELETE RESTRICT,
       side_a_player_2_id INTEGER REFERENCES players(id) ON DELETE RESTRICT,
@@ -113,11 +116,11 @@ function resetAndSeed(client: Database.Database) {
     [
       "INSERT INTO games",
       [
-        "(played_at, format, side_a_player_1_id, side_a_player_2_id,",
+        "(played_on, slot, format, side_a_player_1_id, side_a_player_2_id,",
         "side_b_player_1_id, side_b_player_2_id, side_a_score, side_b_score,",
         "winner_side, created_at, updated_at)",
       ].join(" "),
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     ].join(" "),
   );
 
@@ -152,7 +155,8 @@ function resetAndSeed(client: Database.Database) {
       });
 
       insertGame.run(
-        normalizePlayedAtValue(game.playedAt),
+        normalizePlayedOnValue(game.playedOn),
+        game.slot,
         game.format,
         sideAPlayerIds[0] ?? null,
         sideAPlayerIds[1] ?? null,

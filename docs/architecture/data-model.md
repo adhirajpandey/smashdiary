@@ -27,7 +27,8 @@ Represents one completed badminton match.
 Fields of note:
 
 - `id`: numeric primary key
-- `played_at`: match timestamp stored as an Asia/Kolkata wall-clock value
+- `played_on`: match date stored as a date-only value
+- `slot`: hourly slot label from `12 AM` through `11 PM`
 - `format`: `singles` or `doubles`
 - `side_a_player_1_id`, `side_b_player_1_id`: required player references for the first slot on each side
 - `side_a_player_2_id`, `side_b_player_2_id`: optional second-slot player references used only for doubles
@@ -83,7 +84,7 @@ Rejected conditions include:
 
 ## Persisted vs Resolved Shapes
 
-`played_at` is intentionally stored as the match's local wall-clock time in Asia/Kolkata. The app does not normalize it to UTC for persistence, which keeps the entered date and time stable across server and client rendering.
+`played_on` is intentionally stored as a date-only value, and `slot` carries the selected hour label separately. The app does not persist a full wall-clock timestamp for match entry anymore, which keeps the entered date and selected slot stable across server and client rendering.
 
 The repository layer exposes two conceptual data shapes:
 

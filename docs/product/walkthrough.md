@@ -39,7 +39,7 @@ Current supported behavior:
 - assign players to side A and side B
 - use existing player suggestions
 - create new players implicitly by typing names during submission
-- prefill the played-at field with the current local date and time for new entries
+- prefill the date field with the current local date and default the slot dropdown to `8 PM` for new entries
 - adjust scores with either number inputs or score stepper buttons
 - route to the saved match detail screen after a successful save
 
@@ -52,7 +52,7 @@ The detail screen shows a single resolved match.
 It currently displays:
 
 - match format
-- played date
+- played date and slot
 - final score
 - winning side
 - side A roster

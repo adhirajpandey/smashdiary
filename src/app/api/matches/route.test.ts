@@ -26,7 +26,8 @@ describe("GET /api/matches", () => {
 
 describe("POST /api/matches", () => {
   const payload = {
-    playedAt: "2026-03-22T12:00",
+    playedOn: "2026-03-22",
+    slot: "12 PM",
     format: "singles",
     sideAScore: 21,
     sideBScore: 18,

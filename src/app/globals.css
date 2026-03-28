@@ -79,7 +79,7 @@ select {
   padding-right: 1.5rem;
 }
 
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
@@ -1514,6 +1514,13 @@ img {
 .match-input-group {
   display: grid;
   gap: 0.45rem;
+}
+
+.match-form__date-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: 0.75rem;
+  align-items: start;
 }
 
 .match-input-group__label {

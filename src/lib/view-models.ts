@@ -2,7 +2,8 @@ import type { Player, PlayerDashboardMetrics, PlayerStanding, PlayerStatsSummary
 
 export type MatchFeedItem = {
   id: number;
-  playedAt: string;
+  playedOn: string;
+  slot: ResolvedGame["slot"];
   format: ResolvedGame["format"];
   result: "Victory" | "Defeat" | null;
   ownSideNames: string[];

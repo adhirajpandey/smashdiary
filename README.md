@@ -62,7 +62,7 @@ Persisted player identity is deduplicated case-insensitively by normalized `name
 - Uses the Postgres repository
 - Reads schema from `src/lib/db/schema.ts`
 - Requires `DATABASE_URL`
-- Stores `games.played_at` as an Asia/Kolkata wall-clock timestamp instead of a UTC-normalized instant
+- Stores `games.played_on` as a date-only value plus a separate hourly `slot`
 
 ### Test mode
 
@@ -71,7 +71,7 @@ Persisted player identity is deduplicated case-insensitively by normalized `name
 - Seeds data from `src/data/diary.json` on server start
 - Resets seeded data when the server process is reinitialized
 - Does not require `DATABASE_URL` for app runtime
-- Mirrors the same Asia/Kolkata wall-clock `played_at` behavior used in Postgres
+- Mirrors the same `played_on` + `slot` behavior used in Postgres
 
 ## Database Workflow
 

@@ -1,7 +1,8 @@
 import type { z } from "zod";
 
 const GAME_FORM_FIELDS = [
-  "playedAt",
+  "playedOn",
+  "slot",
   "format",
   "sideAScore",
   "sideBScore",

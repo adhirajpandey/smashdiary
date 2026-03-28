@@ -3,7 +3,15 @@ import type Database from "better-sqlite3";
 import { getTestSqliteClient } from "@/lib/db/test-sqlite";
 import { logger } from "@/lib/logger";
 import { MatchNotFoundError } from "@/lib/match-errors";
-import { buildGamePlayerColumns, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
+import {
+  buildGamePlayerColumns,
+  normalizePlayedOn,
+  normalizePlayerNames,
+  resolveMatches,
+  sortPlayers,
+  sortResolvedMatchesDescending,
+  type ResolvedMatchRow,
+} from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
 import { normalizePlayerNameKey } from "@/lib/utils";
 
@@ -47,7 +55,8 @@ function readResolvedMatches(client: Database.Database, id?: number) {
     [
       "SELECT",
       "g.id AS gameId,",
-      "g.played_at AS playedAt,",
+      "g.played_on AS playedOn,",
+      "g.slot AS slot,",
       "g.format AS format,",
       "g.side_a_score AS sideAScore,",
       "g.side_b_score AS sideBScore,",
@@ -76,12 +85,11 @@ function readResolvedMatches(client: Database.Database, id?: number) {
       "LEFT JOIN players sbp1 ON sbp1.id = g.side_b_player_1_id",
       "LEFT JOIN players sbp2 ON sbp2.id = g.side_b_player_2_id",
       id ? "WHERE g.id = ?" : "",
-      "ORDER BY g.played_at DESC, g.id DESC",
     ].filter(Boolean).join(" "),
   );
 
   const rows = (id ? statement.all(id) : statement.all()) as ResolvedMatchRow[];
-  return resolveMatches(rows);
+  return sortResolvedMatchesDescending(resolveMatches(rows));
 }
 
 function upsertPlayers(names: string[], client: Database.Database) {
@@ -157,7 +165,7 @@ export const sqliteMatchRepository: MatchRepository = {
       const sideAPlayerIds = upsertPlayers(input.sideAPlayers, client);
       const sideBPlayerIds = upsertPlayers(input.sideBPlayers, client);
       const gamePlayerColumns = buildGamePlayerColumns(sideAPlayerIds, sideBPlayerIds);
-      const playedAt = normalizePlayedAt(input.playedAt);
+      const playedOn = normalizePlayedOn(input.playedOn);
 
       if (input.id) {
         const updated = client
@@ -165,7 +173,7 @@ export const sqliteMatchRepository: MatchRepository = {
             [
               "UPDATE games",
               [
-                "SET played_at = ?, format = ?, side_a_player_1_id = ?, side_a_player_2_id = ?,",
+                "SET played_on = ?, slot = ?, format = ?, side_a_player_1_id = ?, side_a_player_2_id = ?,",
                 "side_b_player_1_id = ?, side_b_player_2_id = ?, side_a_score = ?, side_b_score = ?,",
                 "winner_side = ?, updated_at = ?",
               ].join(" "),
@@ -173,7 +181,8 @@ export const sqliteMatchRepository: MatchRepository = {
             ].join(" "),
           )
           .run(
-            playedAt,
+            playedOn,
+            input.slot,
             input.format,
             gamePlayerColumns.sideAPlayer1Id,
             gamePlayerColumns.sideAPlayer2Id,
@@ -200,15 +209,16 @@ export const sqliteMatchRepository: MatchRepository = {
           [
             "INSERT INTO games",
             [
-              "(played_at, format, side_a_player_1_id, side_a_player_2_id,",
+              "(played_on, slot, format, side_a_player_1_id, side_a_player_2_id,",
               "side_b_player_1_id, side_b_player_2_id, side_a_score, side_b_score,",
               "winner_side, created_at, updated_at)",
             ].join(" "),
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           ].join(" "),
         )
         .run(
-          playedAt,
+          playedOn,
+          input.slot,
           input.format,
           gamePlayerColumns.sideAPlayer1Id,
           gamePlayerColumns.sideAPlayer2Id,

@@ -10,8 +10,8 @@ import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "
 import { SectionHeading } from "@/app/_components/section-heading";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
 import { useToast } from "@/app/_components/toast-provider";
-import type { GameFormat, Player } from "@/lib/types";
-import { getCurrentInputDateTimeValue, toInputDateTimeValue } from "@/lib/utils";
+import { MATCH_SLOTS, type GameFormat, type MatchSlot, type Player } from "@/lib/types";
+import { DEFAULT_MATCH_SLOT, getCurrentInputDateValue, toInputDateValue } from "@/lib/utils";
 
 type GameFormProps = {
   initialSeed?: GameFormSeed;
@@ -262,7 +262,8 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
   const createMatchMutation = useCreateMatchMutation();
   const updateMatchMutation = useUpdateMatchMutation(matchId ?? 0);
   const [format, setFormat] = useState<GameFormat>(initialSeed?.format ?? cloneSeed?.format ?? "singles");
-  const [playedAt, setPlayedAt] = useState(initialSeed ? toInputDateTimeValue(initialSeed.playedAt) : getCurrentInputDateTimeValue());
+  const [playedOn, setPlayedOn] = useState(initialSeed ? toInputDateValue(initialSeed.playedOn) : getCurrentInputDateValue());
+  const [slot, setSlot] = useState<MatchSlot>(initialSeed?.slot ?? DEFAULT_MATCH_SLOT);
   const [sideAScore, setSideAScore] = useState<number>(initialSeed?.sideAScore ?? 20);
   const [sideBScore, setSideBScore] = useState<number>(initialSeed?.sideBScore ?? 20);
   const [formState, setFormState] = useState(initialFormState);
@@ -327,7 +328,8 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
     setFormState(initialFormState);
 
     const payload = {
-      playedAt,
+      playedOn,
+      slot,
       format,
       sideAScore,
       sideBScore,
@@ -464,24 +466,51 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
           />
         ) : null}
 
-        <label className="match-input-group">
-          <span className="match-input-group__label">Played at</span>
-          <div className="match-input-shell">
-            <span className="match-input-shell__icon" aria-hidden="true">
-              TM
-            </span>
-            <input
-              className="match-input-shell__input"
-              onChange={(event) => setPlayedAt(event.target.value)}
-              required
-              type="datetime-local"
-              value={playedAt}
-            />
-          </div>
-        </label>
-        {formState.fieldErrors.playedAt ? (
-          <p className="match-form__field-error">{formState.fieldErrors.playedAt}</p>
-        ) : null}
+        <div className="match-form__date-row">
+          <label className="match-input-group">
+            <span className="match-input-group__label">Date</span>
+            <div className="match-input-shell">
+              <span className="match-input-shell__icon" aria-hidden="true">
+                DT
+              </span>
+              <input
+                className="match-input-shell__input"
+                onChange={(event) => setPlayedOn(event.target.value)}
+                required
+                type="date"
+                value={playedOn}
+              />
+            </div>
+            {formState.fieldErrors.playedOn ? (
+              <p className="match-form__field-error">{formState.fieldErrors.playedOn}</p>
+            ) : null}
+          </label>
+
+          <label className="match-input-group">
+            <span className="match-input-group__label">Slot</span>
+            <div className="match-input-shell">
+              <span className="match-input-shell__icon" aria-hidden="true">
+                SL
+              </span>
+              <select
+                aria-label="Slot"
+                className="match-input-shell__input"
+                onChange={(event) => setSlot(event.target.value as MatchSlot)}
+                required
+                value={slot}
+              >
+                {MATCH_SLOTS.map((slotOption) => (
+                  <option key={slotOption} value={slotOption}>
+                    {slotOption}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {formState.fieldErrors.slot ? (
+              <p className="match-form__field-error">{formState.fieldErrors.slot}</p>
+            ) : null}
+          </label>
+        </div>
       </section>
 
       <section className="score-panel">

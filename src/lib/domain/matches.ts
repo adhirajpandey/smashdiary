@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { GameFormat, WinnerSide } from "@/lib/types";
+import { MATCH_SLOTS, type GameFormat, type WinnerSide } from "@/lib/types";
 import { normalizePlayerNameKey } from "@/lib/utils";
 
 export function getPlayersPerSide(format: GameFormat) {
@@ -42,7 +42,10 @@ const playerNameSchema = z
 
 export const gameFormSchema = z
   .object({
-    playedAt: z.string().min(1, "Date and time are required."),
+    playedOn: z.string().min(1, "Date is required."),
+    slot: z.enum(MATCH_SLOTS, {
+      message: "Slot is required.",
+    }),
     format: z.enum(["singles", "doubles"] satisfies [GameFormat, GameFormat]),
     sideAScore: z.coerce.number().int().min(0).max(30),
     sideBScore: z.coerce.number().int().min(0).max(30),

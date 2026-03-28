@@ -4,7 +4,8 @@ export type GameFormSeedMode = "personalized" | "neutral";
 
 export type GameFormSeed = {
   format: ResolvedGame["format"];
-  playedAt: string;
+  playedOn: string;
+  slot: ResolvedGame["slot"];
   sideAScore: number;
   sideBScore: number;
   sideAPlayers: string[];
@@ -31,7 +32,8 @@ export function buildGameFormSeed(match: ResolvedGame, selectedPlayerId: number 
   if (selectedPlayerIsOnSideA && selectedPlayerId !== null) {
     return {
       format: match.format,
-      playedAt: match.playedAt,
+      playedOn: match.playedOn,
+      slot: match.slot,
       sideAScore: match.sideAScore,
       sideBScore: match.sideBScore,
       sideAPlayers: moveSelectedPlayerToFront(match.sideAPlayers, selectedPlayerId),
@@ -43,7 +45,8 @@ export function buildGameFormSeed(match: ResolvedGame, selectedPlayerId: number 
   if (selectedPlayerIsOnSideB && selectedPlayerId !== null) {
     return {
       format: match.format,
-      playedAt: match.playedAt,
+      playedOn: match.playedOn,
+      slot: match.slot,
       sideAScore: match.sideBScore,
       sideBScore: match.sideAScore,
       sideAPlayers: moveSelectedPlayerToFront(match.sideBPlayers, selectedPlayerId),
@@ -54,7 +57,8 @@ export function buildGameFormSeed(match: ResolvedGame, selectedPlayerId: number 
 
   return {
     format: match.format,
-    playedAt: match.playedAt,
+    playedOn: match.playedOn,
+    slot: match.slot,
     sideAScore: match.sideAScore,
     sideBScore: match.sideBScore,
     sideAPlayers: match.sideAPlayers.map((player) => player.name),

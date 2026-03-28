@@ -2,7 +2,8 @@ import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 
 function validSinglesInput() {
   return {
-    playedAt: "2026-03-21T10:00",
+    playedOn: "2026-03-21",
+    slot: "10 AM",
     format: "singles" as const,
     sideAScore: 21,
     sideBScore: 18,
@@ -19,7 +20,8 @@ describe("gameFormSchema", () => {
 
   it("accepts a valid doubles game", () => {
     const parsed = gameFormSchema.safeParse({
-      playedAt: "2026-03-21T10:00",
+      playedOn: "2026-03-21",
+      slot: "10 AM",
       format: "doubles",
       sideAScore: 22,
       sideBScore: 20,
@@ -91,7 +93,8 @@ describe("gameFormSchema", () => {
 
   it("rejects duplicate players on the same side", () => {
     const parsed = gameFormSchema.safeParse({
-      playedAt: "2026-03-21T10:00",
+      playedOn: "2026-03-21",
+      slot: "10 AM",
       format: "doubles",
       sideAScore: 22,
       sideBScore: 20,

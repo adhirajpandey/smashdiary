@@ -6,9 +6,9 @@ import {
   formatPlayerName,
   formatScore,
   formatScoreline,
-  fromInputDateTimeValue,
-  getCurrentInputDateTimeValue,
-  toInputDateTimeValue,
+  fromInputDateValue,
+  getCurrentInputDateValue,
+  toInputDateValue,
 } from "@/lib/utils";
 
 describe("utils", () => {
@@ -21,25 +21,25 @@ describe("utils", () => {
     expect(cn("card", null, false && "hidden", "active")).toBe("card active");
   });
 
-  it("round-trips datetime-local values", () => {
-    const input = "2026-03-21T18:30";
-    const normalized = fromInputDateTimeValue(input);
+  it("round-trips date input values", () => {
+    const input = "2026-03-21";
+    const normalized = fromInputDateValue(input);
 
-    expect(normalized).toBe("2026-03-21 18:30:00");
-    expect(toInputDateTimeValue(normalized)).toBe(input);
+    expect(normalized).toBe("2026-03-21");
+    expect(toInputDateValue(normalized)).toBe(input);
   });
 
   it("formats stored match dates without timezone drift", () => {
-    const storedValue = "2026-03-22 22:29:00";
+    const storedValue = "2026-03-22";
 
-    expect(formatCompactDate(storedValue)).toBe("22 Mar");
-    expect(formatGameDate(storedValue)).toBe("Sun, 22 Mar, 10:29 pm");
+    expect(formatCompactDate(storedValue, "8 PM")).toBe("22 Mar • 8 PM");
+    expect(formatGameDate(storedValue, "8 PM")).toBe("Sun, 22 Mar • 8 PM");
   });
 
   it("builds the default input value in IST", () => {
     const instant = new Date("2026-03-22T18:30:00.000Z");
 
-    expect(getCurrentInputDateTimeValue(instant)).toBe("2026-03-23T00:00");
+    expect(getCurrentInputDateValue(instant)).toBe("2026-03-23");
   });
 
   it("formats player names for full and stacked display", () => {

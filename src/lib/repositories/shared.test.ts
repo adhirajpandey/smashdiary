@@ -1,4 +1,4 @@
-import { buildGamePlayerColumns, normalizePlayedAt, resolveMatches, sortPlayers } from "@/lib/repositories/shared";
+import { buildGamePlayerColumns, normalizePlayedOn, resolveMatches, sortPlayers, sortResolvedMatchesDescending } from "@/lib/repositories/shared";
 import type { Player } from "@/lib/types";
 
 describe("repository shared helpers", () => {
@@ -16,7 +16,8 @@ describe("repository shared helpers", () => {
     const matches = resolveMatches([
       {
         gameId: 12,
-        playedAt: "2026-03-20T10:00:00.000Z",
+        playedOn: "2026-03-20",
+        slot: "10 AM",
         format: "doubles",
         sideAScore: 21,
         sideBScore: 18,
@@ -56,8 +57,48 @@ describe("repository shared helpers", () => {
     });
   });
 
-  it("normalizes playedAt values to IST wall-clock storage", () => {
-    expect(normalizePlayedAt("2026-03-22T22:29")).toBe("2026-03-22 22:29:00");
-    expect(normalizePlayedAt("2026-03-22T22:29:00.000Z")).toBe("2026-03-22 22:29:00");
+  it("normalizes playedOn values to date-only storage", () => {
+    expect(normalizePlayedOn("2026-03-22")).toBe("2026-03-22");
+    expect(normalizePlayedOn("2026-03-22T22:29:00.000Z")).toBe("2026-03-22");
+  });
+
+  it("sorts matches by date, then slot, then id descending", () => {
+    const matches = sortResolvedMatchesDescending([
+      {
+        id: 1,
+        playedOn: "2026-03-22",
+        slot: "7 PM",
+        format: "singles",
+        sideAScore: 21,
+        sideBScore: 18,
+        winnerSide: "A",
+        createdAt: "",
+        updatedAt: "",
+      },
+      {
+        id: 2,
+        playedOn: "2026-03-22",
+        slot: "8 PM",
+        format: "singles",
+        sideAScore: 21,
+        sideBScore: 18,
+        winnerSide: "A",
+        createdAt: "",
+        updatedAt: "",
+      },
+      {
+        id: 3,
+        playedOn: "2026-03-23",
+        slot: "12 PM",
+        format: "singles",
+        sideAScore: 21,
+        sideBScore: 18,
+        winnerSide: "A",
+        createdAt: "",
+        updatedAt: "",
+      },
+    ]);
+
+    expect(matches.map((match) => match.id)).toEqual([3, 2, 1]);
   });
 });

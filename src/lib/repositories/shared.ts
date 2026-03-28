@@ -1,9 +1,10 @@
-import type { Game, Player } from "@/lib/types";
-import { normalizePlayedAtValue, normalizePlayerName } from "@/lib/utils";
+import type { Game, MatchSlot, Player, ResolvedGame } from "@/lib/types";
+import { getMatchSlotOrder, normalizePlayedOnValue, normalizePlayerName } from "@/lib/utils";
 
 export type ResolvedMatchRow = {
   gameId: number;
-  playedAt: string;
+  playedOn: string;
+  slot: MatchSlot;
   format: Game["format"];
   sideAScore: number;
   sideBScore: number;
@@ -35,8 +36,28 @@ type ResolvedPlayerFields = {
   updatedAt: string | null;
 };
 
-export function normalizePlayedAt(dateTime: string) {
-  return normalizePlayedAtValue(dateTime);
+export function normalizePlayedOn(value: string) {
+  return normalizePlayedOnValue(value);
+}
+
+export function compareMatchSlotsDescending(left: MatchSlot, right: MatchSlot) {
+  return getMatchSlotOrder(right) - getMatchSlotOrder(left);
+}
+
+export function sortResolvedMatchesDescending(matches: ResolvedGame[]) {
+  return matches.slice().sort((left, right) => {
+    const playedOnCompare = right.playedOn.localeCompare(left.playedOn);
+    if (playedOnCompare !== 0) {
+      return playedOnCompare;
+    }
+
+    const slotCompare = compareMatchSlotsDescending(left.slot, right.slot);
+    if (slotCompare !== 0) {
+      return slotCompare;
+    }
+
+    return right.id - left.id;
+  });
 }
 
 export function sortPlayers(players: Player[]) {
@@ -59,7 +80,8 @@ function createResolvedPlayer(fields: ResolvedPlayerFields) {
 export function resolveMatches(rows: ResolvedMatchRow[]) {
   return rows.map((row) => ({
     id: row.gameId,
-    playedAt: row.playedAt,
+    playedOn: row.playedOn,
+    slot: row.slot,
     format: row.format,
     sideAScore: row.sideAScore,
     sideBScore: row.sideBScore,

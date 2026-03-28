@@ -34,7 +34,7 @@ export function MatchFeed({ matches }: Readonly<{ matches: MatchFeedItem[] }>) {
             <div className={`dashboard-match__accent ${match.result === "Defeat" ? "is-loss" : ""}`} />
             <div className="dashboard-match__body">
               <div className="dashboard-match__meta">
-                <span>{formatCompactDate(match.playedAt)}</span>
+                <span>{formatCompactDate(match.playedOn, match.slot)}</span>
                 <div className="dashboard-match__meta-actions">
                   <span className={match.result === "Defeat" ? "is-loss" : "is-win"}>
                     {match.result ?? match.format}

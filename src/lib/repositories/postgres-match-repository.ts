@@ -1,11 +1,19 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { getDb } from "@/lib/db";
 import { games, players } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import { MatchNotFoundError } from "@/lib/match-errors";
-import { buildGamePlayerColumns, normalizePlayedAt, normalizePlayerNames, resolveMatches, sortPlayers, type ResolvedMatchRow } from "@/lib/repositories/shared";
+import {
+  buildGamePlayerColumns,
+  normalizePlayedOn,
+  normalizePlayerNames,
+  resolveMatches,
+  sortPlayers,
+  sortResolvedMatchesDescending,
+  type ResolvedMatchRow,
+} from "@/lib/repositories/shared";
 import type { MatchRepository } from "@/lib/repositories/types";
 import { normalizePlayerNameKey } from "@/lib/utils";
 
@@ -24,7 +32,8 @@ async function selectResolvedMatches(whereMatchId?: number) {
   const query = db
     .select({
       gameId: games.id,
-      playedAt: games.playedAt,
+      playedOn: games.playedOn,
+      slot: games.slot,
       format: games.format,
       sideAScore: games.sideAScore,
       sideBScore: games.sideBScore,
@@ -52,11 +61,10 @@ async function selectResolvedMatches(whereMatchId?: number) {
     .leftJoin(sideAPlayer1, eq(sideAPlayer1.id, games.sideAPlayer1Id))
     .leftJoin(sideAPlayer2, eq(sideAPlayer2.id, games.sideAPlayer2Id))
     .leftJoin(sideBPlayer1, eq(sideBPlayer1.id, games.sideBPlayer1Id))
-    .leftJoin(sideBPlayer2, eq(sideBPlayer2.id, games.sideBPlayer2Id))
-    .orderBy(desc(games.playedAt), desc(games.id));
+    .leftJoin(sideBPlayer2, eq(sideBPlayer2.id, games.sideBPlayer2Id));
 
   const rows = whereMatchId ? await query.where(eq(games.id, whereMatchId)) : await query;
-  return resolveMatches(rows as ResolvedMatchRow[]);
+  return sortResolvedMatchesDescending(resolveMatches(rows as ResolvedMatchRow[]));
 }
 
 async function upsertPlayers(names: string[], client: WriteClient) {
@@ -155,13 +163,14 @@ export const postgresMatchRepository: MatchRepository = {
       const sideAPlayerIds = await upsertPlayers(input.sideAPlayers, tx as WriteClient);
       const sideBPlayerIds = await upsertPlayers(input.sideBPlayers, tx as WriteClient);
       const gamePlayerColumns = buildGamePlayerColumns(sideAPlayerIds, sideBPlayerIds);
-      const playedAt = normalizePlayedAt(input.playedAt);
+      const playedOn = normalizePlayedOn(input.playedOn);
 
       if (input.id) {
         const updated = await tx
           .update(games)
           .set({
-            playedAt,
+            playedOn,
+            slot: input.slot,
             format: input.format,
             ...gamePlayerColumns,
             sideAScore: input.sideAScore,
@@ -184,7 +193,8 @@ export const postgresMatchRepository: MatchRepository = {
       const [created] = await tx
         .insert(games)
         .values({
-          playedAt,
+          playedOn,
+          slot: input.slot,
           format: input.format,
           ...gamePlayerColumns,
           sideAScore: input.sideAScore,

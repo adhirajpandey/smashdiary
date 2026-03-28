@@ -265,9 +265,22 @@ export async function openFirstMatchCardActions(page: Page, matchText?: string) 
   const trigger = card.getByRole("button", { name: "Open match actions" });
 
   await expect(card).toBeVisible();
-  await expect(trigger).toBeVisible();
   await dismissVisibleToasts(page);
-  await trigger.scrollIntoViewIfNeeded();
+  await expect
+    .poll(
+      async () => {
+        try {
+          await card.scrollIntoViewIfNeeded();
+          return await trigger.isVisible();
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Expected the first match card actions trigger to stay attached while opening.",
+      },
+    )
+    .toBe(true);
 
   const menu = card.locator(".match-actions__menu");
   await openMatchActionsMenu(trigger, menu);
