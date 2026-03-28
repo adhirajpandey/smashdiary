@@ -44,6 +44,12 @@ async function clearDeletedMatchQueries(queryClient: QueryClient, matchId: numbe
   ]);
 }
 
+export function invalidateDiaryQueriesInBackground(queryClient: QueryClient, matchId?: number) {
+  void invalidateDiaryQueries(queryClient, matchId).catch((error: unknown) => {
+    console.error("Failed to invalidate diary queries after match save.", error);
+  });
+}
+
 async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
     cache: "no-store",
@@ -119,7 +125,7 @@ export function useCreateMatchMutation() {
         method: "POST",
         body: JSON.stringify(input),
       }),
-    onSuccess: async () => invalidateDiaryQueries(queryClient),
+    onSuccess: () => invalidateDiaryQueriesInBackground(queryClient),
   });
 }
 
@@ -132,7 +138,7 @@ export function useUpdateMatchMutation(matchId: number) {
         method: "PUT",
         body: JSON.stringify(input),
       }),
-    onSuccess: async () => invalidateDiaryQueries(queryClient, matchId),
+    onSuccess: () => invalidateDiaryQueriesInBackground(queryClient, matchId),
   });
 }
 
