@@ -1,22 +1,11 @@
-const LOG_LEVELS = ["debug", "info", "warn", "error"] as const;
+import { appConfig, type LogLevel } from "@/lib/config/env";
 
-type LogLevel = (typeof LOG_LEVELS)[number];
 type LogPayload = Record<string, unknown>;
 
-const DEFAULT_LOG_LEVEL: LogLevel = "info";
-
-function resolveLogLevel(): LogLevel {
-  const value = process.env.LOG_LEVEL?.trim().toLowerCase();
-
-  if (!value) {
-    return DEFAULT_LOG_LEVEL;
-  }
-
-  return LOG_LEVELS.includes(value as LogLevel) ? (value as LogLevel) : DEFAULT_LOG_LEVEL;
-}
+const LOG_LEVELS: LogLevel[] = ["debug", "info", "warn", "error"];
 
 function shouldLog(level: LogLevel) {
-  return LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf(resolveLogLevel());
+  return LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf(appConfig.logLevel);
 }
 
 function writeLog(level: Exclude<LogLevel, "warn" | "error">, scope: string, event: string, payload?: LogPayload): void;

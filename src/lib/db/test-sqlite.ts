@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 
 import seedData from "@/data/diary.json";
+import { appConfig } from "@/lib/config/env";
 import { MATCH_SLOTS } from "@/lib/types";
 import { normalizePlayedOnValue } from "@/lib/utils";
 
@@ -29,9 +30,9 @@ type LegacySeedGame = {
 };
 
 function getSqliteFilePath() {
-  const dataDir = path.join(process.cwd(), ".gstack");
+  const dataDir = path.join(process.cwd(), appConfig.testMode.sqliteDirName);
   mkdirSync(dataDir, { recursive: true });
-  return path.join(dataDir, "test-mode.sqlite");
+  return path.join(dataDir, appConfig.testMode.sqliteFileName);
 }
 
 type TestSqliteCache = {

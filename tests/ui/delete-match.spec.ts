@@ -28,7 +28,7 @@ test("lets me delete a saved match", async ({ page }) => {
 
   await deleteMatchAndExpectRedirect(page, { cancelFirst: true });
 
-  await expect(page.getByRole("heading", { name: "Adhiraj's matches" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Adhiraj's singles matches" })).toBeVisible();
   await expect(page.getByText(opponent, { exact: false })).not.toBeVisible();
 });
 

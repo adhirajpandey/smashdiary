@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import type { GameFormFieldErrors } from "@/lib/action-errors";
 import type { CloneMatchSeed } from "@/lib/clone-match";
+import { getMatchDetailRoute } from "@/lib/config/routes";
 import type { GameFormSeed } from "@/lib/game-form-seed";
 import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
 import { SectionHeading } from "@/app/_components/section-heading";
@@ -367,7 +368,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
           ? "The refreshed scoreline is live in your diary."
           : "The scoreline has been added to your diary.",
       });
-      router.push(`/matches/${result.id}`);
+      router.push(getMatchDetailRoute(result.id));
     } catch (error) {
       if (error instanceof ApiClientError) {
         pushToast({

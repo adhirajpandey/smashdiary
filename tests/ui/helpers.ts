@@ -278,7 +278,8 @@ export async function openDetailMatchActions(page: Page) {
 export async function openEditMatchForm(page: Page) {
   const { menu } = await openDetailMatchActions(page);
 
-  await menu.getByText("EDIT", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "EDIT", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "EDIT", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();
 }
@@ -286,7 +287,8 @@ export async function openEditMatchForm(page: Page) {
 export async function cloneMatchFromDetail(page: Page) {
   const { menu } = await openDetailMatchActions(page);
 
-  await menu.getByText("CLONE", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "CLONE", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "CLONE", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("button", { name: "Save Match" })).toBeVisible();
 }
@@ -407,7 +409,8 @@ export async function expectDashboardMatchCardMenuNotClipped(page: Page, card: L
 export async function openFirstMatchCardDeleteModal(page: Page, matchText?: string) {
   const { menu, trigger } = await openFirstMatchCardActions(page, matchText);
 
-  await menu.getByText("DELETE", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "DELETE", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "DELETE", exact: true }).click();
   const dialog = await expectDeleteMatchModal(page);
 
   return { dialog, trigger };
@@ -416,7 +419,8 @@ export async function openFirstMatchCardDeleteModal(page: Page, matchText?: stri
 export async function openDetailDeleteModal(page: Page) {
   const { menu, trigger } = await openDetailMatchActions(page);
 
-  await menu.getByText("DELETE", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "DELETE", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "DELETE", exact: true }).click();
   const dialog = await expectDeleteMatchModal(page);
 
   return { dialog, trigger };

@@ -1,3 +1,5 @@
+import { appConfig } from "@/lib/config/env";
+
 export function isTestMode() {
-  return process.env.APP_MODE === "test";
+  return appConfig.isTestMode;
 }

@@ -6,6 +6,7 @@ import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
 import { MatchFeed } from "@/app/_components/match-feed";
 import { StatsFormatSelector } from "@/app/_components/stats-format-selector";
 import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
+import { appRoutes } from "@/lib/config/routes";
 import type { LeaderboardData, PlayerDashboardMetrics, StatsFormat } from "@/lib/types";
 import { formatStatsFormatLabel } from "@/lib/utils";
 import type { MatchFeedItem } from "@/lib/view-models";
@@ -31,7 +32,7 @@ export function DashboardView({
 
   return (
     <>
-      <Link className="quick-log" href="/matches/new">
+      <Link className="quick-log" href={appRoutes.newMatch}>
         <span className="quick-log__icon">+</span>
         <span>Add a Match</span>
       </Link>
@@ -62,7 +63,7 @@ export function DashboardView({
           <section className="dashboard-section">
             <div className="dashboard-section__row">
               <h2 className="dashboard-section__title">{formatLabel} matches</h2>
-              <Link className="dashboard-link" href="/matches">
+              <Link className="dashboard-link" href={appRoutes.matches}>
                 View all
               </Link>
             </div>

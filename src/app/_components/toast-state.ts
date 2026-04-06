@@ -1,3 +1,5 @@
+import { toastConfig } from "@/lib/config/ui";
+
 export type ToastVariant = "success" | "error" | "info";
 
 export type Toast = {
@@ -15,10 +17,10 @@ export type ToastInput = {
   durationMs?: number | null;
 };
 
-export const MAX_TOASTS = 3;
-export const SUCCESS_TOAST_DURATION_MS = 2800;
-export const INFO_TOAST_DURATION_MS = 4000;
-export const ERROR_TOAST_DURATION_MS = 6000;
+export const MAX_TOASTS = toastConfig.maxVisible;
+export const SUCCESS_TOAST_DURATION_MS = toastConfig.durationsMs.success;
+export const INFO_TOAST_DURATION_MS = toastConfig.durationsMs.info;
+export const ERROR_TOAST_DURATION_MS = toastConfig.durationsMs.error;
 
 export function getToastDuration(variant: ToastVariant) {
   switch (variant) {

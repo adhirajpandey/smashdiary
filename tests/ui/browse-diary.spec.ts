@@ -28,16 +28,16 @@ test("lets me browse my diary and open a saved match", async ({ page }) => {
   await expect(page.getByText("Player rating")).toBeVisible();
 
   await navigatePrimary(page, "Matches");
-  await expect(page.getByRole("heading", { name: "Adhiraj's matches" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Adhiraj's singles matches" })).toBeVisible();
 
   await navigatePrimary(page, "Stats");
-  await expect(page.getByRole("heading", { name: "Adhiraj's stats" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Adhiraj's singles stats" })).toBeVisible();
 
   await navigatePrimary(page, "Matches");
-  await openExistingMatchDetail(page, "Doubles match: Adhiraj and Sanidhya versus Abhishek and Sankalp, score 21-09");
+  await openExistingMatchDetail(page, "Singles match: Adhiraj versus Sanidhya, score 21-17");
 
-  await expect(page.getByRole("heading", { name: "Doubles match" })).toBeVisible();
-  await expect(page.getByText(/21\s*\/\s*09/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Singles match" })).toBeVisible();
+  await expect(page.getByText(/21\s*\/\s*17/)).toBeVisible();
   await expect(page.getByText("Adhiraj", { exact: false })).toBeVisible();
   await expect(page.getByText("Sanidhya", { exact: false })).toBeVisible();
 });

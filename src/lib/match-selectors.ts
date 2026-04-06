@@ -1,10 +1,6 @@
+import { leaderboardConfig } from "@/lib/config/domain";
 import type { LeaderboardData, LeaderboardEntry, Player, PlayerDashboardMetrics, PlayerStatsSummary, ResolvedGame, StatsFormat } from "@/lib/types";
 import { formatStatsFormatLabel, getMatchSlotOrder } from "@/lib/utils";
-
-const ELO_INITIAL_RATING = 1500;
-const ELO_K_FACTOR = 32;
-const LEADERBOARD_MINIMUM_MATCHES = 3;
-const LEADERBOARD_SCORE_LABEL = "Leaderboard score";
 
 export function getPlayerSide(match: ResolvedGame, playerId: number) {
   if (match.sideAPlayers.some((player) => player.id === playerId)) {
@@ -80,14 +76,22 @@ function updateEloRatings(ratingA: number, ratingB: number, scoreA: 0 | 1) {
   const scoreB = scoreA === 1 ? 0 : 1;
 
   return {
-    nextRatingA: ratingA + ELO_K_FACTOR * (scoreA - expectedScoreA),
-    nextRatingB: ratingB + ELO_K_FACTOR * (scoreB - expectedScoreB),
+    nextRatingA: ratingA + leaderboardConfig.eloKFactor * (scoreA - expectedScoreA),
+    nextRatingB: ratingB + leaderboardConfig.eloKFactor * (scoreB - expectedScoreB),
   };
 }
 
 export function normalizeLeaderboardScore(rawRankScore: number) {
-  const normalized = 5 + ((rawRankScore - ELO_INITIAL_RATING) / 100);
-  return Number(Math.max(0, Math.min(10, normalized)).toFixed(1));
+  const normalized =
+    leaderboardConfig.normalizedScore.midpointBase +
+    (rawRankScore - leaderboardConfig.eloInitialRating) / leaderboardConfig.normalizedScore.ratingStep;
+
+  return Number(
+    Math.max(
+      leaderboardConfig.normalizedScore.floor,
+      Math.min(leaderboardConfig.normalizedScore.ceiling, normalized),
+    ).toFixed(leaderboardConfig.normalizedScore.decimals),
+  );
 }
 
 function compareLeaderboardEntries(left: LeaderboardEntry, right: LeaderboardEntry) {
@@ -225,8 +229,16 @@ export function getSinglesLeaderboard(matches: ResolvedGame[], players: Player[]
       continue;
     }
 
-    const sideAStanding = standings.get(sideAPlayer.id) ?? { rating: ELO_INITIAL_RATING, wins: 0, totalMatches: 0 };
-    const sideBStanding = standings.get(sideBPlayer.id) ?? { rating: ELO_INITIAL_RATING, wins: 0, totalMatches: 0 };
+    const sideAStanding = standings.get(sideAPlayer.id) ?? {
+      rating: leaderboardConfig.eloInitialRating,
+      wins: 0,
+      totalMatches: 0,
+    };
+    const sideBStanding = standings.get(sideBPlayer.id) ?? {
+      rating: leaderboardConfig.eloInitialRating,
+      wins: 0,
+      totalMatches: 0,
+    };
     const scoreA: 0 | 1 = match.winnerSide === "A" ? 1 : 0;
     const { nextRatingA, nextRatingB } = updateEloRatings(sideAStanding.rating, sideBStanding.rating, scoreA);
 
@@ -245,14 +257,14 @@ export function getSinglesLeaderboard(matches: ResolvedGame[], players: Player[]
   return players
     .flatMap((player) => {
       const standing = standings.get(player.id);
-      if (!standing || standing.totalMatches < LEADERBOARD_MINIMUM_MATCHES) {
+      if (!standing || standing.totalMatches < leaderboardConfig.minimumMatches) {
         return [];
       }
 
       return [createLeaderboardEntry(`player-${player.id}`, [player.name], standing.wins, standing.totalMatches, standing.rating)];
     })
     .sort(compareLeaderboardEntries)
-    .slice(0, 3);
+    .slice(0, leaderboardConfig.maxEntries);
 }
 
 function createTeamKey(playerIds: number[]) {
@@ -288,13 +300,13 @@ export function getDoublesLeaderboard(matches: ResolvedGame[], players: Player[]
     }
 
     const sideAStanding = standings.get(sideATeamKey) ?? {
-      rating: ELO_INITIAL_RATING,
+      rating: leaderboardConfig.eloInitialRating,
       wins: 0,
       totalMatches: 0,
       names: sideANames,
     };
     const sideBStanding = standings.get(sideBTeamKey) ?? {
-      rating: ELO_INITIAL_RATING,
+      rating: leaderboardConfig.eloInitialRating,
       wins: 0,
       totalMatches: 0,
       names: sideBNames,
@@ -318,22 +330,22 @@ export function getDoublesLeaderboard(matches: ResolvedGame[], players: Player[]
 
   return Array.from(standings.entries())
     .flatMap(([teamKey, standing]) => {
-      if (standing.totalMatches < LEADERBOARD_MINIMUM_MATCHES) {
+      if (standing.totalMatches < leaderboardConfig.minimumMatches) {
         return [];
       }
 
       return [createLeaderboardEntry(`team-${teamKey}`, standing.names, standing.wins, standing.totalMatches, standing.rating)];
     })
     .sort(compareLeaderboardEntries)
-    .slice(0, 3);
+    .slice(0, leaderboardConfig.maxEntries);
 }
 
 function getLeaderboardScoreHelpText(format: StatsFormat) {
   if (format === "singles") {
-    return `Leaderboard score is a 0-10 view of a backend Elo ranking for singles players. Only players with at least ${LEADERBOARD_MINIMUM_MATCHES} singles matches are included. Higher means stronger proven results.`;
+    return `Leaderboard score is a 0-10 view of a backend Elo ranking for singles players. Only players with at least ${leaderboardConfig.minimumMatches} singles matches are included. Higher means stronger proven results.`;
   }
 
-  return `Leaderboard score is a 0-10 view of a backend Elo ranking for exact doubles pairs. Only pairs with at least ${LEADERBOARD_MINIMUM_MATCHES} matches together are included. Higher means stronger proven results together.`;
+  return `Leaderboard score is a 0-10 view of a backend Elo ranking for exact doubles pairs. Only pairs with at least ${leaderboardConfig.minimumMatches} matches together are included. Higher means stronger proven results together.`;
 }
 
 export function getLeaderboard(matches: ResolvedGame[], players: Player[], format: StatsFormat): LeaderboardData {
@@ -342,9 +354,9 @@ export function getLeaderboard(matches: ResolvedGame[], players: Player[], forma
 
   return {
     title: `${formatLabel} leaderboard`,
-    scoreLabel: LEADERBOARD_SCORE_LABEL,
+    scoreLabel: leaderboardConfig.scoreLabel,
     scoreHelpText: getLeaderboardScoreHelpText(format),
-    minimumMatches: LEADERBOARD_MINIMUM_MATCHES,
+    minimumMatches: leaderboardConfig.minimumMatches,
     entries,
   };
 }

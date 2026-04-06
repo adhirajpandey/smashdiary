@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { storageKeys } from "@/lib/config/storage";
 import type { StatsFormat } from "@/lib/types";
 import { isStatsFormat } from "@/lib/utils";
 
@@ -11,7 +12,6 @@ type StatsFormatContextValue = {
   setSelectedStatsFormat: (value: StatsFormat) => void;
 };
 
-const STORAGE_KEY = "smash-diary:selected-stats-format";
 const StatsFormatContext = createContext<StatsFormatContextValue | null>(null);
 
 export function StatsFormatProvider({
@@ -23,7 +23,7 @@ export function StatsFormatProvider({
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const storedValue = window.localStorage.getItem(STORAGE_KEY);
+    const storedValue = window.localStorage.getItem(storageKeys.selectedStatsFormat);
     const nextFormat = isStatsFormat(storedValue ?? "") ? storedValue : "singles";
     const timeoutId = window.setTimeout(() => {
       setSelectedStatsFormatState(nextFormat as StatsFormat);
@@ -35,7 +35,7 @@ export function StatsFormatProvider({
 
   function setSelectedStatsFormat(value: StatsFormat) {
     setSelectedStatsFormatState(value);
-    window.localStorage.setItem(STORAGE_KEY, value);
+    window.localStorage.setItem(storageKeys.selectedStatsFormat, value);
   }
 
   const contextValue = useMemo(

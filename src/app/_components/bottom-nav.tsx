@@ -1,13 +1,14 @@
 import Link from "next/link";
 
+import { appRoutes } from "@/lib/config/routes";
 import { cn } from "@/lib/utils";
 
 type NavIconType = "grid" | "scorecard" | "bars";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: "grid" },
-  { href: "/matches", label: "Matches", icon: "scorecard" },
-  { href: "/stats", label: "Stats", icon: "bars" },
+  { href: appRoutes.dashboard, label: "Dashboard", icon: "grid" },
+  { href: appRoutes.matches, label: "Matches", icon: "scorecard" },
+  { href: appRoutes.stats, label: "Stats", icon: "bars" },
 ] as const;
 
 function Icon({ type }: Readonly<{ type: NavIconType }>) {

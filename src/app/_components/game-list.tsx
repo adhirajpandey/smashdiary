@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getMatchDetailRoute } from "@/lib/config/routes";
 import type { ResolvedGame } from "@/lib/types";
 import { formatCompactDate, formatScore } from "@/lib/utils";
 
@@ -20,7 +21,7 @@ export function GameList({ games }: Readonly<{ games: ResolvedGame[] }>) {
         const winnerLabel = game.winnerSide === "A" ? sideA : sideB;
 
         return (
-          <Link className="match-card" href={`/matches/${game.id}`} key={game.id}>
+          <Link className="match-card" href={getMatchDetailRoute(game.id)} key={game.id}>
             <div className="match-card__frame" aria-hidden="true" />
 
             <div className="match-card__topline">
