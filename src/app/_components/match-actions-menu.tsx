@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboard
 
 import { useToast } from "@/app/_components/toast-provider";
 import { ApiClientError, useDeleteMatchMutation } from "@/lib/api/client";
+import { getCloneMatchRoute, getEditMatchRoute } from "@/lib/config/routes";
 import { cn } from "@/lib/utils";
 
 type MatchActionsMenuProps = {
@@ -14,10 +15,6 @@ type MatchActionsMenuProps = {
   align?: "start" | "end";
   deleteRedirectHref?: string;
 };
-
-function getCloneHref(matchId: number) {
-  return `/matches/new?cloneFrom=${matchId}`;
-}
 
 function getFocusableElements(container: HTMLElement) {
   return Array.from(
@@ -244,10 +241,10 @@ export function MatchActionsMenu({
           id={menuId}
           role="menu"
         >
-          <Link className="match-actions__item" href={getCloneHref(matchId)} onClick={closeMenu} role="menuitem">
+          <Link className="match-actions__item" href={getCloneMatchRoute(matchId)} onClick={closeMenu} role="menuitem">
             CLONE
           </Link>
-          <Link className="match-actions__item" href={`/matches/${matchId}/edit`} onClick={closeMenu} role="menuitem">
+          <Link className="match-actions__item" href={getEditMatchRoute(matchId)} onClick={closeMenu} role="menuitem">
             EDIT
           </Link>
           <button

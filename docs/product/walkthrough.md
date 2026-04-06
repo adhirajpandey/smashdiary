@@ -40,6 +40,7 @@ Current supported behavior:
 - use existing player suggestions through a two-step picker that opens the list first and only starts typing after tapping the search area
 - create new players implicitly by typing names during submission
 - prefill the date field with the current local date and default the slot dropdown to `8 PM` for new entries
+- only accept completed matches dated today or earlier
 - adjust scores with either number inputs or score stepper buttons
 - route to the saved match detail screen after a successful save
 
@@ -65,7 +66,9 @@ Invalid or missing IDs resolve to the app's not-found behavior.
 
 ### Stats (`/stats`)
 
-The stats screen renders player-focused summary information derived from stored matches and players. It is read-only, depends on the currently selected player context for the personal breakdown, and still shows the shared leaderboard when no player is selected.
+The stats screen renders player-focused summary information derived from stored matches and players. It is read-only, depends on the currently selected player context for the personal performance view, and still shows the shared leaderboard when no player is selected. The personal section uses a compact performance surface with headline metrics, average point differential, and a wins/losses split under a `Record` label for the active format.
+
+Detailed stats, rating, leaderboard, and format-segmentation behavior is documented in `stats-and-leaderboard.md`.
 
 ### Rankings Redirect (`/rankings`)
 

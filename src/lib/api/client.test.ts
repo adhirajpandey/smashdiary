@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { invalidateDiaryQueriesInBackground, queryKeys } from "@/lib/api/client";
+import { apiQueryKeyRoots } from "@/lib/config/api";
 
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -37,12 +38,18 @@ describe("invalidateDiaryQueriesInBackground", () => {
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(4);
     expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(1, { queryKey: queryKeys.players });
-    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(2, { queryKey: ["dashboard"] });
-    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(3, { queryKey: ["matches"] });
-    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(4, { queryKey: ["stats"] });
+    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(2, { queryKey: [apiQueryKeyRoots.dashboard] });
+    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(3, { queryKey: [apiQueryKeyRoots.matches] });
+    expect(queryClient.invalidateQueries).toHaveBeenNthCalledWith(4, { queryKey: [apiQueryKeyRoots.stats] });
 
     deferred.resolve();
     await deferred.promise;
+  });
+
+  it("includes stats format in dashboard and stats query keys", () => {
+    expect(queryKeys.dashboard(7, "singles")).toEqual(["dashboard", 7, "singles"]);
+    expect(queryKeys.matches(7, "singles")).toEqual(["matches", 7, "singles"]);
+    expect(queryKeys.stats(7, "doubles")).toEqual(["stats", 7, "doubles"]);
   });
 
   it("includes the saved match detail query for update invalidation", async () => {

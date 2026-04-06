@@ -99,14 +99,24 @@ export async function expectToast(
 }
 
 async function dismissVisibleToasts(page: Page) {
-  const dismissButtons = page.getByRole("button", { name: /dismiss /i });
-  const count = await dismissButtons.count();
+  while (true) {
+    const dismissButtons = page.getByRole("button", { name: /dismiss /i });
+    const count = await dismissButtons.count();
 
-  for (let index = 0; index < count; index += 1) {
-    const button = dismissButtons.nth(index);
+    if (!count) {
+      return;
+    }
 
-    if (await button.isVisible()) {
+    const button = dismissButtons.first();
+
+    try {
+      if (!(await button.isVisible())) {
+        return;
+      }
+
       await button.click();
+    } catch {
+      continue;
     }
   }
 }
@@ -147,12 +157,27 @@ async function openMatchActionsMenu(trigger: Locator, menu: Locator) {
   await expect
     .poll(
       async () => {
-        if ((await trigger.getAttribute("aria-expanded")) === "true") {
+        if ((await menu.locator(".match-actions__item").count()) === 3) {
           return true;
         }
 
-        await trigger.click();
-        return (await trigger.getAttribute("aria-expanded")) === "true";
+        try {
+          await trigger.scrollIntoViewIfNeeded();
+        } catch {
+          return false;
+        }
+
+        try {
+          await trigger.tap();
+        } catch {
+          try {
+            await trigger.click();
+          } catch {
+            return false;
+          }
+        }
+
+        return (await menu.locator(".match-actions__item").count()) === 3;
       },
       {
         message: "Expected match actions trigger to open its menu.",
@@ -253,7 +278,8 @@ export async function openDetailMatchActions(page: Page) {
 export async function openEditMatchForm(page: Page) {
   const { menu } = await openDetailMatchActions(page);
 
-  await menu.getByText("EDIT", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "EDIT", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "EDIT", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();
 }
@@ -261,7 +287,8 @@ export async function openEditMatchForm(page: Page) {
 export async function cloneMatchFromDetail(page: Page) {
   const { menu } = await openDetailMatchActions(page);
 
-  await menu.getByText("CLONE", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "CLONE", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "CLONE", exact: true }).click();
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("button", { name: "Save Match" })).toBeVisible();
 }
@@ -382,7 +409,8 @@ export async function expectDashboardMatchCardMenuNotClipped(page: Page, card: L
 export async function openFirstMatchCardDeleteModal(page: Page, matchText?: string) {
   const { menu, trigger } = await openFirstMatchCardActions(page, matchText);
 
-  await menu.getByText("DELETE", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "DELETE", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "DELETE", exact: true }).click();
   const dialog = await expectDeleteMatchModal(page);
 
   return { dialog, trigger };
@@ -391,7 +419,8 @@ export async function openFirstMatchCardDeleteModal(page: Page, matchText?: stri
 export async function openDetailDeleteModal(page: Page) {
   const { menu, trigger } = await openDetailMatchActions(page);
 
-  await menu.getByText("DELETE", { exact: true }).click();
+  await expect(menu.getByRole("menuitem", { name: "DELETE", exact: true })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "DELETE", exact: true }).click();
   const dialog = await expectDeleteMatchModal(page);
 
   return { dialog, trigger };

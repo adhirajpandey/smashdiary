@@ -2,6 +2,7 @@
 
 import { MatchActionsMenu } from "@/app/_components/match-actions-menu";
 import { SectionHeading } from "@/app/_components/section-heading";
+import { appRoutes } from "@/lib/config/routes";
 import type { ResolvedGame } from "@/lib/types";
 import { formatGameDate, formatPlayerName, formatScore } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ export function MatchDetailView({ match }: Readonly<{ match: ResolvedGame }>) {
             description={formatGameDate(match.playedOn, match.slot)}
             titleClassName="page-title detail-page__title"
           />
-          <MatchActionsMenu className="detail-page__actions" deleteRedirectHref="/matches" matchId={match.id} />
+          <MatchActionsMenu className="detail-page__actions" deleteRedirectHref={appRoutes.matches} matchId={match.id} />
         </div>
       </div>
 

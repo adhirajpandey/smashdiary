@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { MatchActionsMenu } from "@/app/_components/match-actions-menu";
+import { getMatchDetailRoute } from "@/lib/config/routes";
 import { formatCompactDate, formatScoreline } from "@/lib/utils";
 import type { MatchFeedItem } from "@/lib/view-models";
 
@@ -46,7 +47,7 @@ export function MatchFeed({ matches }: Readonly<{ matches: MatchFeedItem[] }>) {
               <Link
                 aria-label={getMatchLinkLabel(match)}
                 className="dashboard-match__link"
-                href={`/matches/${match.id}`}
+                href={getMatchDetailRoute(match.id)}
               >
                 <div className="dashboard-match__content">
                   <div className="dashboard-match__teams">

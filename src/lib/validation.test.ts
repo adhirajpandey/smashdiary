@@ -1,4 +1,11 @@
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
+import { getCurrentInputDateValue } from "@/lib/utils";
+
+function addDaysToDate(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 function validSinglesInput() {
   return {
@@ -30,6 +37,25 @@ describe("gameFormSchema", () => {
     });
 
     expect(parsed.success).toBe(true);
+  });
+
+  it("accepts today's date", () => {
+    const parsed = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      playedOn: getCurrentInputDateValue(),
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejects future dates", () => {
+    const parsed = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      playedOn: addDaysToDate(getCurrentInputDateValue(), 1),
+    });
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.flatten().fieldErrors.playedOn).toContain("Match date cannot be in the future.");
   });
 
   it("accepts a 30-29 finish", () => {

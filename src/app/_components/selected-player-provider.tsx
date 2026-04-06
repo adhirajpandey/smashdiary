@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import { storageKeys } from "@/lib/config/storage";
+
 type SelectedPlayerContextValue = {
   selectedPlayerId: number | null;
   isHydrated: boolean;
@@ -11,8 +13,6 @@ type SelectedPlayerContextValue = {
   openPicker: () => void;
   closePicker: () => void;
 };
-
-const STORAGE_KEY = "smash-diary:selected-player";
 
 const SelectedPlayerContext = createContext<SelectedPlayerContextValue | null>(null);
 
@@ -26,7 +26,7 @@ export function SelectedPlayerProvider({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    const storedValue = window.localStorage.getItem(STORAGE_KEY);
+    const storedValue = window.localStorage.getItem(storageKeys.selectedPlayer);
     const stored = storedValue ? Number(storedValue) : null;
     const timeoutId = window.setTimeout(() => {
       setSelectedPlayerIdState(stored !== null && Number.isInteger(stored) ? stored : null);
@@ -39,12 +39,12 @@ export function SelectedPlayerProvider({
 
   function setSelectedPlayerId(value: number) {
     setSelectedPlayerIdState(value);
-    window.localStorage.setItem(STORAGE_KEY, String(value));
+    window.localStorage.setItem(storageKeys.selectedPlayer, String(value));
   }
 
   function clearSelectedPlayerId() {
     setSelectedPlayerIdState(null);
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(storageKeys.selectedPlayer);
   }
 
   const contextValue = useMemo(

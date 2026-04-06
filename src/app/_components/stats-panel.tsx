@@ -2,92 +2,78 @@
 
 import { LeaderboardPanel } from "@/app/_components/leaderboard-panel";
 import { SectionHeading } from "@/app/_components/section-heading";
-import { SummaryStatTile } from "@/app/_components/summary-stat-tile";
-import type { PlayerDashboardMetrics, PlayerStanding, PlayerStatsSummary } from "@/lib/types";
-
-function formatPercent(value: number) {
-  return `${Math.round(value * 10)}%`;
-}
-
-const resultsGrid = [
-  { key: "singlesWins", label: "Singles Wins", accent: "default" },
-  { key: "singlesLosses", label: "Singles Losses", accent: "default" },
-  { key: "doublesWins", label: "Doubles Wins", accent: "default" },
-  { key: "doublesLosses", label: "Doubles Losses", accent: "default" },
-  { key: "wins", label: "Total Wins", accent: "primary" },
-  { key: "losses", label: "Total Losses", accent: "danger" },
-] as const;
+import { StatsPerformancePanel } from "@/app/_components/stats-performance-panel";
+import { StatsFormatSelector } from "@/app/_components/stats-format-selector";
+import type { LeaderboardData, PlayerDashboardMetrics, PlayerStatsSummary, StatsFormat } from "@/lib/types";
+import { formatStatsFormatLabel } from "@/lib/utils";
 
 export function StatsPanel({
+  format,
+  hasSelectedPlayer,
   leaderboard,
   metrics,
   summary,
 }: Readonly<{
-  leaderboard: PlayerStanding[];
+  format: StatsFormat;
+  hasSelectedPlayer: boolean;
+  leaderboard: LeaderboardData;
   metrics: PlayerDashboardMetrics | null;
   summary: PlayerStatsSummary | null;
 }>) {
+  const formatLabel = formatStatsFormatLabel(format);
+
   if (!summary || !metrics) {
     return (
       <section className="stats-page">
-        <div className="stats-page__header">
-          <SectionHeading
-            eyebrow="Stats"
-            title="Performance sheet"
-            description="Choose a player to load ratings, records, and leaderboard context."
-            titleClassName="page-title stats-page__title"
-          />
+        <div className="stats-page__top">
+          <StatsFormatSelector />
+
+          <div className="stats-page__header">
+            <SectionHeading
+              eyebrow="Stats"
+              title={`${formatLabel} stats`}
+              description={
+                hasSelectedPlayer
+                  ? `No ${format} matches yet for the selected player.`
+                  : `Choose a player to load ${format} ratings, records, and leaderboard context.`
+              }
+              titleClassName="page-title stats-page__title"
+            />
+          </div>
         </div>
 
         <div className="stats-page__empty">
-          <p className="stats-page__empty-title">Player context needed</p>
-          <p className="muted-copy">Pick a player from the header to load personal ratings and results breakdown.</p>
+          <p className="stats-page__empty-title">{hasSelectedPlayer ? `No ${format} stats yet` : "Player context needed"}</p>
+          <p className="muted-copy">
+            {hasSelectedPlayer
+              ? `Log a ${format} match to unlock personal win rate and rating for this format.`
+              : `Pick a player from the header to load personal performance and leaderboard context.`}
+          </p>
         </div>
 
-        <LeaderboardPanel players={leaderboard} />
+        <LeaderboardPanel leaderboard={leaderboard} />
       </section>
     );
   }
 
   return (
     <section className="stats-page">
-      <div className="stats-page__header">
-        <SectionHeading
-          eyebrow="Performance sheet"
-          title={`${summary.playerName}'s stats`}
-          description={`${summary.totalMatches} matches across singles and doubles.`}
-          titleClassName="page-title stats-page__title"
-        />
+      <div className="stats-page__top">
+        <StatsFormatSelector />
+
+        <div className="stats-page__header">
+          <SectionHeading
+            eyebrow="Stats"
+            title={`${summary.playerName}'s ${format} stats`}
+            description={`${summary.totalMatches} ${format} matches`}
+            titleClassName="page-title stats-page__title"
+          />
+        </div>
+
+        <StatsPerformancePanel key={format} metrics={metrics} summary={summary} />
       </div>
 
-      <section className="dashboard-grid stats-page__metrics">
-        <SummaryStatTile accent="primary" label="Win rate" value={formatPercent(metrics.winScore)} />
-        <SummaryStatTile accent="secondary" label="Player rating" value={metrics.playerRating.toFixed(1)} />
-      </section>
-
-      <section className="stats-results">
-        <div className="dashboard-section__row">
-          <h2 className="dashboard-section__title">Results Breakdown</h2>
-          <p className="stats-results__meta">{summary.totalMatches} matches</p>
-        </div>
-
-        <div className="stats-results__grid">
-          {resultsGrid.map((item) => (
-            <div className="stats-results__card" key={item.key}>
-              <span className="stats-results__label">{item.label}</span>
-              <strong
-                className={`display stats-results__value ${
-                  item.accent !== "default" ? `stats-results__value--${item.accent}` : ""
-                }`}
-              >
-                {summary[item.key]}
-              </strong>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <LeaderboardPanel players={leaderboard} title="Leaderboard" />
+      <LeaderboardPanel leaderboard={leaderboard} />
     </section>
   );
 }

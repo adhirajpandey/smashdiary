@@ -1,4 +1,4 @@
-import type { Player, PlayerDashboardMetrics, PlayerStanding, PlayerStatsSummary, ResolvedGame } from "@/lib/types";
+import type { LeaderboardData, Player, PlayerDashboardMetrics, PlayerStatsSummary, ResolvedGame, StatsFormat } from "@/lib/types";
 
 export type MatchFeedItem = {
   id: number;
@@ -17,12 +17,14 @@ export type PlayersData = {
 };
 
 export type DashboardData = {
+  format: StatsFormat;
   metrics: PlayerDashboardMetrics | null;
-  leaderboard: PlayerStanding[];
+  leaderboard: LeaderboardData;
   recentMatches: MatchFeedItem[];
 };
 
 export type MatchesData = {
+  format: StatsFormat;
   selectedPlayerName: string | null;
   matches: MatchFeedItem[];
 };
@@ -32,7 +34,8 @@ export type MatchDetailData = {
 };
 
 export type StatsData = {
+  format: StatsFormat;
   summary: PlayerStatsSummary | null;
   metrics: PlayerDashboardMetrics | null;
-  leaderboard: PlayerStanding[];
+  leaderboard: LeaderboardData;
 };

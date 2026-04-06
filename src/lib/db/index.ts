@@ -1,14 +1,11 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
+import { getRequiredDatabaseUrl } from "@/lib/config/env";
 import * as schema from "@/lib/db/schema";
 
 function getDatabaseUrl() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    throw new Error("Missing DATABASE_URL environment variable.");
-  }
-  return url;
+  return getRequiredDatabaseUrl();
 }
 
 type DatabaseCache = {

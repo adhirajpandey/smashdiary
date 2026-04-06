@@ -1,4 +1,5 @@
 export type GameFormat = "singles" | "doubles";
+export type StatsFormat = GameFormat;
 
 export type WinnerSide = "A" | "B";
 
@@ -63,33 +64,38 @@ export type ResolvedGame = Game & {
 export type PlayerStatsSummary = {
   playerId: number;
   playerName: string;
+  format: StatsFormat;
   totalMatches: number;
   wins: number;
   losses: number;
-  recentForm: Array<"W" | "L">;
-  singlesGames: number;
-  doublesGames: number;
-  singlesWins: number;
-  singlesLosses: number;
-  doublesWins: number;
-  doublesLosses: number;
 };
 
 export type PlayerDashboardMetrics = {
   playerId: number;
   playerName: string;
+  format: StatsFormat;
+  totalMatches: number;
   winScore: number;
   playerRating: number;
+  averagePointDiff: number;
   wins: number;
   losses: number;
-  singlesGames: number;
-  doublesGames: number;
   recentMatches: ResolvedGame[];
 };
 
-export type PlayerStanding = {
-  playerId: number;
-  playerName: string;
+export type LeaderboardEntry = {
+  id: string;
+  names: string[];
   wins: number;
-  rating: number;
+  totalMatches: number;
+  displayScore: number;
+  rawRankScore: number;
+};
+
+export type LeaderboardData = {
+  title: string;
+  scoreLabel: string;
+  scoreHelpText: string;
+  minimumMatches: number;
+  entries: LeaderboardEntry[];
 };
