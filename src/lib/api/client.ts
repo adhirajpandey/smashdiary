@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 
 import type { GameFormFieldErrors } from "@/lib/action-errors";
 import type { ApiResponse, MatchMutationInput, MatchMutationResult } from "@/lib/api/contracts";
+import type { StatsFormat } from "@/lib/types";
 import type { DashboardData, MatchDetailData, MatchesData, PlayersData, StatsData } from "@/lib/view-models";
 
 export class ApiClientError extends Error {
@@ -21,10 +22,10 @@ export class ApiClientError extends Error {
 
 export const queryKeys = {
   players: ["players"] as const,
-  dashboard: (playerId: number | null) => ["dashboard", playerId] as const,
-  matches: (playerId: number | null) => ["matches", playerId] as const,
+  dashboard: (playerId: number | null, format: StatsFormat) => ["dashboard", playerId, format] as const,
+  matches: (playerId: number | null, format: StatsFormat) => ["matches", playerId, format] as const,
   matchDetail: (matchId: number | null) => ["match-detail", matchId] as const,
-  stats: (playerId: number | null) => ["stats", playerId] as const,
+  stats: (playerId: number | null, format: StatsFormat) => ["stats", playerId, format] as const,
 };
 
 async function invalidateDiaryQueries(queryClient: QueryClient, matchId?: number) {
@@ -83,18 +84,18 @@ export function usePlayersQuery() {
   });
 }
 
-export function useDashboardQuery(playerId: number | null) {
+export function useDashboardQuery(playerId: number | null, format: StatsFormat) {
   return useQuery({
-    queryKey: queryKeys.dashboard(playerId),
-    queryFn: () => fetchJson<DashboardData>(playerId ? `/api/dashboard?playerId=${playerId}` : "/api/dashboard"),
+    queryKey: queryKeys.dashboard(playerId, format),
+    queryFn: () => fetchJson<DashboardData>(playerId ? `/api/dashboard?playerId=${playerId}&format=${format}` : `/api/dashboard?format=${format}`),
     placeholderData: (previousData) => previousData,
   });
 }
 
-export function useMatchesQuery(playerId: number | null) {
+export function useMatchesQuery(playerId: number | null, format: StatsFormat) {
   return useQuery({
-    queryKey: queryKeys.matches(playerId),
-    queryFn: () => fetchJson<MatchesData>(playerId ? `/api/matches?playerId=${playerId}` : "/api/matches"),
+    queryKey: queryKeys.matches(playerId, format),
+    queryFn: () => fetchJson<MatchesData>(playerId ? `/api/matches?playerId=${playerId}&format=${format}` : `/api/matches?format=${format}`),
     placeholderData: (previousData) => previousData,
   });
 }
@@ -108,10 +109,10 @@ export function useMatchDetailQuery(matchId: number | null, enabled = true) {
   });
 }
 
-export function useStatsQuery(playerId: number | null) {
+export function useStatsQuery(playerId: number | null, format: StatsFormat) {
   return useQuery({
-    queryKey: queryKeys.stats(playerId),
-    queryFn: () => fetchJson<StatsData>(playerId ? `/api/stats?playerId=${playerId}` : "/api/stats"),
+    queryKey: queryKeys.stats(playerId, format),
+    queryFn: () => fetchJson<StatsData>(playerId ? `/api/stats?playerId=${playerId}&format=${format}` : `/api/stats?format=${format}`),
     placeholderData: (previousData) => previousData,
   });
 }

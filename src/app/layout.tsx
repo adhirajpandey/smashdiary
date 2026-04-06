@@ -3,6 +3,7 @@ import { Lexend, Space_Grotesk } from "next/font/google";
 
 import { AppQueryProvider } from "@/app/_components/query-provider";
 import { SelectedPlayerProvider } from "@/app/_components/selected-player-provider";
+import { StatsFormatProvider } from "@/app/_components/stats-format-provider";
 import { ToastProvider } from "@/app/_components/toast-provider";
 import "./globals.css";
 
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <AppQueryProvider>
           <SelectedPlayerProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <StatsFormatProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </StatsFormatProvider>
           </SelectedPlayerProvider>
         </AppQueryProvider>
       </body>

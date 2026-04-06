@@ -1,6 +1,6 @@
 import clsx, { type ClassValue } from "clsx";
 
-import { MATCH_SLOTS, type MatchSlot } from "@/lib/types";
+import { MATCH_SLOTS, type MatchSlot, type StatsFormat } from "@/lib/types";
 
 export const MATCH_TIME_ZONE = "Asia/Kolkata";
 export const DEFAULT_MATCH_SLOT: MatchSlot = "8 PM";
@@ -159,6 +159,18 @@ export function normalizePlayerNameKey(name: string) {
 export function parseNumericId(value: string) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+export function isStatsFormat(value: string): value is StatsFormat {
+  return value === "singles" || value === "doubles";
+}
+
+export function parseStatsFormat(value: string | null | undefined): StatsFormat {
+  return isStatsFormat(String(value ?? "")) ? (value as StatsFormat) : "singles";
+}
+
+export function formatStatsFormatLabel(format: StatsFormat) {
+  return format === "singles" ? "Singles" : "Doubles";
 }
 
 export function formatPlayerName(name: string): string;

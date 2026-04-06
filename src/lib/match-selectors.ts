@@ -1,4 +1,10 @@
-import type { Player, PlayerDashboardMetrics, PlayerStanding, PlayerStatsSummary, ResolvedGame } from "@/lib/types";
+import type { LeaderboardData, LeaderboardEntry, Player, PlayerDashboardMetrics, PlayerStatsSummary, ResolvedGame, StatsFormat } from "@/lib/types";
+import { formatStatsFormatLabel, getMatchSlotOrder } from "@/lib/utils";
+
+const ELO_INITIAL_RATING = 1500;
+const ELO_K_FACTOR = 32;
+const LEADERBOARD_MINIMUM_MATCHES = 3;
+const LEADERBOARD_SCORE_LABEL = "Leaderboard score";
 
 export function getPlayerSide(match: ResolvedGame, playerId: number) {
   if (match.sideAPlayers.some((player) => player.id === playerId)) {
@@ -40,43 +46,114 @@ export function getPlayerMatches(matches: ResolvedGame[], playerId: number) {
 
 export const getPlayerGames = getPlayerMatches;
 
+export function filterMatchesByFormat(matches: ResolvedGame[], format: StatsFormat) {
+  return matches.filter((match) => match.format === format);
+}
+
+export function getPlayerMatchesByFormat(matches: ResolvedGame[], playerId: number, format: StatsFormat) {
+  return getPlayerMatches(filterMatchesByFormat(matches, format), playerId);
+}
+
+function sortMatchesAscending(matches: ResolvedGame[]) {
+  return matches.slice().sort((left, right) => {
+    const playedOnCompare = left.playedOn.localeCompare(right.playedOn);
+    if (playedOnCompare !== 0) {
+      return playedOnCompare;
+    }
+
+    const slotCompare = getMatchSlotOrder(left.slot) - getMatchSlotOrder(right.slot);
+    if (slotCompare !== 0) {
+      return slotCompare;
+    }
+
+    return left.id - right.id;
+  });
+}
+
+function getExpectedScore(currentRating: number, opposingRating: number) {
+  return 1 / (1 + 10 ** ((opposingRating - currentRating) / 400));
+}
+
+function updateEloRatings(ratingA: number, ratingB: number, scoreA: 0 | 1) {
+  const expectedScoreA = getExpectedScore(ratingA, ratingB);
+  const expectedScoreB = getExpectedScore(ratingB, ratingA);
+  const scoreB = scoreA === 1 ? 0 : 1;
+
+  return {
+    nextRatingA: ratingA + ELO_K_FACTOR * (scoreA - expectedScoreA),
+    nextRatingB: ratingB + ELO_K_FACTOR * (scoreB - expectedScoreB),
+  };
+}
+
+export function normalizeLeaderboardScore(rawRankScore: number) {
+  const normalized = 5 + ((rawRankScore - ELO_INITIAL_RATING) / 100);
+  return Number(Math.max(0, Math.min(10, normalized)).toFixed(1));
+}
+
+function compareLeaderboardEntries(left: LeaderboardEntry, right: LeaderboardEntry) {
+  if (right.rawRankScore !== left.rawRankScore) {
+    return right.rawRankScore - left.rawRankScore;
+  }
+
+  if (right.wins !== left.wins) {
+    return right.wins - left.wins;
+  }
+
+  if (right.totalMatches !== left.totalMatches) {
+    return right.totalMatches - left.totalMatches;
+  }
+
+  return left.names.join(" ").localeCompare(right.names.join(" "));
+}
+
+function createLeaderboardEntry(id: string, names: string[], wins: number, totalMatches: number, rawRankScore: number): LeaderboardEntry {
+  return {
+    id,
+    names,
+    wins,
+    totalMatches,
+    displayScore: normalizeLeaderboardScore(rawRankScore),
+    rawRankScore: Number(rawRankScore.toFixed(2)),
+  };
+}
+
 export function getPlayerSummary(
   matches: ResolvedGame[],
   players: Player[],
   playerId: number,
+  format: StatsFormat,
 ): PlayerStatsSummary | null {
   const player = players.find((entry) => entry.id === playerId);
   if (!player) {
     return null;
   }
 
-  const playerMatches = getPlayerMatches(matches, playerId);
-  const singlesMatches = playerMatches.filter((match) => match.format === "singles");
-  const doublesMatches = playerMatches.filter((match) => match.format === "doubles");
+  const playerMatches = getPlayerMatchesByFormat(matches, playerId, format);
+  if (!playerMatches.length) {
+    return null;
+  }
+
   const wins = playerMatches.filter((match) => didPlayerWin(match, playerId)).length;
-  const losses = playerMatches.length - wins;
-  const singlesWins = singlesMatches.filter((match) => didPlayerWin(match, playerId)).length;
-  const doublesWins = doublesMatches.filter((match) => didPlayerWin(match, playerId)).length;
 
   return {
     playerId: player.id,
     playerName: player.name,
+    format,
     totalMatches: playerMatches.length,
     wins,
-    losses,
-    singlesGames: singlesMatches.length,
-    doublesGames: doublesMatches.length,
-    singlesWins,
-    singlesLosses: singlesMatches.length - singlesWins,
-    doublesWins,
-    doublesLosses: doublesMatches.length - doublesWins,
+    losses: playerMatches.length - wins,
   };
 }
 
 export const getPlayerStatsSummary = getPlayerSummary;
 
-export function getPlayerRating(matches: ResolvedGame[], playerId: number) {
-  const playerMatches = getPlayerMatches(matches, playerId);
+export function getPlayerRating(matches: ResolvedGame[], playerId: number, format?: StatsFormat) {
+  const sourceMatches = format ? filterMatchesByFormat(matches, format) : matches;
+  const playerMatches = getPlayerMatches(sourceMatches, playerId);
+  if (!playerMatches.length) {
+    return null;
+  }
+
   const wins = playerMatches.filter((match) => didPlayerWin(match, playerId)).length;
   const pointDiff = playerMatches.reduce((sum, match) => {
     const { scoreFor, scoreAgainst } = getPlayerPerspectiveScore(match, playerId);
@@ -92,49 +169,168 @@ export function getDashboardMetrics(
   matches: ResolvedGame[],
   players: Player[],
   playerId: number,
+  format: StatsFormat,
 ): PlayerDashboardMetrics | null {
-  const stats = getPlayerSummary(matches, players, playerId);
+  const stats = getPlayerSummary(matches, players, playerId, format);
   if (!stats) {
     return null;
   }
 
-  const playerMatches = getPlayerMatches(matches, playerId);
+  const playerMatches = getPlayerMatchesByFormat(matches, playerId, format);
+  const playerRating = getPlayerRating(matches, playerId, format);
+  if (playerRating === null) {
+    return null;
+  }
+
   const winRate = playerMatches.length ? stats.wins / playerMatches.length : 0;
 
   return {
     playerId: stats.playerId,
     playerName: stats.playerName,
+    format,
+    totalMatches: stats.totalMatches,
     winScore: Number((winRate * 10).toFixed(1)),
-    playerRating: getPlayerRating(matches, playerId),
+    playerRating,
     wins: stats.wins,
     losses: stats.losses,
-    singlesGames: stats.singlesGames,
-    doublesGames: stats.doublesGames,
     recentMatches: playerMatches.slice(0, 4),
   };
 }
 
-export function getTopPerformers(matches: ResolvedGame[], players: Player[]): PlayerStanding[] {
-  return players
-    .map((player) => {
-      const playerMatches = getPlayerMatches(matches, player.id);
-      const wins = playerMatches.filter((match) => didPlayerWin(match, player.id)).length;
+export function getSinglesLeaderboard(matches: ResolvedGame[], players: Player[]): LeaderboardEntry[] {
+  const singlesMatches = sortMatchesAscending(filterMatchesByFormat(matches, "singles"));
+  const standings = new Map<number, { rating: number; wins: number; totalMatches: number }>();
 
-      return {
-        playerId: player.id,
-        playerName: player.name,
-        wins,
-        rating: getPlayerRating(matches, player.id),
-      };
-    })
-    .sort((a, b) => {
-      if (b.wins !== a.wins) {
-        return b.wins - a.wins;
+  for (const match of singlesMatches) {
+    const sideAPlayer = match.sideAPlayers[0];
+    const sideBPlayer = match.sideBPlayers[0];
+
+    if (!sideAPlayer || !sideBPlayer || match.sideAPlayers.length !== 1 || match.sideBPlayers.length !== 1) {
+      continue;
+    }
+
+    const sideAStanding = standings.get(sideAPlayer.id) ?? { rating: ELO_INITIAL_RATING, wins: 0, totalMatches: 0 };
+    const sideBStanding = standings.get(sideBPlayer.id) ?? { rating: ELO_INITIAL_RATING, wins: 0, totalMatches: 0 };
+    const scoreA: 0 | 1 = match.winnerSide === "A" ? 1 : 0;
+    const { nextRatingA, nextRatingB } = updateEloRatings(sideAStanding.rating, sideBStanding.rating, scoreA);
+
+    standings.set(sideAPlayer.id, {
+      rating: nextRatingA,
+      wins: sideAStanding.wins + (scoreA === 1 ? 1 : 0),
+      totalMatches: sideAStanding.totalMatches + 1,
+    });
+    standings.set(sideBPlayer.id, {
+      rating: nextRatingB,
+      wins: sideBStanding.wins + (scoreA === 0 ? 1 : 0),
+      totalMatches: sideBStanding.totalMatches + 1,
+    });
+  }
+
+  return players
+    .flatMap((player) => {
+      const standing = standings.get(player.id);
+      if (!standing || standing.totalMatches < LEADERBOARD_MINIMUM_MATCHES) {
+        return [];
       }
 
-      return b.rating - a.rating;
+      return [createLeaderboardEntry(`player-${player.id}`, [player.name], standing.wins, standing.totalMatches, standing.rating)];
     })
+    .sort(compareLeaderboardEntries)
     .slice(0, 3);
+}
+
+function createTeamKey(playerIds: number[]) {
+  return playerIds.slice().sort((left, right) => left - right).join(":");
+}
+
+export function getDoublesLeaderboard(matches: ResolvedGame[], players: Player[]): LeaderboardEntry[] {
+  const doublesMatches = sortMatchesAscending(filterMatchesByFormat(matches, "doubles"));
+  const playerById = new Map(players.map((player) => [player.id, player]));
+  const standings = new Map<string, { rating: number; wins: number; totalMatches: number; names: string[] }>();
+
+  for (const match of doublesMatches) {
+    if (match.sideAPlayers.length !== 2 || match.sideBPlayers.length !== 2) {
+      continue;
+    }
+
+    const sideATeamIds = match.sideAPlayers.map((player) => player.id).sort((left, right) => left - right);
+    const sideBTeamIds = match.sideBPlayers.map((player) => player.id).sort((left, right) => left - right);
+    const sideATeamKey = createTeamKey(sideATeamIds);
+    const sideBTeamKey = createTeamKey(sideBTeamIds);
+
+    const sideANames = sideATeamIds
+      .map((playerId) => playerById.get(playerId)?.name)
+      .filter((name): name is string => Boolean(name))
+      .sort((left, right) => left.localeCompare(right));
+    const sideBNames = sideBTeamIds
+      .map((playerId) => playerById.get(playerId)?.name)
+      .filter((name): name is string => Boolean(name))
+      .sort((left, right) => left.localeCompare(right));
+
+    if (sideANames.length !== 2 || sideBNames.length !== 2) {
+      continue;
+    }
+
+    const sideAStanding = standings.get(sideATeamKey) ?? {
+      rating: ELO_INITIAL_RATING,
+      wins: 0,
+      totalMatches: 0,
+      names: sideANames,
+    };
+    const sideBStanding = standings.get(sideBTeamKey) ?? {
+      rating: ELO_INITIAL_RATING,
+      wins: 0,
+      totalMatches: 0,
+      names: sideBNames,
+    };
+    const scoreA: 0 | 1 = match.winnerSide === "A" ? 1 : 0;
+    const { nextRatingA, nextRatingB } = updateEloRatings(sideAStanding.rating, sideBStanding.rating, scoreA);
+
+    standings.set(sideATeamKey, {
+      rating: nextRatingA,
+      wins: sideAStanding.wins + (scoreA === 1 ? 1 : 0),
+      totalMatches: sideAStanding.totalMatches + 1,
+      names: sideANames,
+    });
+    standings.set(sideBTeamKey, {
+      rating: nextRatingB,
+      wins: sideBStanding.wins + (scoreA === 0 ? 1 : 0),
+      totalMatches: sideBStanding.totalMatches + 1,
+      names: sideBNames,
+    });
+  }
+
+  return Array.from(standings.entries())
+    .flatMap(([teamKey, standing]) => {
+      if (standing.totalMatches < LEADERBOARD_MINIMUM_MATCHES) {
+        return [];
+      }
+
+      return [createLeaderboardEntry(`team-${teamKey}`, standing.names, standing.wins, standing.totalMatches, standing.rating)];
+    })
+    .sort(compareLeaderboardEntries)
+    .slice(0, 3);
+}
+
+function getLeaderboardScoreHelpText(format: StatsFormat) {
+  if (format === "singles") {
+    return `Leaderboard score is a 0-10 view of a backend Elo ranking for singles players. Only players with at least ${LEADERBOARD_MINIMUM_MATCHES} singles matches are included. Higher means stronger proven results.`;
+  }
+
+  return `Leaderboard score is a 0-10 view of a backend Elo ranking for exact doubles pairs. Only pairs with at least ${LEADERBOARD_MINIMUM_MATCHES} matches together are included. Higher means stronger proven results together.`;
+}
+
+export function getLeaderboard(matches: ResolvedGame[], players: Player[], format: StatsFormat): LeaderboardData {
+  const formatLabel = formatStatsFormatLabel(format);
+  const entries = format === "singles" ? getSinglesLeaderboard(matches, players) : getDoublesLeaderboard(matches, players);
+
+  return {
+    title: `${formatLabel} leaderboard`,
+    scoreLabel: LEADERBOARD_SCORE_LABEL,
+    scoreHelpText: getLeaderboardScoreHelpText(format),
+    minimumMatches: LEADERBOARD_MINIMUM_MATCHES,
+    entries,
+  };
 }
 
 export function getMatchPerspective(match: ResolvedGame, playerId?: number | null) {

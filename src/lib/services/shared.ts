@@ -1,7 +1,7 @@
-import { getDashboardMetrics, getMatchPerspective, getPlayerMatches, getPlayerStatsSummary, getTopPerformers } from "@/lib/match-selectors";
+import { filterMatchesByFormat, getDashboardMetrics, getLeaderboard, getMatchPerspective, getPlayerMatches, getPlayerStatsSummary } from "@/lib/match-selectors";
 import { listMatchesQuery } from "@/lib/queries/matches";
 import { listPlayersQuery } from "@/lib/queries/players";
-import type { Player, ResolvedGame } from "@/lib/types";
+import type { Player, ResolvedGame, StatsFormat } from "@/lib/types";
 import type { MatchFeedItem } from "@/lib/view-models";
 
 export async function getMatchesAndPlayers() {
@@ -36,30 +36,33 @@ export function buildMatchFeedItems(matches: ResolvedGame[], playerId?: number |
   });
 }
 
-export function buildDashboardData(matches: ResolvedGame[], players: Player[], playerId?: number | null) {
-  const metrics = playerId ? getDashboardMetrics(matches, players, playerId) : null;
+export function buildDashboardData(matches: ResolvedGame[], players: Player[], playerId: number | null | undefined, format: StatsFormat) {
+  const metrics = playerId ? getDashboardMetrics(matches, players, playerId, format) : null;
 
   return {
+    format,
     metrics,
-    leaderboard: getTopPerformers(matches, players),
+    leaderboard: getLeaderboard(matches, players, format),
     recentMatches: metrics ? buildMatchFeedItems(metrics.recentMatches, playerId) : [],
   };
 }
 
-export function buildMatchesData(matches: ResolvedGame[], players: Player[], playerId?: number | null) {
+export function buildMatchesData(matches: ResolvedGame[], players: Player[], playerId: number | null | undefined, format: StatsFormat) {
   const selectedPlayer = getSelectedPlayer(players, playerId);
-  const playerMatches = selectedPlayer ? getPlayerMatches(matches, selectedPlayer.id) : [];
+  const playerMatches = selectedPlayer ? getPlayerMatches(filterMatchesByFormat(matches, format), selectedPlayer.id) : [];
 
   return {
+    format,
     selectedPlayerName: selectedPlayer?.name ?? null,
     matches: buildMatchFeedItems(playerMatches, selectedPlayer?.id ?? null),
   };
 }
 
-export function buildStatsData(matches: ResolvedGame[], players: Player[], playerId?: number | null) {
+export function buildStatsData(matches: ResolvedGame[], players: Player[], playerId: number | null | undefined, format: StatsFormat) {
   return {
-    summary: playerId ? getPlayerStatsSummary(matches, players, playerId) : null,
-    metrics: playerId ? getDashboardMetrics(matches, players, playerId) : null,
-    leaderboard: getTopPerformers(matches, players),
+    format,
+    summary: playerId ? getPlayerStatsSummary(matches, players, playerId, format) : null,
+    metrics: playerId ? getDashboardMetrics(matches, players, playerId, format) : null,
+    leaderboard: getLeaderboard(matches, players, format),
   };
 }

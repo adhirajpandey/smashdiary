@@ -45,6 +45,12 @@ describe("invalidateDiaryQueriesInBackground", () => {
     await deferred.promise;
   });
 
+  it("includes stats format in dashboard and stats query keys", () => {
+    expect(queryKeys.dashboard(7, "singles")).toEqual(["dashboard", 7, "singles"]);
+    expect(queryKeys.matches(7, "singles")).toEqual(["matches", 7, "singles"]);
+    expect(queryKeys.stats(7, "doubles")).toEqual(["stats", 7, "doubles"]);
+  });
+
   it("includes the saved match detail query for update invalidation", async () => {
     const queryClient = createQueryClientMock();
 

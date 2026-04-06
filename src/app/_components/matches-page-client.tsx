@@ -3,13 +3,15 @@
 import { MatchesView } from "@/app/_components/matches-view";
 import { StatusView } from "@/app/_components/status-view";
 import { useSelectedPlayer } from "@/app/_components/selected-player-provider";
+import { useStatsFormat } from "@/app/_components/stats-format-provider";
 import { useMatchesQuery } from "@/lib/api/client";
 
 export function MatchesPageClient() {
   const { isHydrated, selectedPlayerId } = useSelectedPlayer();
-  const { data, error, isPending } = useMatchesQuery(selectedPlayerId);
+  const { isHydrated: isStatsFormatHydrated, selectedStatsFormat } = useStatsFormat();
+  const { data, error, isPending } = useMatchesQuery(selectedPlayerId, selectedStatsFormat);
 
-  if (!isHydrated || isPending) {
+  if (!isHydrated || !isStatsFormatHydrated || isPending) {
     return (
       <StatusView
         eyebrow="Loading"
@@ -23,5 +25,5 @@ export function MatchesPageClient() {
     return <StatusView eyebrow="System fault" title="Could not load matches" description={error.message} />;
   }
 
-  return <MatchesView matches={data.matches} selectedPlayerName={data.selectedPlayerName} />;
+  return <MatchesView format={data.format} matches={data.matches} selectedPlayerName={data.selectedPlayerName} />;
 }

@@ -13,13 +13,14 @@ import { saveMatchFromJson } from "@/lib/services/save-match";
 describe("GET /api/matches", () => {
   it("returns match history JSON", async () => {
     (getMatchesData as jest.Mock).mockResolvedValue({
+      format: "singles",
       selectedPlayerName: "Aman",
       matches: [],
     });
 
-    const response = await GET(new Request("http://localhost/api/matches?playerId=1"));
+    const response = await GET(new Request("http://localhost/api/matches?playerId=1&format=doubles"));
 
-    expect(getMatchesData).toHaveBeenCalledWith(1);
+    expect(getMatchesData).toHaveBeenCalledWith(1, "doubles");
     expect(response.status).toBe(200);
   });
 });

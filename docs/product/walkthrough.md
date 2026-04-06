@@ -68,6 +68,8 @@ Invalid or missing IDs resolve to the app's not-found behavior.
 
 The stats screen renders player-focused summary information derived from stored matches and players. It is read-only, depends on the currently selected player context for the personal breakdown, and still shows the shared leaderboard when no player is selected.
 
+Detailed stats, rating, leaderboard, and format-segmentation behavior is documented in `stats-and-leaderboard.md`.
+
 ### Rankings Redirect (`/rankings`)
 
 `/rankings` does not currently render a separate rankings experience. It immediately redirects to `/stats`.

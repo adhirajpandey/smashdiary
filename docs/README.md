@@ -16,6 +16,7 @@ This directory is organized by intent so contributors can find the right level o
 ### Product
 
 - [product/walkthrough.md](./product/walkthrough.md): implemented screens, workflows, and current product boundaries
+- [product/stats-and-leaderboard.md](./product/stats-and-leaderboard.md): detailed stats, rating, leaderboard, and format-segmentation behavior
 
 ### Design
 
