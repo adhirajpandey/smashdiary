@@ -33,7 +33,7 @@ export function StatsPanel({
         <div className="stats-page__header">
           <SectionHeading
             eyebrow="Stats"
-            title="Performance sheet"
+            title="Player stats"
             description="Choose a player to load ratings, records, and leaderboard context."
             titleClassName="page-title stats-page__title"
           />
@@ -53,7 +53,7 @@ export function StatsPanel({
     <section className="stats-page">
       <div className="stats-page__header">
         <SectionHeading
-          eyebrow="Performance sheet"
+          eyebrow="Stats"
           title={`${summary.playerName}'s stats`}
           description={`${summary.totalMatches} matches across singles and doubles.`}
           titleClassName="page-title stats-page__title"

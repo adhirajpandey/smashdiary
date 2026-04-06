@@ -93,7 +93,6 @@ describe("diary metrics", () => {
       singlesLosses: 0,
       doublesWins: 0,
       doublesLosses: 1,
-      recentForm: ["L", "W", "W"],
     });
   });
 

@@ -64,7 +64,6 @@ export function getPlayerSummary(
     totalMatches: playerMatches.length,
     wins,
     losses,
-    recentForm: playerMatches.slice(0, 6).map((match) => (didPlayerWin(match, playerId) ? "W" : "L")),
     singlesGames: singlesMatches.length,
     doublesGames: doublesMatches.length,
     singlesWins,

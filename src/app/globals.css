@@ -1945,37 +1945,12 @@ img {
   color: var(--secondary);
 }
 
-.form-pill-list {
-  display: flex;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.form-pill {
-  min-width: 3rem;
-  padding: 0.95rem 0.85rem;
-  border-radius: 999px;
-  text-align: center;
-  font-weight: 800;
-}
-
-.form-pill.is-win {
-  background: linear-gradient(45deg, rgb(243 255 202 / 0.95), rgb(202 253 0 / 0.92));
-  color: var(--on-primary);
-}
-
-.form-pill.is-loss {
-  background: linear-gradient(45deg, rgb(125 152 255 / 0.95), rgb(0 77 234 / 0.92));
-  color: white;
-}
-
 .stats-page {
   display: grid;
   gap: 1rem;
 }
 
-.stats-breakdown,
-.stats-form {
+.stats-breakdown {
   position: relative;
   overflow: hidden;
 }
@@ -2071,8 +2046,7 @@ img {
   gap: 0.7rem;
 }
 
-.stats-breakdown,
-.stats-form {
+.stats-breakdown {
   display: grid;
   gap: 0.8rem;
   padding: 0.9rem;
@@ -2080,16 +2054,14 @@ img {
   background: linear-gradient(180deg, rgb(24 24 24 / 0.96), rgb(14 14 14 / 1));
 }
 
-.stats-breakdown__header,
-.stats-form__header {
+.stats-breakdown__header {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   align-items: baseline;
 }
 
-.stats-breakdown__meta,
-.stats-form__meta {
+.stats-breakdown__meta {
   margin: 0;
   color: var(--text-secondary);
   font-size: 0.64rem;
@@ -2129,62 +2101,6 @@ img {
 }
 
 .stats-breakdown__value--secondary {
-  color: var(--secondary);
-}
-
-.stats-form__track {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.stats-form__marker {
-  display: grid;
-  gap: 0.28rem;
-  align-items: start;
-  min-height: 4.3rem;
-  padding: 0.6rem 0.6rem 0.55rem;
-  border-radius: 0.8rem;
-  background: linear-gradient(180deg, rgb(29 29 29 / 0.96), rgb(18 18 18 / 0.98));
-  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
-  animation: stats-rise 420ms ease both;
-}
-
-.stats-form__marker:hover {
-  transform: translateY(-1px);
-}
-
-.stats-form__marker.is-win {
-  background:
-    linear-gradient(180deg, rgb(214 255 0 / 0.16), transparent 46%),
-    linear-gradient(180deg, rgb(29 29 29 / 0.96), rgb(18 18 18 / 0.98));
-  box-shadow: inset 0 0 0 1px rgb(214 255 0 / 0.12);
-}
-
-.stats-form__marker.is-loss {
-  background:
-    linear-gradient(180deg, rgb(125 152 255 / 0.18), transparent 46%),
-    linear-gradient(180deg, rgb(29 29 29 / 0.96), rgb(18 18 18 / 0.98));
-  box-shadow: inset 0 0 0 1px rgb(125 152 255 / 0.14);
-}
-
-.stats-form__index {
-  color: rgb(244 243 238 / 0.42);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.stats-form__result {
-  font-size: 1.6rem;
-  line-height: 1;
-}
-
-.stats-form__marker.is-win .stats-form__result {
-  color: var(--primary);
-}
-
-.stats-form__marker.is-loss .stats-form__result {
   color: var(--secondary);
 }
 

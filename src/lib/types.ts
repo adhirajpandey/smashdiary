@@ -66,7 +66,6 @@ export type PlayerStatsSummary = {
   totalMatches: number;
   wins: number;
   losses: number;
-  recentForm: Array<"W" | "L">;
   singlesGames: number;
   doublesGames: number;
   singlesWins: number;
