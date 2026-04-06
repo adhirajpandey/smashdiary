@@ -3,7 +3,7 @@ export const leaderboardConfig = {
   eloKFactor: 32,
   minimumMatches: 3,
   scoreLabel: "Leaderboard score",
-  maxEntries: 3,
+  maxEntries: 5,
   normalizedScore: {
     floor: 0,
     ceiling: 10,
