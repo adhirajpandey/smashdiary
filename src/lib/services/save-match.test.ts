@@ -5,6 +5,13 @@ jest.mock("@/lib/commands/save-match", () => ({
 import { saveMatch } from "@/lib/commands/save-match";
 import { MatchNotFoundError } from "@/lib/match-errors";
 import { saveMatchFromJson } from "@/lib/services/save-match";
+import { getCurrentInputDateValue } from "@/lib/utils";
+
+function addDaysToDate(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 describe("saveMatchFromJson", () => {
   const payload = {
@@ -29,6 +36,24 @@ describe("saveMatchFromJson", () => {
         formError: "Please fix the highlighted input and try again.",
         fieldErrors: {
           sideAScore: "The winning side must reach at least 21.",
+        },
+      },
+    });
+    expect(saveMatch).not.toHaveBeenCalled();
+  });
+
+  it("returns validation errors when the match date is in the future", async () => {
+    const result = await saveMatchFromJson({
+      ...payload,
+      playedOn: addDaysToDate(getCurrentInputDateValue(), 1),
+    });
+
+    expect(result).toMatchObject({
+      type: "validation_error",
+      errors: {
+        formError: "Please fix the highlighted input and try again.",
+        fieldErrors: {
+          playedOn: "Match date cannot be in the future.",
         },
       },
     });

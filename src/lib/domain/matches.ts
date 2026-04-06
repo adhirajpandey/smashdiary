@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { MATCH_SLOTS, type GameFormat, type WinnerSide } from "@/lib/types";
-import { normalizePlayerNameKey } from "@/lib/utils";
+import { getCurrentInputDateValue, normalizePlayedOnValue, normalizePlayerNameKey } from "@/lib/utils";
 
 export function getPlayersPerSide(format: GameFormat) {
   return format === "singles" ? 1 : 2;
@@ -9,6 +9,20 @@ export function getPlayersPerSide(format: GameFormat) {
 
 export function deriveWinnerSide(sideAScore: number, sideBScore: number): WinnerSide {
   return sideAScore > sideBScore ? "A" : "B";
+}
+
+function isFuturePlayedOnDate(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return false;
+  }
+
+  try {
+    return normalizePlayedOnValue(trimmed) > getCurrentInputDateValue();
+  } catch {
+    return false;
+  }
 }
 
 export function isValidFinalScore(sideAScore: number, sideBScore: number) {
@@ -96,6 +110,14 @@ export const gameFormSchema = z
         code: z.ZodIssueCode.custom,
         message: "A player cannot appear on both sides.",
         path: ["sideAPlayers"],
+      });
+    }
+
+    if (isFuturePlayedOnDate(value.playedOn)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Match date cannot be in the future.",
+        path: ["playedOn"],
       });
     }
 

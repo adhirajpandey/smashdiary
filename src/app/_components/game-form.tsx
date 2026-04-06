@@ -304,6 +304,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
   const opponentPartnerName = sideBPlayers[1] ?? "";
   const isPending = createMatchMutation.isPending || updateMatchMutation.isPending;
   const isEdit = matchId !== undefined;
+  const maxPlayedOn = getCurrentInputDateValue();
   const primaryPlayerLabel = isPersonalizedMode ? "You" : "Side A";
   const partnerLabel = isPersonalizedMode ? "Your Partner" : "Side A Partner";
   const opponentLabel = isPersonalizedMode ? "Opponent" : "Side B";
@@ -492,6 +493,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
               </span>
               <input
                 className="match-input-shell__input"
+                max={maxPlayedOn}
                 onChange={(event) => setPlayedOn(event.target.value)}
                 required
                 type="date"

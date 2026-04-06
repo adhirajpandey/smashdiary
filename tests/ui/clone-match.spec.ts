@@ -100,7 +100,7 @@ test("opens edit from the match card overflow menu", async ({ page }) => {
 
   await navigatePrimary(page, "Matches");
   const { menu: matchesMenu } = await openFirstMatchCardActions(page, opponent);
-  await matchesMenu.getByText("EDIT", { exact: true }).click();
+  await matchesMenu.getByRole("menuitem", { name: "EDIT", exact: true }).click();
 
   await expect(page).toHaveURL(/\/matches\/\d+\/edit$/);
   await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();
@@ -123,7 +123,7 @@ test("opens edit from dashboard recent matches without clipping the overflow men
   await navigatePrimary(page, "Dashboard");
   const { card: dashboardCard, menu: dashboardMenu } = await openFirstMatchCardActions(page);
   await expectDashboardMatchCardMenuNotClipped(page, dashboardCard, dashboardMenu);
-  await dashboardMenu.getByText("EDIT", { exact: true }).click();
+  await dashboardMenu.getByRole("menuitem", { name: "EDIT", exact: true }).click();
 
   await expect(page).toHaveURL(/\/matches\/\d+\/edit$/);
   await expect(page.getByRole("button", { name: "Update Match" })).toBeVisible();

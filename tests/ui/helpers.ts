@@ -99,14 +99,24 @@ export async function expectToast(
 }
 
 async function dismissVisibleToasts(page: Page) {
-  const dismissButtons = page.getByRole("button", { name: /dismiss /i });
-  const count = await dismissButtons.count();
+  while (true) {
+    const dismissButtons = page.getByRole("button", { name: /dismiss /i });
+    const count = await dismissButtons.count();
 
-  for (let index = 0; index < count; index += 1) {
-    const button = dismissButtons.nth(index);
+    if (!count) {
+      return;
+    }
 
-    if (await button.isVisible()) {
+    const button = dismissButtons.first();
+
+    try {
+      if (!(await button.isVisible())) {
+        return;
+      }
+
       await button.click();
+    } catch {
+      continue;
     }
   }
 }
@@ -147,12 +157,27 @@ async function openMatchActionsMenu(trigger: Locator, menu: Locator) {
   await expect
     .poll(
       async () => {
-        if ((await trigger.getAttribute("aria-expanded")) === "true") {
+        if ((await menu.locator(".match-actions__item").count()) === 3) {
           return true;
         }
 
-        await trigger.click();
-        return (await trigger.getAttribute("aria-expanded")) === "true";
+        try {
+          await trigger.scrollIntoViewIfNeeded();
+        } catch {
+          return false;
+        }
+
+        try {
+          await trigger.tap();
+        } catch {
+          try {
+            await trigger.click();
+          } catch {
+            return false;
+          }
+        }
+
+        return (await menu.locator(".match-actions__item").count()) === 3;
       },
       {
         message: "Expected match actions trigger to open its menu.",

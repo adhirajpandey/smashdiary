@@ -40,6 +40,7 @@ Current supported behavior:
 - use existing player suggestions through a two-step picker that opens the list first and only starts typing after tapping the search area
 - create new players implicitly by typing names during submission
 - prefill the date field with the current local date and default the slot dropdown to `8 PM` for new entries
+- only accept completed matches dated today or earlier
 - adjust scores with either number inputs or score stepper buttons
 - route to the saved match detail screen after a successful save
 
