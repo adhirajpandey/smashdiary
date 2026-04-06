@@ -177,6 +177,25 @@ Practical interpretation:
 - it is not a cross-era or schedule-strength-adjusted ranking
 - it does not account for opponent rating, teammate strength, recency weighting, or match format weighting
 
+### Average Point Differential
+
+The stats page also shows average point differential as supporting evidence for the headline metrics.
+
+Formula:
+
+`pointDiff = sum(scoreFor - scoreAgainst across player matches)`
+
+`averagePointDiff = pointDiff / totalMatches`
+
+The final number is rounded to one decimal place and keeps its sign.
+
+Practical interpretation:
+
+- positive values mean the player usually wins by more points than they concede
+- negative values mean the player is typically outscored on average
+- unlike the player rating formula, this number is not clamped to ignore negative margins
+- it is computed only from matches in the active format
+
 ### Activity Counts
 
 The dashboard's activity section is now format-specific.
@@ -317,16 +336,19 @@ With a selected player and at least one match in the active format, it shows:
 - the singles/doubles selector
 - title using the player's name and active format
 - subtitle showing total matches in the active format
-- win rate tile
-- player rating tile
-- active-format breakdown cards for matches, record, wins, and losses
+- one `Performance` surface for the active format
+- win rate as the dominant metric
+- player rating as the secondary headline metric
+- average point differential as supporting evidence in the right rail
+- a `Record` label above the visual wins/losses split
+- raw wins and losses counts anchored to the split, without a separate white record value
 - the same format-specific leaderboard
 
 Without a selected player, it shows:
 
 - the selector
 - heading and prompt to choose a player
-- no personal metrics or breakdown
+- no personal performance metrics
 - the same format-specific leaderboard
 
 If a player is selected but has no matches in the active format:

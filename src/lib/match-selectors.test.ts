@@ -1,5 +1,6 @@
 import {
   filterMatchesByFormat,
+  getDashboardMetrics,
   getDoublesLeaderboard,
   getLeaderboard,
   getMatchPerspective,
@@ -86,6 +87,19 @@ describe("match selectors", () => {
   it("returns null metrics for players without matches in the selected format", () => {
     expect(getPlayerSummary(matches, players, 6, "singles")).toBeNull();
     expect(getPlayerRating(matches, 6, "singles")).toBeNull();
+  });
+
+  it("adds average point differential to dashboard metrics for the active format", () => {
+    expect(getDashboardMetrics(matches, players, 1, "singles")).toMatchObject({
+      averagePointDiff: 0,
+      wins: 2,
+      losses: 2,
+    });
+    expect(getDashboardMetrics(matches, players, 1, "doubles")).toMatchObject({
+      averagePointDiff: 1.3,
+      wins: 2,
+      losses: 1,
+    });
   });
 
   it("normalizes backend Elo scores into the 0 to 10 display range", () => {

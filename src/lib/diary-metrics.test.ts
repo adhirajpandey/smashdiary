@@ -97,6 +97,7 @@ describe("diary metrics", () => {
     expect(metrics).not.toBeNull();
     expect(metrics?.wins).toBe(2);
     expect(metrics?.losses).toBe(2);
+    expect(metrics?.averagePointDiff).toBe(0);
     expect(metrics?.winScore).toBeLessThanOrEqual(10);
     expect(metrics?.playerRating).toBeLessThanOrEqual(10);
     expect(metrics?.recentMatches).toHaveLength(4);

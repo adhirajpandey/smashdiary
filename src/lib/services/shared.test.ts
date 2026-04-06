@@ -98,7 +98,12 @@ describe("shared screen data services", () => {
       losses: 1,
       format: "doubles",
     });
-    expect(stats.metrics?.playerRating).toBeGreaterThanOrEqual(0);
+    expect(stats.metrics).toMatchObject({
+      playerRating: expect.any(Number),
+      averagePointDiff: 1.3,
+      wins: 2,
+      losses: 1,
+    });
     expect(stats.leaderboard).toMatchObject({
       title: "Doubles leaderboard",
       scoreLabel: "Leaderboard score",

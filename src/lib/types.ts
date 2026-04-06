@@ -77,6 +77,7 @@ export type PlayerDashboardMetrics = {
   totalMatches: number;
   winScore: number;
   playerRating: number;
+  averagePointDiff: number;
   wins: number;
   losses: number;
   recentMatches: ResolvedGame[];

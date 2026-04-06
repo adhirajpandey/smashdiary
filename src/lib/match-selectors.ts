@@ -165,6 +165,20 @@ export function getPlayerRating(matches: ResolvedGame[], playerId: number, forma
   return Number(Math.min(10, winRate * 10 + Math.max(averageDiff, 0) * 0.5).toFixed(1));
 }
 
+function getAveragePointDiff(matches: ResolvedGame[], playerId: number, format: StatsFormat) {
+  const playerMatches = getPlayerMatchesByFormat(matches, playerId, format);
+  if (!playerMatches.length) {
+    return null;
+  }
+
+  const pointDiff = playerMatches.reduce((sum, match) => {
+    const { scoreFor, scoreAgainst } = getPlayerPerspectiveScore(match, playerId);
+    return sum + (scoreFor - scoreAgainst);
+  }, 0);
+
+  return Number((pointDiff / playerMatches.length).toFixed(1));
+}
+
 export function getDashboardMetrics(
   matches: ResolvedGame[],
   players: Player[],
@@ -178,7 +192,8 @@ export function getDashboardMetrics(
 
   const playerMatches = getPlayerMatchesByFormat(matches, playerId, format);
   const playerRating = getPlayerRating(matches, playerId, format);
-  if (playerRating === null) {
+  const averagePointDiff = getAveragePointDiff(matches, playerId, format);
+  if (playerRating === null || averagePointDiff === null) {
     return null;
   }
 
@@ -191,6 +206,7 @@ export function getDashboardMetrics(
     totalMatches: stats.totalMatches,
     winScore: Number((winRate * 10).toFixed(1)),
     playerRating,
+    averagePointDiff,
     wins: stats.wins,
     losses: stats.losses,
     recentMatches: playerMatches.slice(0, 4),

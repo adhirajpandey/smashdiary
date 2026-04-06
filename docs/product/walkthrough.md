@@ -66,7 +66,7 @@ Invalid or missing IDs resolve to the app's not-found behavior.
 
 ### Stats (`/stats`)
 
-The stats screen renders player-focused summary information derived from stored matches and players. It is read-only, depends on the currently selected player context for the personal breakdown, and still shows the shared leaderboard when no player is selected.
+The stats screen renders player-focused summary information derived from stored matches and players. It is read-only, depends on the currently selected player context for the personal performance view, and still shows the shared leaderboard when no player is selected. The personal section uses a compact performance surface with headline metrics, average point differential, and a wins/losses split under a `Record` label for the active format.
 
 Detailed stats, rating, leaderboard, and format-segmentation behavior is documented in `stats-and-leaderboard.md`.
 
