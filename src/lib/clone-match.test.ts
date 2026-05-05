@@ -25,6 +25,7 @@ describe("buildCloneMatchSeed", () => {
   it("keeps the original side order when the selected player is on side A", () => {
     expect(buildCloneMatchSeed(match, 1)).toEqual({
       format: "doubles",
+      playedOn: "2026-03-22",
       sideAPlayers: ["Adhiraj", "Aman"],
       sideBPlayers: ["Riya", "Sara"],
       mode: "personalized",
@@ -34,6 +35,7 @@ describe("buildCloneMatchSeed", () => {
   it("swaps sides when the selected player is on side B", () => {
     expect(buildCloneMatchSeed(match, 3)).toEqual({
       format: "doubles",
+      playedOn: "2026-03-22",
       sideAPlayers: ["Riya", "Sara"],
       sideBPlayers: ["Adhiraj", "Aman"],
       mode: "personalized",
@@ -43,6 +45,7 @@ describe("buildCloneMatchSeed", () => {
   it("rotates the selected slot 2 player into side A slot 1", () => {
     expect(buildCloneMatchSeed(match, 2)).toEqual({
       format: "doubles",
+      playedOn: "2026-03-22",
       sideAPlayers: ["Aman", "Adhiraj"],
       sideBPlayers: ["Riya", "Sara"],
       mode: "personalized",
@@ -52,6 +55,7 @@ describe("buildCloneMatchSeed", () => {
   it("falls back to the original side order when the selected player is absent", () => {
     expect(buildCloneMatchSeed(match, 99)).toEqual({
       format: "doubles",
+      playedOn: "2026-03-22",
       sideAPlayers: ["Adhiraj", "Aman"],
       sideBPlayers: ["Riya", "Sara"],
       mode: "neutral",

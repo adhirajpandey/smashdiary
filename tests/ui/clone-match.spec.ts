@@ -58,6 +58,7 @@ test("keeps a selected doubles slot-2 player as You when cloning a saved match",
 
   await expect(page).toHaveURL(/\/matches\/new\?cloneFrom=14$/);
   await expect(page.locator(".match-input-shell.is-readonly .match-input-shell__value")).toHaveText("Sachi");
+  await expect(page.getByLabel("Date")).toHaveValue("2026-03-08");
   await expectPlayerFieldValue(page, "Your Partner", "Adhiraj");
   await expectPlayerFieldValue(page, "Opponent", "EASGuy A");
   await expectPlayerFieldValue(page, "Opponent's Partner", "Abhilasha");
@@ -77,6 +78,7 @@ test("keeps a selected doubles slot-2 player as You when cloning a saved match",
   const saveRequest = await saveRequestPromise;
 
   expect(JSON.parse(saveRequest.postData() ?? "{}")).toMatchObject({
+    playedOn: "2026-03-08",
     format: "doubles",
     sideAPlayers: ["Sachi", "Adhiraj"],
     sideBPlayers: ["EASGuy A", "Abhilasha"],

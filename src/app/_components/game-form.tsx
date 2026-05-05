@@ -279,8 +279,9 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
   const { selectedPlayerId } = useSelectedPlayer();
   const createMatchMutation = useCreateMatchMutation();
   const updateMatchMutation = useUpdateMatchMutation(matchId ?? 0);
+  const seedPlayedOn = initialSeed?.playedOn ?? cloneSeed?.playedOn;
   const [format, setFormat] = useState<GameFormat>(initialSeed?.format ?? cloneSeed?.format ?? "singles");
-  const [playedOn, setPlayedOn] = useState(initialSeed ? toInputDateValue(initialSeed.playedOn) : getCurrentInputDateValue());
+  const [playedOn, setPlayedOn] = useState(seedPlayedOn ? toInputDateValue(seedPlayedOn) : getCurrentInputDateValue());
   const [slot, setSlot] = useState<MatchSlot>(initialSeed?.slot ?? DEFAULT_MATCH_SLOT);
   const [sideAScore, setSideAScore] = useState<number>(initialSeed?.sideAScore ?? 20);
   const [sideBScore, setSideBScore] = useState<number>(initialSeed?.sideBScore ?? 20);

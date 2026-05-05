@@ -3,6 +3,7 @@ import type { GameFormat, ResolvedGame } from "@/lib/types";
 
 export type CloneMatchSeed = {
   format: GameFormat;
+  playedOn: string;
   sideAPlayers: string[];
   sideBPlayers: string[];
   mode: GameFormSeedMode;
@@ -13,6 +14,7 @@ export function buildCloneMatchSeed(match: ResolvedGame, selectedPlayerId: numbe
 
   return {
     format: seed.format,
+    playedOn: seed.playedOn,
     sideAPlayers: seed.sideAPlayers,
     sideBPlayers: seed.sideBPlayers,
     mode: seed.mode,
