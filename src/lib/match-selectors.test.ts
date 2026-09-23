@@ -59,6 +59,30 @@ const matches: ResolvedGame[] = [
   createResolvedMatch(12, "2026-03-28", "doubles", "A", [5, 6], [4, 2]),
 ];
 
+function createMatchSeries(
+  firstId: number,
+  count: number,
+  format: "singles" | "doubles",
+  sideAPlayerIds: number[],
+  sideBPlayerIds: number[],
+  sideAWins: number,
+) {
+  return Array.from({ length: count }, (_, index) =>
+    createResolvedMatch(firstId + index, "2026-04-01", format, index < sideAWins ? "A" : "B", sideAPlayerIds, sideBPlayerIds),
+  );
+}
+
+// Kabir, Aman, and Riya reach 10 singles matches; Neha stops at 9 and Tara at 1.
+// Aman & Riya and Kabir & Neha reach 5 matches together; Tara & Zoya and Riya & Neha stop at 4.
+const leaderboardMatches: ResolvedGame[] = [
+  ...createMatchSeries(101, 10, "singles", [3], [1], 7),
+  ...createMatchSeries(111, 9, "singles", [2], [4], 5),
+  createResolvedMatch(120, "2026-04-01", "singles", "A", [2], [5]),
+  ...createMatchSeries(201, 4, "doubles", [1, 2], [3, 4], 3),
+  createResolvedMatch(205, "2026-04-01", "doubles", "B", [4, 3], [2, 1]),
+  ...createMatchSeries(211, 4, "doubles", [5, 6], [2, 4], 4),
+];
+
 describe("match selectors", () => {
   it("returns filtered player matches", () => {
     expect(getPlayerMatches(matches, 1)).toHaveLength(7);
@@ -109,43 +133,58 @@ describe("match selectors", () => {
     expect(normalizeLeaderboardScore(2100)).toBe(10);
   });
 
-  it("builds a singles leaderboard from backend Elo and excludes players below the minimum threshold", () => {
-    const standings = getSinglesLeaderboard(matches, players);
+  it("builds a singles leaderboard from backend Elo and excludes players below 10 singles matches", () => {
+    const standings = getSinglesLeaderboard(leaderboardMatches, players);
 
-    expect(standings).toHaveLength(3);
-    expect(standings[0]?.names).toEqual(["Kabir"]);
-    expect(standings.map((entry) => entry.names[0])).not.toContain("Neha");
-    expect(standings.every((entry) => entry.totalMatches >= 3)).toBe(true);
+    expect(standings.map((entry) => entry.names[0])).toEqual(["Kabir", "Riya", "Aman"]);
+    expect(standings.every((entry) => entry.totalMatches >= 10)).toBe(true);
     expect(standings[0]!.rawRankScore).toBeGreaterThan(standings[1]!.rawRankScore);
   });
 
-  it("builds doubles leaderboard rows from exact team pairs and excludes pairs under the threshold", () => {
-    const standings = getDoublesLeaderboard(matches, players);
+  it("excludes singles players with 9 matches", () => {
+    const standings = getSinglesLeaderboard(leaderboardMatches, players);
+
+    expect(standings.map((entry) => entry.names[0])).not.toContain("Neha");
+    expect(standings.map((entry) => entry.names[0])).not.toContain("Tara");
+  });
+
+  it("builds doubles leaderboard rows from exact team pairs and excludes pairs below 5 matches together", () => {
+    const standings = getDoublesLeaderboard(leaderboardMatches, players);
 
     expect(standings).toHaveLength(2);
     expect(standings[0]).toMatchObject({
       names: ["Aman", "Riya"],
-      wins: 2,
-      totalMatches: 3,
+      wins: 4,
+      totalMatches: 5,
     });
     expect(standings[1]).toMatchObject({
       names: ["Kabir", "Neha"],
       wins: 1,
-      totalMatches: 3,
+      totalMatches: 5,
     });
     expect(standings.map((entry) => entry.names.join(" & "))).not.toContain("Tara & Zoya");
+    expect(standings.map((entry) => entry.names.join(" & "))).not.toContain("Neha & Riya");
   });
 
-  it("returns a backend-owned leaderboard block with metadata for the UI", () => {
-    const leaderboard = getLeaderboard(matches, players, "doubles");
+  it("returns a backend-owned leaderboard block with the per-format minimum for the UI", () => {
+    const singlesLeaderboard = getLeaderboard(leaderboardMatches, players, "singles");
+    const doublesLeaderboard = getLeaderboard(leaderboardMatches, players, "doubles");
 
-    expect(leaderboard).toMatchObject({
+    expect(singlesLeaderboard).toMatchObject({
+      title: "Singles leaderboard",
+      scoreLabel: "Leaderboard score",
+      minimumMatches: 10,
+    });
+    expect(singlesLeaderboard.scoreHelpText).toContain("at least 10 singles matches");
+    expect(singlesLeaderboard.entries).toHaveLength(3);
+    expect(doublesLeaderboard).toMatchObject({
       title: "Doubles leaderboard",
       scoreLabel: "Leaderboard score",
-      minimumMatches: 3,
+      minimumMatches: 5,
     });
-    expect(leaderboard.scoreHelpText).toContain("exact doubles pairs");
-    expect(leaderboard.entries).toHaveLength(2);
+    expect(doublesLeaderboard.scoreHelpText).toContain("exact doubles pairs");
+    expect(doublesLeaderboard.scoreHelpText).toContain("at least 5 matches together");
+    expect(doublesLeaderboard.entries).toHaveLength(2);
   });
 
   it("resolves match perspective for a selected player", () => {

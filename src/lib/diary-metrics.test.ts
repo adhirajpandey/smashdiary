@@ -107,18 +107,17 @@ describe("diary metrics", () => {
     const singlesLeaderboard = getLeaderboard(games, players, "singles");
     const doublesLeaderboard = getLeaderboard(games, players, "doubles");
 
-    expect(getSinglesLeaderboard(games, players)[0]?.names).toEqual(["Kabir"]);
-    expect(getDoublesLeaderboard(games, players)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ names: ["Aman", "Riya"] }),
-        expect.objectContaining({ names: ["Kabir", "Neha"] }),
-      ]),
-    );
     expect(singlesLeaderboard).toMatchObject({
       title: "Singles leaderboard",
       scoreLabel: "Leaderboard score",
-      minimumMatches: 3,
+      minimumMatches: 10,
     });
-    expect(doublesLeaderboard.entries[0]!.rawRankScore).toBeGreaterThan(doublesLeaderboard.entries[1]!.rawRankScore);
+    expect(doublesLeaderboard).toMatchObject({
+      title: "Doubles leaderboard",
+      scoreLabel: "Leaderboard score",
+      minimumMatches: 5,
+    });
+    expect(getSinglesLeaderboard(games, players)).toEqual([]);
+    expect(getDoublesLeaderboard(games, players)).toEqual([]);
   });
 });

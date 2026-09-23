@@ -257,7 +257,7 @@ export function getSinglesLeaderboard(matches: ResolvedGame[], players: Player[]
   return players
     .flatMap((player) => {
       const standing = standings.get(player.id);
-      if (!standing || standing.totalMatches < leaderboardConfig.minimumMatches) {
+      if (!standing || standing.totalMatches < leaderboardConfig.minimumMatches.singles) {
         return [];
       }
 
@@ -330,7 +330,7 @@ export function getDoublesLeaderboard(matches: ResolvedGame[], players: Player[]
 
   return Array.from(standings.entries())
     .flatMap(([teamKey, standing]) => {
-      if (standing.totalMatches < leaderboardConfig.minimumMatches) {
+      if (standing.totalMatches < leaderboardConfig.minimumMatches.doubles) {
         return [];
       }
 
@@ -342,10 +342,10 @@ export function getDoublesLeaderboard(matches: ResolvedGame[], players: Player[]
 
 function getLeaderboardScoreHelpText(format: StatsFormat) {
   if (format === "singles") {
-    return `Leaderboard score is a 0-10 view of a backend Elo ranking for singles players. Only players with at least ${leaderboardConfig.minimumMatches} singles matches are included. Higher means stronger proven results.`;
+    return `Leaderboard score is a 0-10 view of a backend Elo ranking for singles players. Only players with at least ${leaderboardConfig.minimumMatches.singles} singles matches are included. Higher means stronger proven results.`;
   }
 
-  return `Leaderboard score is a 0-10 view of a backend Elo ranking for exact doubles pairs. Only pairs with at least ${leaderboardConfig.minimumMatches} matches together are included. Higher means stronger proven results together.`;
+  return `Leaderboard score is a 0-10 view of a backend Elo ranking for exact doubles pairs. Only pairs with at least ${leaderboardConfig.minimumMatches.doubles} matches together are included. Higher means stronger proven results together.`;
 }
 
 export function getLeaderboard(matches: ResolvedGame[], players: Player[], format: StatsFormat): LeaderboardData {
@@ -356,7 +356,7 @@ export function getLeaderboard(matches: ResolvedGame[], players: Player[], forma
     title: `${formatLabel} leaderboard`,
     scoreLabel: leaderboardConfig.scoreLabel,
     scoreHelpText: getLeaderboardScoreHelpText(format),
-    minimumMatches: leaderboardConfig.minimumMatches,
+    minimumMatches: leaderboardConfig.minimumMatches[format],
     entries,
   };
 }

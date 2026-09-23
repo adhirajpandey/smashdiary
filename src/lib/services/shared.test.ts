@@ -63,9 +63,9 @@ describe("shared screen data services", () => {
     expect(dashboard.leaderboard).toMatchObject({
       title: "Singles leaderboard",
       scoreLabel: "Leaderboard score",
-      minimumMatches: 3,
+      minimumMatches: 10,
     });
-    expect(dashboard.leaderboard.entries[0]?.names).toEqual(["Kabir"]);
+    expect(dashboard.leaderboard.entries).toEqual([]);
   });
 
   it("builds selected-player match history view data", () => {
@@ -107,9 +107,9 @@ describe("shared screen data services", () => {
     expect(stats.leaderboard).toMatchObject({
       title: "Doubles leaderboard",
       scoreLabel: "Leaderboard score",
-      minimumMatches: 3,
+      minimumMatches: 5,
     });
-    expect(stats.leaderboard.entries[0]?.names).toEqual(["Aman", "Riya"]);
+    expect(stats.leaderboard.entries).toEqual([]);
   });
 
   it("returns empty personal stats when the selected player has no matches in the active format", () => {
@@ -117,6 +117,6 @@ describe("shared screen data services", () => {
 
     expect(stats.summary).toBeNull();
     expect(stats.metrics).toBeNull();
-    expect(stats.leaderboard.entries).toHaveLength(3);
+    expect(stats.leaderboard).toMatchObject({ title: "Singles leaderboard", minimumMatches: 10 });
   });
 });

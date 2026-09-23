@@ -254,7 +254,7 @@ Current behavior:
 2. Walk matches in chronological order.
 3. Initialize each player at `1500` Elo.
 4. Update Elo after each singles result using win/loss only and a fixed `K = 32`.
-5. Exclude players with fewer than `3` singles matches.
+5. Exclude players with fewer than `10` singles matches.
 6. Sort by raw Elo descending.
 7. Return up to the top `5`.
 
@@ -273,7 +273,7 @@ Current behavior:
 3. Walk doubles matches in chronological order.
 4. Initialize each pair at `1500` Elo.
 5. Update pair Elo after each result using win/loss only and a fixed `K = 32`.
-6. Exclude pairs with fewer than `3` matches together.
+6. Exclude pairs with fewer than `5` matches together.
 7. Sort by raw pair Elo descending.
 8. Return up to the top `5`.
 
@@ -299,7 +299,7 @@ Important implications:
 - the leaderboard is global within the active format, not filtered to the selected player
 - ranking is based on backend Elo, not the personal player-rating tile formula
 - doubles rows represent exact pairs, not averages of two players' separate doubles ratings
-- players or teams below the three-match threshold are not included
+- singles players below `10` matches and doubles pairs below `5` matches together are not included
 
 ## Screen And Component Behavior
 
