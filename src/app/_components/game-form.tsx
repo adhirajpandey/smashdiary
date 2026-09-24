@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import type { GameFormFieldErrors } from "@/lib/action-errors";
 import type { CloneMatchSeed } from "@/lib/clone-match";
+import { PLAYER_NAME_MAX_LENGTH } from "@/lib/config/domain";
 import { getMatchDetailRoute } from "@/lib/config/routes";
 import type { GameFormSeed } from "@/lib/game-form-seed";
 import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
@@ -173,6 +174,7 @@ function PlayerField({
             aria-labelledby={labelId}
             autoComplete="off"
             className="match-input-shell__input"
+            maxLength={PLAYER_NAME_MAX_LENGTH}
             onChange={(event) => {
               onChange(event.target.value);
               if (!isOpen) {

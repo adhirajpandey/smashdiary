@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { PLAYER_NAME_MAX_LENGTH } from "@/lib/config/domain";
 import { MATCH_SLOTS, type GameFormat, type WinnerSide } from "@/lib/types";
 import { getCurrentInputDateValue, normalizePlayedOnValue, normalizePlayerNameKey } from "@/lib/utils";
 
@@ -67,7 +68,7 @@ const playerNameSchema = z
   .string()
   .trim()
   .min(1, "Player name is required.")
-  .max(32, "Player name must be 32 characters or fewer.");
+  .max(PLAYER_NAME_MAX_LENGTH, `Player name must be ${PLAYER_NAME_MAX_LENGTH} characters or fewer.`);
 
 export const gameFormSchema = z
   .object({
