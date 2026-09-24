@@ -74,6 +74,8 @@ describe("repository shared helpers", () => {
         winnerSide: "A",
         createdAt: "",
         updatedAt: "",
+        sideAPlayers: [],
+        sideBPlayers: [],
       },
       {
         id: 2,
@@ -85,6 +87,8 @@ describe("repository shared helpers", () => {
         winnerSide: "A",
         createdAt: "",
         updatedAt: "",
+        sideAPlayers: [],
+        sideBPlayers: [],
       },
       {
         id: 3,
@@ -96,6 +100,8 @@ describe("repository shared helpers", () => {
         winnerSide: "A",
         createdAt: "",
         updatedAt: "",
+        sideAPlayers: [],
+        sideBPlayers: [],
       },
     ]);
 

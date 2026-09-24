@@ -74,6 +74,7 @@ The app shell includes a persistent identity picker. Several screens intentional
 ### Quality checks
 
 - `npm run lint`: run ESLint
+- `npm run typecheck`: type-check the app and tests with `tsc --noEmit`
 - `npm run test`: run Jest once
 - `npm run test:watch`: run Jest in watch mode
 - `npm run test:db`: reset the local database and run the Postgres repository tests

@@ -72,6 +72,7 @@ Schema changes should be accompanied by a matching migration in `drizzle/`.
 ## Testing and Linting
 
 - `npm run lint`
+- `npm run typecheck`
 - `npm run test`
 - `npm run test:watch`
 - `npm run test:db`
