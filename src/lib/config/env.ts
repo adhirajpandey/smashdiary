@@ -1,5 +1,3 @@
-export type RuntimeMode = "default" | "test";
-
 const LOG_LEVELS = ["debug", "info", "warn", "error"] as const;
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
@@ -8,15 +6,8 @@ type EnvSource = NodeJS.ProcessEnv;
 
 type AppConfig = {
   ci: boolean;
-  runtimeMode: RuntimeMode;
-  isTestMode: boolean;
   databaseUrl?: string;
   logLevel: LogLevel;
-  testMode: {
-    sqliteDirName: string;
-    sqliteFileName: string;
-    seedFilePath: string;
-  };
   playwright: {
     port: number;
     baseUrl: string;
@@ -30,9 +21,6 @@ const DEFAULT_LOG_LEVEL: LogLevel = "info";
 const DEFAULT_PLAYWRIGHT_PORT = 3101;
 const DEFAULT_PLAYWRIGHT_DIST_DIR = ".next-playwright";
 const LOCAL_DATABASE_URL = "postgres://postgres:postgres@127.0.0.1:5433/smashdiary";
-const TEST_MODE_SQLITE_DIR_NAME = ".gstack";
-const TEST_MODE_SQLITE_FILE_NAME = "test-mode.sqlite";
-const TEST_MODE_SEED_FILE_PATH = "src/data/diary.json";
 
 function readTrimmedEnv(env: EnvSource, key: keyof EnvSource) {
   const value = env[key];
@@ -43,20 +31,6 @@ function readTrimmedEnv(env: EnvSource, key: keyof EnvSource) {
 
   const trimmed = value.trim();
   return trimmed.length ? trimmed : undefined;
-}
-
-function parseRuntimeMode(env: EnvSource): RuntimeMode {
-  const value = readTrimmedEnv(env, "APP_MODE");
-
-  if (!value) {
-    return "default";
-  }
-
-  if (value === "test") {
-    return "test";
-  }
-
-  throw new Error(`Invalid APP_MODE environment variable: "${value}". Expected "test" or unset.`);
 }
 
 function parseLogLevel(env: EnvSource): LogLevel {
@@ -115,20 +89,12 @@ function parseNextDistDir(env: EnvSource) {
 }
 
 export function createAppConfig(env: EnvSource = process.env): AppConfig {
-  const runtimeMode = parseRuntimeMode(env);
   const port = parsePlaywrightPort(env);
 
   return {
     ci: Boolean(readTrimmedEnv(env, "CI")),
-    runtimeMode,
-    isTestMode: runtimeMode === "test",
     databaseUrl: readTrimmedEnv(env, "DATABASE_URL"),
     logLevel: parseLogLevel(env),
-    testMode: {
-      sqliteDirName: TEST_MODE_SQLITE_DIR_NAME,
-      sqliteFileName: TEST_MODE_SQLITE_FILE_NAME,
-      seedFilePath: TEST_MODE_SEED_FILE_PATH,
-    },
     playwright: {
       port,
       baseUrl: `http://127.0.0.1:${port}`,
