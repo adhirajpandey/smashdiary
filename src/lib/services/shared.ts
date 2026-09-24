@@ -1,4 +1,4 @@
-import { filterMatchesByFormat, getDashboardMetrics, getLeaderboard, getMatchPerspective, getPlayerMatches, getPlayerStatsSummary } from "@/lib/match-selectors";
+import { filterMatchesByFormat, getDashboardMetrics, getLeaderboard, getMatchPerspective, getPlayerMatches, getPlayerSummary } from "@/lib/match-selectors";
 import { listMatchesQuery } from "@/lib/queries/matches";
 import { listPlayersQuery } from "@/lib/queries/players";
 import type { Player, ResolvedGame, StatsFormat } from "@/lib/types";
@@ -61,7 +61,7 @@ export function buildMatchesData(matches: ResolvedGame[], players: Player[], pla
 export function buildStatsData(matches: ResolvedGame[], players: Player[], playerId: number | null | undefined, format: StatsFormat) {
   return {
     format,
-    summary: playerId ? getPlayerStatsSummary(matches, players, playerId, format) : null,
+    summary: playerId ? getPlayerSummary(matches, players, playerId, format) : null,
     metrics: playerId ? getDashboardMetrics(matches, players, playerId, format) : null,
     leaderboard: getLeaderboard(matches, players, format),
   };

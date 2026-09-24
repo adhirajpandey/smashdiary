@@ -40,8 +40,6 @@ export function getPlayerMatches(matches: ResolvedGame[], playerId: number) {
   );
 }
 
-export const getPlayerGames = getPlayerMatches;
-
 export function filterMatchesByFormat(matches: ResolvedGame[], format: StatsFormat) {
   return matches.filter((match) => match.format === format);
 }
@@ -148,8 +146,6 @@ export function getPlayerSummary(
     losses: playerMatches.length - wins,
   };
 }
-
-export const getPlayerStatsSummary = getPlayerSummary;
 
 export function getPlayerRating(matches: ResolvedGame[], playerId: number, format?: StatsFormat) {
   const sourceMatches = format ? filterMatchesByFormat(matches, format) : matches;
