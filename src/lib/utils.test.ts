@@ -1,32 +1,22 @@
 import {
   cn,
-  ensureArray,
   formatCompactDate,
   formatGameDate,
   formatPlayerName,
   formatScore,
   formatScoreline,
-  fromInputDateValue,
   getCurrentInputDateValue,
   toInputDateValue,
 } from "@/lib/utils";
 
 describe("utils", () => {
-  it("wraps non-array values and preserves arrays", () => {
-    expect(ensureArray("one")).toEqual(["one"]);
-    expect(ensureArray([1, 2])).toEqual([1, 2]);
-  });
-
   it("combines class names with falsy filtering", () => {
     expect(cn("card", null, false && "hidden", "active")).toBe("card active");
   });
 
-  it("round-trips date input values", () => {
-    const input = "2026-03-21";
-    const normalized = fromInputDateValue(input);
-
-    expect(normalized).toBe("2026-03-21");
-    expect(toInputDateValue(normalized)).toBe(input);
+  it("normalizes stored dates to input values", () => {
+    expect(toInputDateValue("2026-03-21")).toBe("2026-03-21");
+    expect(toInputDateValue("2026-03-21T22:29:00.000Z")).toBe("2026-03-21");
   });
 
   it("formats stored match dates without timezone drift", () => {

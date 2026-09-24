@@ -70,11 +70,7 @@ function formatMatchDateValue(value: string, options: Intl.DateTimeFormatOptions
   }).format(createUtcDate(value));
 }
 
-export function formatMatchDate(value: string, variant: MatchDateFormatVariant): string;
-export function formatMatchDate(value: string, timeZone: string, variant: MatchDateFormatVariant): string;
-export function formatMatchDate(value: string, first: MatchDateFormatVariant | string, second?: MatchDateFormatVariant) {
-  const variant = second ?? (first as MatchDateFormatVariant);
-
+export function formatMatchDate(value: string, variant: MatchDateFormatVariant) {
   if (variant === "compact") {
     return formatMatchDateValue(value, {
       day: "numeric",
@@ -87,10 +83,6 @@ export function formatMatchDate(value: string, first: MatchDateFormatVariant | s
     day: "numeric",
     month: "short",
   });
-}
-
-export function isMatchSlot(value: string): value is MatchSlot {
-  return slotOrder.has(value as MatchSlot);
 }
 
 export function getMatchSlotOrder(slot: MatchSlot) {
@@ -127,10 +119,6 @@ export function toInputDateValue(value: string) {
   return normalizePlayedOnValue(value);
 }
 
-export function fromInputDateValue(value: string) {
-  return normalizePlayedOnValue(value);
-}
-
 export function getCurrentInputDateValue(now = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: MATCH_TIME_ZONE,
@@ -142,10 +130,6 @@ export function getCurrentInputDateValue(now = new Date()) {
   const getPart = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
 
   return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
-}
-
-export function ensureArray<T>(value: T | T[]) {
-  return Array.isArray(value) ? value : [value];
 }
 
 export function normalizePlayerName(name: string) {

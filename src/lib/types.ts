@@ -51,11 +51,6 @@ export type Game = {
   updatedAt: string;
 };
 
-export type DiaryStore = {
-  players: Player[];
-  games: Game[];
-};
-
 export type ResolvedGame = Game & {
   sideAPlayers: Player[];
   sideBPlayers: Player[];
