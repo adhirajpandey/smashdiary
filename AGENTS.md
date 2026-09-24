@@ -46,6 +46,7 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 
 ### Quality
 - Lint: `npm run lint`
+- Type check: `npm run typecheck`
 - Test: `npm run test`
 - Test watch mode: `npm run test:watch`
 - Postgres repository tests: `npm run test:db` (needs Docker)
