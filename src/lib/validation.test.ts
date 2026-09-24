@@ -58,6 +58,16 @@ describe("gameFormSchema", () => {
     expect(parsed.error?.flatten().fieldErrors.playedOn).toContain("Match date cannot be in the future.");
   });
 
+  it.each(["garbage", "2026-02-31", "March 5 2026"])("rejects malformed date %p", (playedOn) => {
+    const parsed = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      playedOn,
+    });
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.flatten().fieldErrors.playedOn).toEqual(["Enter a valid date."]);
+  });
+
   it("accepts a 30-29 finish", () => {
     const parsed = gameFormSchema.safeParse({
       ...validSinglesInput(),
