@@ -123,6 +123,7 @@ When changing persistence behavior:
 
 - update `src/lib/db/schema.ts`
 - generate or add the matching migration under `drizzle/`
+- if you write a migration by hand, also add its `drizzle/meta/NNNN_snapshot.json`, then check that `npm run db:generate` reports no schema changes
 - keep repository reads and writes compatible with the new schema
 - update documentation if setup, runtime behavior, or data semantics change
 - run `npm run db:reset` to check that the migrations apply to a fresh database and that `db/seed.sql` still loads
