@@ -372,15 +372,33 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
       router.push(getMatchDetailRoute(result.id));
     } catch (error) {
       if (error instanceof ApiClientError) {
-        pushToast({
-          variant: "error",
-          title: "Check the highlighted values",
-          description: error.formError ?? error.message,
-        });
-        setFormState({
-          fieldErrors: error.fieldErrors ?? {},
-        });
-        return;
+        switch (error.code) {
+          case "VALIDATION_ERROR":
+            pushToast({
+              variant: "error",
+              title: "Check the highlighted values",
+              description: error.formError ?? error.message,
+            });
+            setFormState({
+              fieldErrors: error.fieldErrors ?? {},
+            });
+            return;
+          case "NOT_FOUND":
+            pushToast({
+              variant: "error",
+              title: "Match not found",
+              description: error.message,
+            });
+            return;
+          case "INTERNAL_ERROR":
+            pushToast({
+              variant: "error",
+              title: "Save failed",
+              description: error.message,
+              durationMs: null,
+            });
+            return;
+        }
       }
 
       pushToast({
