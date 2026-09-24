@@ -2,25 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
-import type { GameFormFieldErrors } from "@/lib/action-errors";
-import type { ApiResponse, MatchMutationInput, MatchMutationResult } from "@/lib/api/contracts";
+import type { MatchMutationInput, MatchMutationResult } from "@/lib/api/contracts";
+import { fetchJson } from "@/lib/api/fetch-json";
 import { apiQueryKeyRoots, apiRoutes, queryKeys } from "@/lib/config/api";
 import type { StatsFormat } from "@/lib/types";
 import type { DashboardData, MatchDetailData, MatchesData, PlayersData, StatsData } from "@/lib/view-models";
 
-export class ApiClientError extends Error {
-  code: string;
-  formError?: string;
-  fieldErrors?: GameFormFieldErrors;
-
-  constructor(message: string, code: string, formError?: string, fieldErrors?: GameFormFieldErrors) {
-    super(message);
-    this.code = code;
-    this.formError = formError;
-    this.fieldErrors = fieldErrors;
-  }
-}
-
+export { ApiClientError } from "@/lib/api/fetch-json";
 export { queryKeys };
 
 async function invalidateDiaryQueries(queryClient: QueryClient, matchId?: number) {
@@ -44,30 +32,6 @@ export function invalidateDiaryQueriesInBackground(queryClient: QueryClient, mat
   void invalidateDiaryQueries(queryClient, matchId).catch((error: unknown) => {
     console.error("Failed to invalidate diary queries after match save.", error);
   });
-}
-
-async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, {
-    cache: "no-store",
-    ...init,
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
-  });
-
-  const body = (await response.json()) as ApiResponse<T>;
-
-  if ("error" in body) {
-    throw new ApiClientError(
-      body.error.message ?? body.error.formError ?? "Request failed.",
-      body.error.code,
-      body.error.formError,
-      body.error.fieldErrors,
-    );
-  }
-
-  return body.data;
 }
 
 export function usePlayersQuery() {
