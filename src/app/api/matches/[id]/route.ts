@@ -1,5 +1,5 @@
 import { deleteMatchById } from "@/lib/services/delete-match";
-import { jsonNotFound, jsonServerError, jsonSuccess, jsonValidationError } from "@/lib/api/responses";
+import { jsonNotFound, jsonServerError, jsonSuccess, jsonValidationError, logRouteError, logRouteWarning } from "@/lib/api/responses";
 import { getMatchDetailData } from "@/lib/services/matches";
 import { saveMatchFromJson } from "@/lib/services/save-match";
 import { parseNumericId } from "@/lib/utils";
@@ -21,7 +21,8 @@ export async function GET(
   try {
     const data = await getMatchDetailData(matchId);
     return data ? jsonSuccess(data) : jsonNotFound("Match not found.");
-  } catch {
+  } catch (error) {
+    logRouteError("GET /api/matches/[id]", error);
     return jsonServerError("Could not load match.");
   }
 }
@@ -51,7 +52,8 @@ export async function PUT(
       case "internal_error":
         return jsonServerError(result.message);
     }
-  } catch {
+  } catch (error) {
+    logRouteWarning("PUT /api/matches/[id]", error);
     return jsonValidationError("Invalid request payload.");
   }
 }
@@ -70,7 +72,8 @@ export async function DELETE(
   try {
     const deleted = await deleteMatchById(matchId);
     return deleted ? jsonSuccess({ id: matchId }) : jsonNotFound("Match not found.");
-  } catch {
+  } catch (error) {
+    logRouteError("DELETE /api/matches/[id]", error);
     return jsonServerError("Could not delete match.");
   }
 }

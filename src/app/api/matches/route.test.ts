@@ -1,3 +1,7 @@
+jest.mock("@/lib/logger", () => ({
+  logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+}));
+
 jest.mock("@/lib/services/matches", () => ({
   getMatchesData: jest.fn(),
 }));
@@ -9,6 +13,7 @@ jest.mock("@/lib/services/save-match", () => ({
 import { GET, POST } from "@/app/api/matches/route";
 import { getMatchesData } from "@/lib/services/matches";
 import { saveMatchFromJson } from "@/lib/services/save-match";
+import { logger } from "@/lib/logger";
 
 describe("GET /api/matches", () => {
   it("returns match history JSON", async () => {
@@ -52,6 +57,11 @@ describe("POST /api/matches", () => {
         formError: "Invalid request payload.",
       },
     });
+    expect(logger.warn).toHaveBeenCalledWith(
+      "api",
+      "route_warning",
+      expect.objectContaining({ route: "POST /api/matches" }),
+    );
   });
 
   it("returns normalized validation errors from the save service", async () => {
