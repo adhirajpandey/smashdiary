@@ -1,12 +1,11 @@
 # Development
 
-This document is for contributors working on the app locally. It focuses on setup, runtime modes, validation points, and the workflows most likely to matter during day-to-day changes.
+This document is for contributors working on the app locally. It focuses on setup, the local database, validation points, and the workflows most likely to matter during day-to-day changes.
 
 ## Prerequisites
 
-- Node.js with npm available locally
-- Postgres available if you want to run in default mode
-- A valid `DATABASE_URL` for migration commands and default runtime mode
+- Node.js with npm
+- Docker with Compose, for the local Postgres database
 
 ## Initial Setup
 
@@ -24,14 +23,13 @@ cp .env.example .env
 
 Available variables:
 
-- `DATABASE_URL`: required for default app runtime and Drizzle commands
+- `DATABASE_URL`: required by the app and the Drizzle commands. The example value points at the local Docker Compose database.
 - `LOG_LEVEL`: optional logger level
-- `APP_MODE`: set to `test` for local SQLite-backed runtime
 
-If you are running against Postgres, apply migrations before starting the app:
+Start the local database, apply the migrations, and load the seed data:
 
 ```bash
-npm run db:migrate
+npm run db:reset
 ```
 
 Start the development server:
@@ -40,33 +38,21 @@ Start the development server:
 npm run dev
 ```
 
-## Runtime Modes
+## Local Database
 
-### Default mode
+The app has one persistence path: Postgres through `src/lib/repositories/postgres-match-repository.ts`, with the schema in `src/lib/db/schema.ts`.
 
-Use default mode when working on the real persistence path.
+For local work, `docker-compose.yml` runs Postgres 17 on `127.0.0.1:5433`. Production runs Postgres 17 as well.
 
-- active when `APP_MODE` is unset
-- repository implementation: `src/lib/repositories/postgres-match-repository.ts`
-- requires `DATABASE_URL`
-- Drizzle schema source: `src/lib/db/schema.ts`
+`npm run db:reset` does three things:
 
-### Test mode
+1. Starts the container if it is not running.
+2. Applies the Drizzle migrations from `drizzle/`.
+3. Truncates `players` and `games`, then loads `db/seed.sql`.
 
-Use test mode when you want a self-contained local environment.
+The reset always targets the local container. It ignores `DATABASE_URL`, so it cannot touch production even if your `.env` points there.
 
-```bash
-APP_MODE=test npm run dev
-```
-
-Behavior:
-
-- repository implementation: `src/lib/repositories/sqlite-match-repository.ts`
-- local database file: `.gstack/test-mode.sqlite`
-- seed source: `src/data/diary.json`
-- schema bootstrapped by `src/lib/db/test-sqlite.ts`
-
-Test mode is useful for UI and workflow validation when a Postgres instance is not available.
+`db/seed.sql` is a data-only copy of production. Tests and your own experiments write into the same local database, and the next reset discards those rows. To refresh the seed from a newer production backup, restore the backup into the local container and regenerate the file with `pg_dump --data-only --inserts --column-inserts --schema=public`. Keep the `TRUNCATE` header and remove the `\restrict` and `\unrestrict` lines.
 
 ## Player Context
 
@@ -82,7 +68,6 @@ The app shell includes a persistent identity picker. Several screens intentional
 ### App lifecycle
 
 - `npm run dev`: start the Next.js development server
-- `npm run dev:test`: start the app in SQLite-backed test mode
 - `npm run build`: create a production build
 - `npm run start`: serve the production build
 
@@ -91,8 +76,8 @@ The app shell includes a persistent identity picker. Several screens intentional
 - `npm run lint`: run ESLint
 - `npm run test`: run Jest once
 - `npm run test:watch`: run Jest in watch mode
+- `npm run test:db`: reset the local database and run the Postgres repository tests
 - `npx playwright install chromium`: install the browser used by the UI suite
-- `npm run dev:test:ui`: start the isolated SQLite-backed server used by Playwright on port `3101`
 - `npm run test:ui`: run the Playwright smoke suite
 - `npm run test:ui:headed`: run the Playwright smoke suite with a visible browser
 
@@ -101,6 +86,7 @@ The app shell includes a persistent identity picker. Several screens intentional
 - `npm run db:generate`: generate Drizzle migrations from schema changes
 - `npm run db:migrate`: apply migrations
 - `npm run db:studio`: open Drizzle Studio
+- `npm run db:reset`: rebuild the local database from the migrations and `db/seed.sql`
 
 ## Working Areas
 
@@ -116,12 +102,12 @@ The app shell includes a persistent identity picker. Several screens intentional
 - `src/lib/services`: server-side screen-data composition and JSON write coordination
 - `src/lib/queries`: read-oriented accessors
 - `src/lib/commands`: write-oriented accessors
-- `src/lib/repositories`: persistence boundary and backend selection
+- `src/lib/repositories`: persistence boundary
 - `src/lib/db`: Postgres schema and DB initialization
 
 ### Local data and migrations
 
-- `src/data`: seed and reference data
+- `db/seed.sql`: local seed data
 - `drizzle`: migrations and metadata snapshots
 
 ## Validation and Business Rules
@@ -132,11 +118,10 @@ For match-entry changes, check both of these places:
 - `src/lib/db/schema.ts`: database-level constraints
 - player identity is deduplicated case-insensitively from normalized `name`; there is no separate persisted lookup column
 
-If a schema-affecting change also impacts test mode, update `src/lib/db/test-sqlite.ts` to keep local behavior aligned.
-
 ## Tests
 
-Tests live beside the source under `src/` as `*.test.ts`.
+Unit tests live beside the source under `src/` as `*.test.ts`. They mock the repository and run without a database.
+Postgres repository tests live beside the source as `*.db.test.ts` and run with `npm run test:db`.
 Playwright UI smoke tests live under `tests/ui/`.
 
 Areas with meaningful existing test coverage include:
@@ -147,11 +132,12 @@ Areas with meaningful existing test coverage include:
 - metrics and selectors
 - screen-data services
 - repositories shared logic
+- the Postgres repository, including one test that pins a known bug in concurrent player creation
 - utilities
 - mobile UI workflows via Playwright (create singles, create doubles, edit, delete, and validation messaging)
 
 When changing behavior, prefer focused test updates near the touched module before broadening scope.
-Run the UI suite in `APP_MODE=test`; it starts the app against the seeded SQLite dataset and does not require Postgres.
+The UI suite resets the local database before it runs, then starts the app against it. Specs create the matches and players they check through `POST /api/matches`. The only seeded row they rely on is the player `Adhiraj`.
 By default Playwright starts its own isolated server on `127.0.0.1:3101` and does not reuse an existing process, which prevents accidental attachment to a server already running on `3000`.
 If you intentionally want Playwright to reuse an already-running test server on that same port, set `PLAYWRIGHT_REUSE_SERVER=1`.
 
@@ -184,6 +170,5 @@ When changing match-entry behavior:
 
 - keep JSON API mutations aligned with the shared validation and command path
 - keep mutation error mapping aligned with the current contract: invalid JSON and validation errors return `400`, missing update targets return `404`, and unexpected save failures return `500`
-- keep the Postgres and SQLite repository behavior aligned where persistence overlaps
 
 For UI changes, keep the established visual language and refer to [system.md](../design/system.md) instead of duplicating design rules into feature docs.

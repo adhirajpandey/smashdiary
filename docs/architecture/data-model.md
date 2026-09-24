@@ -63,7 +63,7 @@ Expected roster size by match format:
 - singles: one player per side
 - doubles: two players per side
 
-That rule is enforced in the application validation layer and also protected by Postgres and SQLite table checks. The repositories write slot IDs based on already-validated input.
+That rule is enforced in the application validation layer and also protected by Postgres table checks. The repository writes slot IDs based on already-validated input.
 
 ## Score Rules
 
@@ -103,7 +103,7 @@ The UI primarily consumes `ResolvedGame`, which combines:
 - `sideAPlayers: Player[]`
 - `sideBPlayers: Player[]`
 
-Repositories build this resolved shape by joining the four game slot columns back to `players`, then assembling side arrays in slot order.
+The repository builds this resolved shape by joining the four game slot columns back to `players`, then assembling side arrays in slot order.
 
 ## Derived Metrics
 
@@ -124,7 +124,5 @@ When changing persistence behavior:
 - update `src/lib/db/schema.ts`
 - generate or add the matching migration under `drizzle/`
 - keep repository reads and writes compatible with the new schema
-- update test-mode SQLite schema in `src/lib/db/test-sqlite.ts` if the change affects tables or constraints
 - update documentation if setup, runtime behavior, or data semantics change
-
-Do not treat the SQLite schema as disposable documentation-only code. It is a functional persistence backend for local test mode and should evolve with the Postgres model where behavior overlaps.
+- run `npm run db:reset` to check that the migrations apply to a fresh database and that `db/seed.sql` still loads

@@ -1,6 +1,6 @@
 # Architecture
 
-Smash Diary is a Next.js App Router application with a thin server layer and a repository-backed data access boundary. The codebase is organized so that route files stay small, domain rules are centralized, and persistence can switch between Postgres and SQLite without changing the UI layer.
+Smash Diary is a Next.js App Router application with a thin server layer and a repository-backed data access boundary. Route files stay small, domain rules live in one place, and all persistence goes through a single Postgres repository.
 
 ## App Shape
 
@@ -43,18 +43,15 @@ Current route surfaces:
 
 - `saveMatch()` stays thin
 - `saveMatchFromJson()` handles JSON payload validation before delegating to the command
-- Persistence decisions are delegated to the active repository
+- The command delegates persistence to the repository
 
 ### Repository layer
 
 `src/lib/repositories` provides the persistence boundary.
 
-- `getMatchRepository()` chooses the implementation based on runtime mode
-- `postgres-match-repository.ts` handles default runtime persistence
-- `sqlite-match-repository.ts` handles local test-mode persistence
+- `postgres-match-repository.ts` is the only implementation
+- `getMatchRepository()` returns it. Command and route tests mock this function to run without a database
 - Shared transformation logic lives in `src/lib/repositories/shared.ts`
-
-This repository pattern is the main seam that allows the app to run against Postgres in normal development and SQLite in seeded test mode without changing route or UI code.
 
 ### Domain and validation layer
 
@@ -71,7 +68,6 @@ This layer is responsible for:
 
 - `src/lib/db/schema.ts` defines the Postgres schema with Drizzle
 - `src/lib/db/index.ts` initializes the Postgres Drizzle client
-- `src/lib/db/test-sqlite.ts` initializes the test SQLite database and seeds it from local JSON data
 
 ## Read Flow
 
@@ -80,7 +76,7 @@ The normal read path is:
 1. A client page container fetches JSON from an internal route handler.
 2. The route handler calls a screen-data service.
 3. The service calls repository-backed query functions.
-4. The active repository returns players or resolved matches.
+4. The repository returns players or resolved matches.
 5. The service derives dashboard, history, stats, or detail view data and returns JSON.
 6. React components render the resulting view.
 
@@ -98,7 +94,7 @@ The normal write path is:
 2. The route handler parses the JSON body and passes it to `saveMatchFromJson()`.
 3. The service validates the payload with `gameFormSchema` and derives `winnerSide`.
 4. The service calls the `saveMatch()` command.
-5. The command delegates to the active repository.
+5. The command delegates to the repository.
 6. The repository upserts players, resolves the four roster slots, and writes the match in a transaction.
 7. Delete requests flow through a matching service and command path before the repository removes the match.
 8. The client invalidates affected queries, shows an in-app toast notification, and navigates to the destination screen when appropriate.
@@ -107,23 +103,11 @@ Mutation handlers return `400` for malformed or schema-invalid payloads, `404` w
 
 This keeps route handlers thin while moving dashboard, history, and stats derivation into the server-side service layer before JSON is returned.
 
-## Runtime Modes
+## Database
 
-### Default mode
-
-- Selected when `APP_MODE` is unset or not equal to `test`
-- Uses `postgres-match-repository`
-- Requires `DATABASE_URL`
-- Uses Drizzle schema and migrations in `drizzle/`
-
-### Test mode
-
-- Selected when `APP_MODE=test`
-- Uses `sqlite-match-repository`
-- Stores data in `.gstack/test-mode.sqlite`
-- Creates schema locally and reseeds from `src/data/diary.json`
-
-This mode is intended for local product exploration and end-to-end testing without a running Postgres instance.
+- The app always uses Postgres and requires `DATABASE_URL`
+- The schema lives in `src/lib/db/schema.ts`, with migrations in `drizzle/`
+- Development and tests use a local Postgres 17 container from `docker-compose.yml`, loaded from `db/seed.sql` by `npm run db:reset`
 
 ## Domain Entities
 
@@ -140,6 +124,5 @@ Rules are enforced in more than one place by design:
 
 - Form and domain validation reject invalid match input before persistence
 - Postgres schema constraints enforce score validity and core invariants at the database level
-- SQLite test mode recreates equivalent constraints locally
 
 That duplication is intentional. It keeps invalid input out early while still protecting stored data if an invalid write path bypasses the UI.

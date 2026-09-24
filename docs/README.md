@@ -6,12 +6,12 @@ This directory is organized by intent so contributors can find the right level o
 
 ### Architecture
 
-- [architecture/overview.md](./architecture/overview.md): application structure, runtime modes, and read/write flow
+- [architecture/overview.md](./architecture/overview.md): application structure, database, and read/write flow
 - [architecture/data-model.md](./architecture/data-model.md): schema, relationships, resolved data shapes, and migration expectations
 
 ### Guides
 
-- [guides/development.md](./guides/development.md): local setup, runtime modes, commands, testing, and contributor workflow
+- [guides/development.md](./guides/development.md): local setup, the local database, commands, testing, and contributor workflow
 
 ### Product
 
