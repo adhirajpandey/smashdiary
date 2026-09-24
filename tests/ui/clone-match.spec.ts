@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import {
   cloneMatchFromDetail,
+  createMatchViaApi,
   createUniquePlayerName,
   expectDashboardMatchCardMenuNotClipped,
   expectDeleteMatchModal,
@@ -49,19 +50,30 @@ test("clones a saved match into a new prefilled entry", async ({ page }) => {
   await expect(page).not.toHaveURL(sourceUrl);
 });
 
-test("keeps a selected doubles slot-2 player as You when cloning a saved match", async ({ page }) => {
-  await openAppAndSelectPlayer(page, "Sachi");
-  await page.goto("/matches/14");
+test("keeps a selected doubles slot-2 player as You when cloning a saved match", async ({ page, request }) => {
+  const me = createUniquePlayerName("SlotTwo");
+  const opponent = createUniquePlayerName("CloneRival");
+  const opponentPartner = createUniquePlayerName("CloneRivalMate");
+  const sourceMatchId = await createMatchViaApi(request, {
+    playedOn: "2026-03-08",
+    sideAPlayers: ["Adhiraj", me],
+    sideBPlayers: [opponent, opponentPartner],
+    sideAScore: 21,
+    sideBScore: 15,
+  });
+
+  await openAppAndSelectPlayer(page, me);
+  await page.goto(`/matches/${sourceMatchId}`);
   await page.waitForLoadState("networkidle");
 
   await cloneMatchFromDetail(page);
 
-  await expect(page).toHaveURL(/\/matches\/new\?cloneFrom=14$/);
-  await expect(page.locator(".match-input-shell.is-readonly .match-input-shell__value")).toHaveText("Sachi");
+  await expect(page).toHaveURL(new RegExp(`/matches/new\\?cloneFrom=${sourceMatchId}$`));
+  await expect(page.locator(".match-input-shell.is-readonly .match-input-shell__value")).toHaveText(me);
   await expect(page.getByLabel("Date")).toHaveValue("2026-03-08");
   await expectPlayerFieldValue(page, "Your Partner", "Adhiraj");
-  await expectPlayerFieldValue(page, "Opponent", "EASGuy A");
-  await expectPlayerFieldValue(page, "Opponent's Partner", "Abhilasha");
+  await expectPlayerFieldValue(page, "Opponent", opponent);
+  await expectPlayerFieldValue(page, "Opponent's Partner", opponentPartner);
 
   await fillMatchScores(page, { yours: 21, opponent: 19 });
 
@@ -71,7 +83,7 @@ test("keeps a selected doubles slot-2 player as You when cloning a saved match",
 
   await submitMatchAndExpectDetail(page, {
     formatHeading: "Doubles match",
-    players: ["Sachi", "Adhiraj", "EASGuy A", "Abhilasha"],
+    players: [me, "Adhiraj", opponent, opponentPartner],
     scoreline: "21-19",
   });
 
@@ -80,8 +92,8 @@ test("keeps a selected doubles slot-2 player as You when cloning a saved match",
   expect(JSON.parse(saveRequest.postData() ?? "{}")).toMatchObject({
     playedOn: "2026-03-08",
     format: "doubles",
-    sideAPlayers: ["Sachi", "Adhiraj"],
-    sideBPlayers: ["EASGuy A", "Abhilasha"],
+    sideAPlayers: [me, "Adhiraj"],
+    sideBPlayers: [opponent, opponentPartner],
     sideAScore: 21,
     sideBScore: 19,
   });

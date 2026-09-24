@@ -63,7 +63,7 @@ Matches are sorted descending by:
 
 That means the app treats the newest date as most recent, then the later time slot on the same day, then the larger match ID as the final tie-breaker.
 
-This ordering is shared by both Postgres and SQLite repositories through `sortResolvedMatchesDescending()`.
+The Postgres repository applies this ordering through `sortResolvedMatchesDescending()`.
 
 ## Core Selector Logic
 
@@ -406,17 +406,6 @@ The current implementation does not represent:
 - official badminton ranking logic
 
 Any contributor reading the UI should treat the current stats system as lightweight diary analytics, not a formal ranking engine.
-
-## Runtime Mode Notes
-
-The stats logic is shared across runtime modes.
-
-- default mode reads from the Postgres-backed repository
-- test mode reads from the SQLite-backed repository
-- both repositories resolve the same `ResolvedGame` shape
-- both repositories use the same sorting helpers before selector logic runs
-
-That means metric behavior should stay aligned across Postgres and SQLite as long as both repositories continue to return the same resolved match data.
 
 ## Current Product Boundaries
 
