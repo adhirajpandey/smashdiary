@@ -79,22 +79,24 @@ describe("postgresMatchRepository player deduplication", () => {
     await postgresMatchRepository.deleteMatch(matchId);
   });
 
-  // Known bug: the duplicate insert fails inside the transaction, which aborts it, so the follow-up
-  // select in upsertPlayers cannot run. When upsertPlayers is fixed, this save should succeed and
-  // reuse the committed player; update the expectation then.
-  it("known bug: fails when another transaction commits the same new player mid-save", async () => {
+  it("reuses a player that another transaction commits mid-save", async () => {
     const opponent = uniqueName("Race Opponent");
+    let opponentId: number | undefined;
     let savePromise: Promise<number> | undefined;
 
     await getSqlClient().begin(async (tx) => {
-      await tx.unsafe("INSERT INTO players (name) VALUES ($1)", [opponent]);
+      const [row] = await tx.unsafe<{ id: string }[]>("INSERT INTO players (name) VALUES ($1) RETURNING id", [opponent]);
+      opponentId = Number(row.id);
       savePromise = postgresMatchRepository.saveMatch(singlesMatch("Adhiraj", opponent));
       savePromise.catch(() => {});
       await waitForBlockedQuery();
     });
 
-    // 25P02: in_failed_sql_transaction
-    await expect(savePromise).rejects.toMatchObject({ cause: { code: "25P02" } });
+    const matchId = await savePromise!;
+    const saved = await postgresMatchRepository.getMatchById(matchId);
+    expect(saved?.sideBPlayers.map((player) => player.id)).toEqual([opponentId]);
+
+    await postgresMatchRepository.deleteMatch(matchId);
   });
 });
 

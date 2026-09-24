@@ -93,22 +93,23 @@ async function upsertPlayers(names: string[], client: WriteClient) {
 
     const timestamp = new Date().toISOString();
 
-    try {
-      const [inserted] = await client
-        .insert(players)
-        .values({
-          name,
-          createdAt: timestamp,
-          updatedAt: timestamp,
-        })
-        .returning({ id: players.id });
+    // Another transaction can insert the same name after the select above. ON CONFLICT DO NOTHING
+    // keeps this transaction usable, and under READ COMMITTED the select below sees that row.
+    const [inserted] = await client
+      .insert(players)
+      .values({
+        name,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+      .onConflictDoNothing()
+      .returning({ id: players.id });
 
-      if (inserted) {
-        knownByNameKey.set(nameKey, inserted.id);
-        ids.push(inserted.id);
-        continue;
-      }
-    } catch {}
+    if (inserted) {
+      knownByNameKey.set(nameKey, inserted.id);
+      ids.push(inserted.id);
+      continue;
+    }
 
     const [concurrent] = await client
       .select({ id: players.id })
