@@ -13,6 +13,7 @@ describe("config env", () => {
     expect(config.playwright.baseUrl).toBe("http://127.0.0.1:3101");
     expect(config.playwright.reuseExistingServer).toBe(false);
     expect(config.playwright.nextDistDir).toBe(".next-playwright");
+    expect(config.playwright.databaseUrl).toBe("postgres://postgres:postgres@127.0.0.1:5433/smashdiary");
     expect(config.testMode.sqliteDirName).toBe(".gstack");
     expect(config.testMode.sqliteFileName).toBe("test-mode.sqlite");
     expect(config.testMode.seedFilePath).toBe("src/data/diary.json");

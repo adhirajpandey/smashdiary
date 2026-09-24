@@ -1,4 +1,6 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Locator, type Page } from "@playwright/test";
+
+import type { MatchMutationInput, MatchMutationResult } from "@/lib/api/contracts";
 
 type MatchDetails = {
   formatHeading: "Singles match" | "Doubles match";
@@ -461,4 +463,24 @@ export async function deleteMatchAndExpectRedirect(page: Page, options?: { cance
 export function createUniquePlayerName(prefix: string) {
   const suffix = `${Date.now().toString(36).slice(-4)}${Math.random().toString(36).slice(2, 4)}`;
   return `${prefix}${suffix}`;
+}
+
+export async function createMatchViaApi(
+  request: APIRequestContext,
+  match: Pick<MatchMutationInput, "sideAPlayers" | "sideBPlayers" | "sideAScore" | "sideBScore"> &
+    Partial<Pick<MatchMutationInput, "playedOn" | "slot">>,
+) {
+  const format = match.sideAPlayers.length === 2 ? "doubles" : "singles";
+  const response = await request.post("/api/matches", {
+    data: {
+      playedOn: match.playedOn ?? new Date().toISOString().slice(0, 10),
+      slot: match.slot ?? "8 AM",
+      format,
+      ...match,
+    } satisfies MatchMutationInput,
+  });
+
+  expect(response.status()).toBe(201);
+  const body = (await response.json()) as { data: MatchMutationResult };
+  return body.data.id;
 }

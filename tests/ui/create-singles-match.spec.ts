@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  createMatchViaApi,
+  createUniquePlayerName,
   fillMatchScores,
   fillPlayerField,
   openAppAndSelectPlayer,
@@ -22,15 +24,23 @@ test("opens the player list before focusing the search input", async ({ page }) 
   await expect(searchInput).toBeFocused();
 });
 
-test("lets me record a singles win", async ({ page }) => {
+test("lets me record a singles win", async ({ page, request }) => {
+  const opponent = createUniquePlayerName("Rival");
+  await createMatchViaApi(request, {
+    sideAPlayers: [opponent],
+    sideBPlayers: [createUniquePlayerName("WarmupRival")],
+    sideAScore: 21,
+    sideBScore: 10,
+  });
+
   await openAppAndSelectPlayer(page);
   await openNewMatchForm(page);
-  await fillPlayerField(page, "Opponent", "Jinu");
+  await fillPlayerField(page, "Opponent", opponent);
   await fillMatchScores(page, { yours: 21, opponent: 17 });
 
   await submitMatchAndExpectDetail(page, {
     formatHeading: "Singles match",
-    players: ["Adhiraj", "Jinu"],
+    players: ["Adhiraj", opponent],
     scoreline: "21-17",
   });
 });

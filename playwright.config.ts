@@ -8,6 +8,7 @@ const shouldReuseExistingServer = appConfig.playwright.reuseExistingServer;
 
 export default defineConfig({
   testDir: "./tests/ui",
+  globalSetup: "./tests/ui/global-setup.ts",
   fullyParallel: false,
   timeout: 60 * 1000,
   retries: appConfig.ci ? 2 : 0,
@@ -31,7 +32,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `cross-env APP_MODE=test NEXT_DIST_DIR=${appConfig.playwright.nextDistDir} PORT=${uiTestPort} next dev --port ${uiTestPort}`,
+    command: `cross-env DATABASE_URL=${appConfig.playwright.databaseUrl} NEXT_DIST_DIR=${appConfig.playwright.nextDistDir} PORT=${uiTestPort} next dev --port ${uiTestPort}`,
     url: uiTestBaseUrl,
     reuseExistingServer: shouldReuseExistingServer,
     timeout: 120 * 1000,

@@ -22,12 +22,14 @@ type AppConfig = {
     baseUrl: string;
     reuseExistingServer: boolean;
     nextDistDir: string;
+    databaseUrl: string;
   };
 };
 
 const DEFAULT_LOG_LEVEL: LogLevel = "info";
 const DEFAULT_PLAYWRIGHT_PORT = 3101;
 const DEFAULT_PLAYWRIGHT_DIST_DIR = ".next-playwright";
+const LOCAL_DATABASE_URL = "postgres://postgres:postgres@127.0.0.1:5433/smashdiary";
 const TEST_MODE_SQLITE_DIR_NAME = ".gstack";
 const TEST_MODE_SQLITE_FILE_NAME = "test-mode.sqlite";
 const TEST_MODE_SEED_FILE_PATH = "src/data/diary.json";
@@ -132,6 +134,7 @@ export function createAppConfig(env: EnvSource = process.env): AppConfig {
       baseUrl: `http://127.0.0.1:${port}`,
       reuseExistingServer: parseReuseExistingServer(env),
       nextDistDir: parseNextDistDir(env),
+      databaseUrl: LOCAL_DATABASE_URL,
     },
   };
 }

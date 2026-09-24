@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { navigatePrimary, openAppAndSelectPlayer, openExistingMatchDetail } from "./helpers";
+import {
+  createMatchViaApi,
+  createUniquePlayerName,
+  navigatePrimary,
+  openAppAndSelectPlayer,
+  openExistingMatchDetail,
+} from "./helpers";
 
 test("opens the identity player list before focusing search", async ({ page }) => {
   await page.goto("/");
@@ -21,7 +27,15 @@ test("opens the identity player list before focusing search", async ({ page }) =
   await expect(page.getByRole("button", { name: "Open player identity picker for Adhiraj" })).toBeVisible();
 });
 
-test("lets me browse my diary and open a saved match", async ({ page }) => {
+test("lets me browse my diary and open a saved match", async ({ page, request }) => {
+  const opponent = createUniquePlayerName("BrowseRival");
+  await createMatchViaApi(request, {
+    sideAPlayers: ["Adhiraj"],
+    sideBPlayers: [opponent],
+    sideAScore: 21,
+    sideBScore: 17,
+  });
+
   await openAppAndSelectPlayer(page);
 
   await expect(page.getByText("Win rate")).toBeVisible();
@@ -34,10 +48,10 @@ test("lets me browse my diary and open a saved match", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Adhiraj's singles stats" })).toBeVisible();
 
   await navigatePrimary(page, "Matches");
-  await openExistingMatchDetail(page, "Singles match: Adhiraj versus Sanidhya, score 21-17");
+  await openExistingMatchDetail(page, `Singles match: Adhiraj versus ${opponent}, score 21-17`);
 
   await expect(page.getByRole("heading", { name: "Singles match" })).toBeVisible();
   await expect(page.getByText(/21\s*\/\s*17/)).toBeVisible();
   await expect(page.getByText("Adhiraj", { exact: false })).toBeVisible();
-  await expect(page.getByText("Sanidhya", { exact: false })).toBeVisible();
+  await expect(page.getByText(opponent, { exact: false })).toBeVisible();
 });
