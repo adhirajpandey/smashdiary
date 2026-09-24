@@ -26,6 +26,12 @@ describe("utils", () => {
     expect(formatGameDate(storedValue, "8 PM")).toBe("Sun, 22 Mar • 8 PM");
   });
 
+  it("rejects date strings that are not ISO dates or wall-clock datetimes", () => {
+    expect(toInputDateValue("2026-03-22T22:29:00.000Z")).toBe("2026-03-22");
+    expect(() => toInputDateValue("March 5 2026")).toThrow("Invalid match date.");
+    expect(() => toInputDateValue("garbage")).toThrow("Invalid match date.");
+  });
+
   it("builds the default input value in IST", () => {
     const instant = new Date("2026-03-22T18:30:00.000Z");
 

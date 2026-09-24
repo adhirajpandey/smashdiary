@@ -11,6 +11,21 @@ export function deriveWinnerSide(sideAScore: number, sideBScore: number): Winner
   return sideAScore > sideBScore ? "A" : "B";
 }
 
+const playedOnPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function isCalendarDate(value: string) {
+  const match = value.match(playedOnPattern);
+
+  if (!match) {
+    return false;
+  }
+
+  const [year, month, day] = match.slice(1).map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
 function isFuturePlayedOnDate(value: string) {
   const trimmed = value.trim();
 
@@ -56,7 +71,7 @@ const playerNameSchema = z
 
 export const gameFormSchema = z
   .object({
-    playedOn: z.string().min(1, "Date is required."),
+    playedOn: z.string().min(1, "Date is required.").refine(isCalendarDate, "Enter a valid date."),
     slot: z.enum(MATCH_SLOTS, {
       message: "Slot is required.",
     }),

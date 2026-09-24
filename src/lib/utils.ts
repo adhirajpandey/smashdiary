@@ -14,7 +14,8 @@ type MatchDateParts = {
 };
 
 const wallClockDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
-const wallClockDateTimePattern = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/;
+// A trailing Z is UTC, so the literal date part matches the UTC date without any timezone math.
+const wallClockDateTimePattern = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?Z?$/;
 const slotOrder = new Map(MATCH_SLOTS.map((slot, index) => [slot, index]));
 
 export function cn(...inputs: ClassValue[]) {
@@ -46,16 +47,7 @@ function buildMatchDateParts(value: string): MatchDateParts {
     };
   }
 
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new Error("Invalid match date.");
-  }
-
-  return {
-    year: parsed.getUTCFullYear(),
-    month: parsed.getUTCMonth() + 1,
-    day: parsed.getUTCDate(),
-  };
+  throw new Error("Invalid match date.");
 }
 
 function createUtcDate(value: string) {

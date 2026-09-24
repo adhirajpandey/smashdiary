@@ -92,6 +92,29 @@ describe("POST /api/matches", () => {
     });
   });
 
+  it("returns a playedOn field error for a malformed date", async () => {
+    const { saveMatchFromJson: actualSaveMatchFromJson } = jest.requireActual<
+      typeof import("@/lib/services/save-match")
+    >("@/lib/services/save-match");
+    (saveMatchFromJson as jest.Mock).mockImplementation(actualSaveMatchFromJson);
+
+    const response = await POST(
+      new Request("http://localhost/api/matches", {
+        method: "POST",
+        body: JSON.stringify({ ...payload, playedOn: "garbage" }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: {
+        code: "VALIDATION_ERROR",
+        fieldErrors: { playedOn: "Enter a valid date." },
+      },
+    });
+  });
+
   it("returns an internal error when save execution fails", async () => {
     (saveMatchFromJson as jest.Mock).mockResolvedValue({
       type: "internal_error",
