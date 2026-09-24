@@ -24,7 +24,6 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 - `src/`: application source.
   - `app/`: Next.js App Router pages, JSON route handlers under `api/`, boundaries, and UI components under `_components/`.
   - `lib/`: shared logic including `commands/`, `db/`, `domain/`, `queries/`, `repositories/`, validation, metrics, and utilities.
-  - `data/`: an early CSV export of matches that the app does not read.
 - `drizzle/`: SQL migrations and Drizzle metadata.
 - `db/seed.sql`: data-only copy of production used to seed the local database.
 - `scripts/db-reset.mjs`: resets the local database.
