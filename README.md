@@ -92,7 +92,6 @@ Playwright uses an isolated local server on `127.0.0.1:3101` by default so it do
 - `src/lib`: domain logic, validation, queries, repositories, DB access, metrics, and utilities
 - `drizzle`: SQL migrations and Drizzle metadata
 - `db`: seed data for the local database
-- `src/data`: an early CSV export of matches that the app does not read
 - `scripts`: local database tooling
 - `tests`: Playwright UI tests and DB test setup
 - `docs`: architecture, development, data model, product walkthrough, and design notes

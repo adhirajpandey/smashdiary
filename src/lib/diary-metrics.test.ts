@@ -3,12 +3,12 @@ import {
   getDashboardMetrics,
   getDoublesLeaderboard,
   getLeaderboard,
-  getPlayerGames,
+  getPlayerMatches,
   getPlayerPerspectiveScore,
   getPlayerSide,
-  getPlayerStatsSummary,
+  getPlayerSummary,
   getSinglesLeaderboard,
-} from "@/lib/diary-metrics";
+} from "@/lib/match-selectors";
 import type { Player, ResolvedGame } from "@/lib/types";
 
 const players: Player[] = [
@@ -73,12 +73,12 @@ describe("diary metrics", () => {
   });
 
   it("returns only games containing a player", () => {
-    expect(getPlayerGames(games, 4)).toHaveLength(3);
-    expect(getPlayerGames(games, 1)).toHaveLength(7);
+    expect(getPlayerMatches(games, 4)).toHaveLength(3);
+    expect(getPlayerMatches(games, 1)).toHaveLength(7);
   });
 
   it("builds player stats summary", () => {
-    const summary = getPlayerStatsSummary(games, players, 1, "doubles");
+    const summary = getPlayerSummary(games, players, 1, "doubles");
     expect(summary).not.toBeNull();
     expect(summary).toMatchObject({
       totalMatches: 3,
@@ -89,7 +89,7 @@ describe("diary metrics", () => {
   });
 
   it("returns null stats summary for unknown player", () => {
-    expect(getPlayerStatsSummary(games, players, 999, "singles")).toBeNull();
+    expect(getPlayerSummary(games, players, 999, "singles")).toBeNull();
   });
 
   it("builds dashboard metrics with score bounds and recent matches", () => {
