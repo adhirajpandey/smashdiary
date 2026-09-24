@@ -11,6 +11,7 @@
     "lint": "eslint",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
+    "test:db": "jest --runInBand --config jest.db.config.mjs",
     "test:ui": "playwright test",
     "test:ui:headed": "playwright test --headed",
     "db:generate": "drizzle-kit generate",
