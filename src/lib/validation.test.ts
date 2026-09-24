@@ -1,3 +1,4 @@
+import { PLAYER_NAME_MAX_LENGTH } from "@/lib/config/domain";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 import { getCurrentInputDateValue } from "@/lib/utils";
 
@@ -116,6 +117,22 @@ describe("gameFormSchema", () => {
     });
 
     expect(parsed.success).toBe(false);
+  });
+
+  it("limits player names to PLAYER_NAME_MAX_LENGTH characters", () => {
+    const atLimit = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      sideBPlayers: ["R".repeat(PLAYER_NAME_MAX_LENGTH)],
+    });
+    const overLimit = gameFormSchema.safeParse({
+      ...validSinglesInput(),
+      sideBPlayers: ["R".repeat(PLAYER_NAME_MAX_LENGTH + 1)],
+    });
+
+    expect(atLimit.success).toBe(true);
+    expect(overLimit.error?.flatten().fieldErrors.sideBPlayers).toEqual([
+      `Player name must be ${PLAYER_NAME_MAX_LENGTH} characters or fewer.`,
+    ]);
   });
 
   it("rejects the same player on both sides", () => {

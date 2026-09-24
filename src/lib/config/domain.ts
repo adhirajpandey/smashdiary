@@ -1,5 +1,7 @@
 import type { StatsFormat } from "@/lib/types";
 
+export const PLAYER_NAME_MAX_LENGTH = 32;
+
 export const leaderboardConfig = {
   eloInitialRating: 1500,
   eloKFactor: 32,
