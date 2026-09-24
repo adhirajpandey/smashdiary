@@ -15,7 +15,8 @@
     "test:ui:headed": "playwright test --headed",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:reset": "node scripts/db-reset.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.7",
