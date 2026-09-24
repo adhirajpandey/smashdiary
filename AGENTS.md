@@ -34,7 +34,7 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
   - `architecture/`: system overview and data model docs.
   - `guides/`: development workflow and setup docs.
   - `product/`: implemented product behavior docs.
-  - `design/`: visual system guidance and screenshots.
+  - `design/`: visual system guidance.
 
 ## Build, Test, and Development Commands
 ### App
@@ -85,7 +85,7 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 - Use `docs/architecture/` for architecture and persistence documentation.
 - Use `docs/guides/` for setup, local workflow, and command guidance.
 - Use `docs/product/` for implemented screen and workflow behavior.
-- Use `docs/design/` for design system guidance and reference screenshots.
+- Use `docs/design/` for design system guidance.
 
 ## When in Doubt
 - Ask before making assumptions about product behavior.
