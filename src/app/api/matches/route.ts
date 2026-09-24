@@ -1,4 +1,4 @@
-import { jsonServerError, jsonSuccess, jsonValidationError } from "@/lib/api/responses";
+import { jsonServerError, jsonSuccess, jsonValidationError, logRouteError, logRouteWarning } from "@/lib/api/responses";
 import { getMatchesData } from "@/lib/services/matches";
 import { saveMatchFromJson } from "@/lib/services/save-match";
 import { parseNumericId, parseStatsFormat } from "@/lib/utils";
@@ -13,7 +13,8 @@ export async function GET(request: Request) {
     const format = parseStatsFormat(searchParams.get("format"));
 
     return jsonSuccess(await getMatchesData(playerId, format));
-  } catch {
+  } catch (error) {
+    logRouteError("GET /api/matches", error);
     return jsonServerError("Could not load matches.");
   }
 }
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
       case "not_found":
         return jsonServerError("Could not save match. Please try again.");
     }
-  } catch {
+  } catch (error) {
+    logRouteWarning("POST /api/matches", error);
     return jsonValidationError("Invalid request payload.");
   }
 }

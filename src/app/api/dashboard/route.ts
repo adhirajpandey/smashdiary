@@ -1,4 +1,4 @@
-import { jsonServerError, jsonSuccess } from "@/lib/api/responses";
+import { jsonServerError, jsonSuccess, logRouteError } from "@/lib/api/responses";
 import { getDashboardData } from "@/lib/services/dashboard";
 import { parseNumericId, parseStatsFormat } from "@/lib/utils";
 
@@ -12,7 +12,8 @@ export async function GET(request: Request) {
     const format = parseStatsFormat(searchParams.get("format"));
 
     return jsonSuccess(await getDashboardData(playerId, format));
-  } catch {
+  } catch (error) {
+    logRouteError("GET /api/dashboard", error);
     return jsonServerError("Could not load dashboard.");
   }
 }

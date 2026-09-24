@@ -1,5 +1,6 @@
 import { normalizeGameFormErrors, type NormalizedGameFormErrors } from "@/lib/action-errors";
 import { saveMatch } from "@/lib/commands/save-match";
+import { logger } from "@/lib/logger";
 import { MatchNotFoundError } from "@/lib/match-errors";
 import { deriveWinnerSide, gameFormSchema } from "@/lib/validation";
 
@@ -34,6 +35,8 @@ export async function saveMatchFromJson(input: unknown, id?: number): Promise<Sa
         message: error.message,
       };
     }
+
+    logger.error("save-match", "save_failed", { id, error });
 
     return {
       type: "internal_error",

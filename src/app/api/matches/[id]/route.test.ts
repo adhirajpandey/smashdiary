@@ -1,3 +1,7 @@
+jest.mock("@/lib/logger", () => ({
+  logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+}));
+
 jest.mock("@/lib/services/matches", () => ({
   getMatchDetailData: jest.fn(),
 }));

@@ -1,8 +1,13 @@
+jest.mock("@/lib/logger", () => ({
+  logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+}));
+
 jest.mock("@/lib/commands/save-match", () => ({
   saveMatch: jest.fn(),
 }));
 
 import { saveMatch } from "@/lib/commands/save-match";
+import { logger } from "@/lib/logger";
 import { MatchNotFoundError } from "@/lib/match-errors";
 import { saveMatchFromJson } from "@/lib/services/save-match";
 import { getCurrentInputDateValue } from "@/lib/utils";
@@ -80,14 +85,17 @@ describe("saveMatchFromJson", () => {
       type: "not_found",
       message: "Match not found.",
     });
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
-  it("returns an internal error when saving throws unexpectedly", async () => {
-    (saveMatch as jest.Mock).mockRejectedValue(new Error("db down"));
+  it("logs and returns an internal error when saving throws unexpectedly", async () => {
+    const error = new Error("db down");
+    (saveMatch as jest.Mock).mockRejectedValue(error);
 
     await expect(saveMatchFromJson(payload)).resolves.toEqual({
       type: "internal_error",
       message: "Could not save match. Please try again.",
     });
+    expect(logger.error).toHaveBeenCalledWith("save-match", "save_failed", { id: undefined, error });
   });
 });

@@ -1,4 +1,4 @@
-import { jsonServerError, jsonSuccess } from "@/lib/api/responses";
+import { jsonServerError, jsonSuccess, logRouteError } from "@/lib/api/responses";
 import { getStatsData } from "@/lib/services/stats";
 import { parseNumericId, parseStatsFormat } from "@/lib/utils";
 
@@ -12,7 +12,8 @@ export async function GET(request: Request) {
     const format = parseStatsFormat(searchParams.get("format"));
 
     return jsonSuccess(await getStatsData(playerId, format));
-  } catch {
+  } catch (error) {
+    logRouteError("GET /api/stats", error);
     return jsonServerError("Could not load stats.");
   }
 }
