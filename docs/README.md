@@ -21,7 +21,6 @@ This directory is organized by intent so contributors can find the right level o
 ### Design
 
 - [design/system.md](./design/system.md): visual system and UI design guidance
-- [design/references/](./design/references/): screenshots and visual references
 
 ## Reading Order
 
