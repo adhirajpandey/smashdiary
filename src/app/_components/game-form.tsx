@@ -298,6 +298,7 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
   const [sideAPlayers, setSideAPlayers] = useState<string[]>(() => buildInitialValues(initialSideAValues));
   const [sideBPlayers, setSideBPlayers] = useState<string[]>(() => buildInitialValues(initialSideBValues));
   const lastScoreTapRef = useRef(0);
+  const isSubmittingRef = useRef(false);
 
   const selectedPlayer = players.find((player) => player.id === selectedPlayerId) ?? null;
   const isPersonalizedMode = mode === "personalized";
@@ -347,6 +348,14 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    // isPending only disables the button after a rerender, so a fast second submit can still get here.
+    // The lock stays set after a successful save because the form is navigating away.
+    if (isSubmittingRef.current) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setFormState(initialFormState);
 
     const payload = {
@@ -373,6 +382,8 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
       });
       router.push(getMatchDetailRoute(result.id));
     } catch (error) {
+      isSubmittingRef.current = false;
+
       if (error instanceof ApiClientError) {
         switch (error.code) {
           case "VALIDATION_ERROR":

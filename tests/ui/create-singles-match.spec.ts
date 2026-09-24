@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   createMatchViaApi,
   createUniquePlayerName,
+  expectMatchDetail,
   fillMatchScores,
   fillPlayerField,
   openAppAndSelectPlayer,
@@ -43,4 +44,36 @@ test("lets me record a singles win", async ({ page, request }) => {
     players: ["Adhiraj", opponent],
     scoreline: "21-17",
   });
+});
+
+test("saves once when the form is submitted twice", async ({ page }) => {
+  const opponent = createUniquePlayerName("DoubleSubmit");
+  let postCount = 0;
+
+  await openAppAndSelectPlayer(page);
+  await openNewMatchForm(page);
+  await fillPlayerField(page, "Opponent", opponent, { selectSuggestion: false });
+  await fillMatchScores(page, { yours: 21, opponent: 15 });
+
+  await page.route("**/api/matches", async (route) => {
+    if (route.request().method() === "POST") {
+      postCount += 1;
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+
+    await route.fallback();
+  });
+
+  // Both submits run in one task, before React rerenders and disables the Save button.
+  await page.locator("form.match-form").evaluate((form: HTMLFormElement) => {
+    form.requestSubmit();
+    form.requestSubmit();
+  });
+
+  await expectMatchDetail(page, {
+    formatHeading: "Singles match",
+    players: ["Adhiraj", opponent],
+    scoreline: "21-15",
+  });
+  expect(postCount).toBe(1);
 });
