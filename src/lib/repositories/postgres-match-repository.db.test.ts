@@ -148,10 +148,13 @@ describe("postgresMatchRepository match lifecycle", () => {
     expect(await postgresMatchRepository.deleteMatch(matchId)).toBe(false);
   });
 
-  it("throws MatchNotFoundError when updating a missing match", async () => {
+  it("throws MatchNotFoundError and creates no players when updating a missing match", async () => {
+    const beforeCount = await countPlayers();
+
     await expect(
       postgresMatchRepository.saveMatch({ ...singlesMatch("Adhiraj", uniqueName("Ghost")), id: 999_999_999 }),
     ).rejects.toBeInstanceOf(MatchNotFoundError);
+    expect(await countPlayers()).toBe(beforeCount);
   });
 
   it("rejects a score the database constraints do not allow", async () => {

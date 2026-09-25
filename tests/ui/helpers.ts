@@ -484,3 +484,13 @@ export async function createMatchViaApi(
   const body = (await response.json()) as { data: MatchMutationResult };
   return body.data.id;
 }
+
+export async function deleteMatchViaApi(request: APIRequestContext, matchId: number) {
+  const response = await request.delete(`/api/matches/${matchId}`);
+  expect(response.status()).toBe(200);
+}
+
+export async function openMatchDetailById(page: Page, matchId: number) {
+  await page.goto(`/matches/${matchId}`);
+  await page.waitForLoadState("networkidle");
+}
