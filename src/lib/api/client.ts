@@ -3,13 +3,19 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 import type { MatchMutationInput, MatchMutationResult } from "@/lib/api/contracts";
-import { fetchJson } from "@/lib/api/fetch-json";
+import { ApiClientError, fetchJson } from "@/lib/api/fetch-json";
 import { apiQueryKeyRoots, apiRoutes, queryKeys } from "@/lib/config/api";
 import type { StatsFormat } from "@/lib/types";
 import type { DashboardData, MatchDetailData, MatchesData, PlayersData, StatsData } from "@/lib/view-models";
 
 export { ApiClientError } from "@/lib/api/fetch-json";
 export { queryKeys };
+
+export type DeleteMatchOutcome = "deleted" | "already_deleted";
+
+function isNotFoundError(error: unknown) {
+  return error instanceof ApiClientError && error.code === "NOT_FOUND";
+}
 
 async function invalidateDiaryQueries(queryClient: QueryClient, matchId?: number) {
   await Promise.all([
@@ -106,10 +112,21 @@ export function useDeleteMatchMutation(matchId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      fetchJson<MatchMutationResult>(apiRoutes.matchDetail(matchId), {
-        method: "DELETE",
-      }),
+    // A 404 means another tab or device already deleted the match, which is what the user wanted.
+    mutationFn: async (): Promise<DeleteMatchOutcome> => {
+      try {
+        await fetchJson<MatchMutationResult>(apiRoutes.matchDetail(matchId), {
+          method: "DELETE",
+        });
+        return "deleted";
+      } catch (error) {
+        if (isNotFoundError(error)) {
+          return "already_deleted";
+        }
+
+        throw error;
+      }
+    },
     onSuccess: async () => clearDeletedMatchQueries(queryClient, matchId),
   });
 }
