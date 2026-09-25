@@ -13,11 +13,12 @@ Current route surfaces:
 - `/`: dashboard view
 - `/matches`: match history
 - `/matches/new`: new match form
-- `/matches/[id]/edit`: edit form for an existing match
-- shared shell controls: mobile header, bottom navigation, and persistent identity picker
 - `/matches/[id]`: match detail
+- `/matches/[id]/edit`: edit form for an existing match
 - `/stats`: player stats
 - `/rankings`: redirects to `/stats`
+
+Every page renders inside a shared shell with a mobile header, bottom navigation, and the persistent identity picker.
 
 ## Layer Boundaries
 
@@ -27,7 +28,10 @@ Current route surfaces:
 
 - Route files stay thin and mostly render page shells for dashboard, history, stats, and form flows
 - Client containers and presentational components such as dashboard, history, stats, forms, and shell controls live under `src/app/_components`
-- Route handlers under `src/app/api` expose the app's internal JSON read and write endpoints (`/api/matches`)
+- Route handlers under `src/app/api` expose the app's internal JSON endpoints:
+  - `GET /api/dashboard`, `GET /api/stats`, and `GET /api/players` for screen data
+  - `GET /api/matches` for match history, and `POST /api/matches` to create a match
+  - `GET`, `PUT`, and `DELETE /api/matches/[id]` to read, update, and delete one match
 
 ### Query layer
 
@@ -90,7 +94,7 @@ Examples:
 
 The normal write path is:
 
-1. The client form submits JSON to `POST /api/matches` for create and `PUT /api/matches/[id]` for edit. Match detail actions can also call `DELETE /api/matches/[id]`. Saved-match-backed forms personalize the selected player into the fixed "You" side when that player is part of the saved roster; otherwise the form falls back to neutral `Side A` / `Side B` labels.
+1. The client form submits JSON to `POST /api/matches` for create and `PUT /api/matches/[id]` for edit. The match actions menu on the detail page and on match cards calls `DELETE /api/matches/[id]`. Saved-match-backed forms personalize the selected player into the fixed "You" side when that player is part of the saved roster; otherwise the form falls back to neutral `Side A` / `Side B` labels.
 2. The route handler parses the JSON body and passes it to `saveMatchFromJson()`.
 3. The service validates the payload with `gameFormSchema` and derives `winnerSide`.
 4. The service calls the `saveMatch()` command.
@@ -99,7 +103,7 @@ The normal write path is:
 7. Delete requests flow through a matching service and command path before the repository removes the match.
 8. The client invalidates affected queries, shows an in-app toast notification, and navigates to the destination screen when appropriate.
 
-Mutation handlers return `400` for malformed or schema-invalid payloads, `404` when an update targets a missing match, and `500` for unexpected persistence failures.
+Mutation handlers return `400` for malformed or schema-invalid payloads, `404` when an update or delete targets a missing match, and `500` for unexpected persistence failures. The client treats a `404` on delete as already deleted, and a `404` on update sends the user back to the match list.
 
 This keeps route handlers thin while moving dashboard, history, and stats derivation into the server-side service layer before JSON is returned.
 
