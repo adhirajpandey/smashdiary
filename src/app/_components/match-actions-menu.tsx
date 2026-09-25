@@ -184,13 +184,25 @@ export function MatchActionsMenu({
     setDeleteError(null);
 
     try {
-      await deleteMatchMutation.mutateAsync();
+      const outcome = await deleteMatchMutation.mutateAsync();
       setIsDeleteConfirmOpen(false);
-      pushToast({
-        variant: "success",
-        title: "Match deleted",
-        description: "The saved scoreline has been cleared from your diary.",
-      });
+
+      switch (outcome) {
+        case "deleted":
+          pushToast({
+            variant: "success",
+            title: "Match deleted",
+            description: "The saved scoreline has been cleared from your diary.",
+          });
+          break;
+        case "already_deleted":
+          pushToast({
+            variant: "info",
+            title: "Match already deleted",
+            description: "It was removed from another tab or device.",
+          });
+          break;
+      }
 
       if (deleteRedirectHref) {
         router.push(deleteRedirectHref);
