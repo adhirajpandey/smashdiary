@@ -68,7 +68,7 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 ## Runtime and Persistence Rules (Important)
 - **Database**: Postgres only, through `src/lib/repositories/postgres-match-repository.ts`. The app requires `DATABASE_URL`.
 - **Local database**: `npm run db:reset` targets the Docker Compose container on `127.0.0.1:5433` and ignores `DATABASE_URL`. Never point tests or resets at production.
-- **Production database**: agents never connect to it. `npm run dev`, `db:studio`, and `db:migrate` use `DATABASE_URL`, so keep `.env` on the local container. The owner applies production migrations by following `docs/guides/deployment.md`.
+- **Production database**: agents never connect to it. A checkout's `.env` may point at production, and `npm run dev`, `npm run start`, `db:studio`, and `db:migrate` all use `DATABASE_URL` from it. Check `.env` before running them, or run them with `DATABASE_URL` set to the local container. The owner applies production migrations by following `docs/guides/deployment.md`.
 - **Write path**: forms send JSON to the route handlers under `src/app/api/matches`, which call `saveMatchFromJson` in `src/lib/services/save-match.ts`, then `saveMatch` and the repository.
 - **Read path**: client pages fetch JSON from route handlers, which call screen-data services. The services use repository-backed query functions and selector utilities.
 
