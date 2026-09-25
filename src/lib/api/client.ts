@@ -105,6 +105,13 @@ export function useUpdateMatchMutation(matchId: number) {
         body: JSON.stringify(input),
       }),
     onSuccess: () => invalidateDiaryQueriesInBackground(queryClient, matchId),
+    // The match was deleted elsewhere, so the lists still show it. The detail query is left alone
+    // because the edit page still observes it until the form navigates away.
+    onError: (error) => {
+      if (isNotFoundError(error)) {
+        invalidateDiaryQueriesInBackground(queryClient);
+      }
+    },
   });
 }
 

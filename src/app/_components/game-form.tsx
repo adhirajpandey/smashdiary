@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { GameFormFieldErrors } from "@/lib/action-errors";
 import type { CloneMatchSeed } from "@/lib/clone-match";
 import { PLAYER_NAME_MAX_LENGTH } from "@/lib/config/domain";
-import { getMatchDetailRoute } from "@/lib/config/routes";
+import { appRoutes, getMatchDetailRoute } from "@/lib/config/routes";
 import type { GameFormSeed } from "@/lib/game-form-seed";
 import { ApiClientError, useCreateMatchMutation, useUpdateMatchMutation } from "@/lib/api/client";
 import { SectionHeading } from "@/app/_components/section-heading";
@@ -382,6 +382,18 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
       });
       router.push(getMatchDetailRoute(result.id));
     } catch (error) {
+      // Only an update can hit a missing match. The lock stays set because the form is navigating away.
+      if (error instanceof ApiClientError && error.code === "NOT_FOUND") {
+        pushToast({
+          variant: "info",
+          title: "Match was deleted",
+          description: "Another tab or device deleted this match, so your changes weren't saved.",
+          durationMs: null,
+        });
+        router.push(appRoutes.matches);
+        return;
+      }
+
       isSubmittingRef.current = false;
 
       if (error instanceof ApiClientError) {
@@ -394,13 +406,6 @@ export function GameForm({ initialSeed, matchId, cloneSeed, cloneError, players 
             });
             setFormState({
               fieldErrors: error.fieldErrors ?? {},
-            });
-            return;
-          case "NOT_FOUND":
-            pushToast({
-              variant: "error",
-              title: "Match not found",
-              description: error.message,
             });
             return;
           case "INTERNAL_ERROR":
