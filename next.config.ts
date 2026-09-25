@@ -5,7 +5,6 @@ const distDir = process.env.NEXT_DIST_DIR;
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   ...(distDir ? { distDir } : {}),
-  output: "standalone",
 };
 
 export default nextConfig;

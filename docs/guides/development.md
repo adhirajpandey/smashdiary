@@ -133,7 +133,7 @@ Areas with meaningful existing test coverage include:
 - metrics and selectors
 - screen-data services
 - repositories shared logic
-- the Postgres repository, including one test that pins a known bug in concurrent player creation
+- the Postgres repository, including concurrent player creation and constraint failures
 - utilities
 - mobile UI workflows via Playwright (create singles, create doubles, edit, delete, and validation messaging)
 
@@ -166,10 +166,11 @@ When changing schema or persistence behavior:
 
 - include the matching Drizzle migration
 - mention env or setup implications in the PR
+- apply the migration to production before merging, as described in [deployment.md](./deployment.md)
 
 When changing match-entry behavior:
 
 - keep JSON API mutations aligned with the shared validation and command path
-- keep mutation error mapping aligned with the current contract: invalid JSON and validation errors return `400`, missing update targets return `404`, and unexpected save failures return `500`
+- keep mutation error mapping aligned with the current contract: invalid JSON and validation errors return `400`, missing update or delete targets return `404`, and unexpected save failures return `500`
 
 For UI changes, keep the established visual language and refer to [system.md](../design/system.md) instead of duplicating design rules into feature docs.

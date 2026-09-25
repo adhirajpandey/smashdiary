@@ -12,6 +12,7 @@ This directory is organized by intent so contributors can find the right level o
 ### Guides
 
 - [guides/development.md](./guides/development.md): local setup, the local database, commands, testing, and contributor workflow
+- [guides/deployment.md](./guides/deployment.md): Vercel hosting, production environment variables, and applying migrations to production
 
 ### Product
 

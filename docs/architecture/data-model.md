@@ -127,3 +127,4 @@ When changing persistence behavior:
 - keep repository reads and writes compatible with the new schema
 - update documentation if setup, runtime behavior, or data semantics change
 - run `npm run db:reset` to check that the migrations apply to a fresh database and that `db/seed.sql` still loads
+- apply the migration to production before merging, as described in [deployment.md](../guides/deployment.md)

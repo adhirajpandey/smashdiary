@@ -32,7 +32,7 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 - `docs/`: living documentation set.
   - `README.md`: docs index.
   - `architecture/`: system overview and data model docs.
-  - `guides/`: development workflow and setup docs.
+  - `guides/`: development workflow, setup, and deployment docs.
   - `product/`: implemented product behavior docs.
   - `design/`: visual system guidance.
 
@@ -61,12 +61,14 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 - Refer to `docs/architecture/overview.md` for the app shape, database, and read/write flow.
 - Refer to `docs/architecture/data-model.md` for schema, relationships, resolved match data, and migration expectations.
 - Refer to `docs/guides/development.md` for setup, commands, and contributor workflow.
+- Refer to `docs/guides/deployment.md` for hosting and for applying migrations to production.
 - Refer to `docs/product/walkthrough.md` for current screens, workflows, and explicit product boundaries.
 - Refer to `docs/design/system.md` for UI and visual guidance.
 
 ## Runtime and Persistence Rules (Important)
 - **Database**: Postgres only, through `src/lib/repositories/postgres-match-repository.ts`. The app requires `DATABASE_URL`.
 - **Local database**: `npm run db:reset` targets the Docker Compose container on `127.0.0.1:5433` and ignores `DATABASE_URL`. Never point tests or resets at production.
+- **Production database**: agents never connect to it. A checkout's `.env` may point at production, and `npm run dev`, `npm run start`, `db:studio`, and `db:migrate` all use `DATABASE_URL` from it. Check `.env` before running them, or run them with `DATABASE_URL` set to the local container. The owner applies production migrations by following `docs/guides/deployment.md`.
 - **Write path**: forms send JSON to the route handlers under `src/app/api/matches`, which call `saveMatchFromJson` in `src/lib/services/save-match.ts`, then `saveMatch` and the repository.
 - **Read path**: client pages fetch JSON from route handlers, which call screen-data services. The services use repository-backed query functions and selector utilities.
 
@@ -83,7 +85,7 @@ Smash Diary is a mobile-first badminton journal for recording completed singles 
 - Keep docs accurate to the current codebase and remove outdated claims.
 - Use `README.md` for quick start and repo entrypoint updates.
 - Use `docs/architecture/` for architecture and persistence documentation.
-- Use `docs/guides/` for setup, local workflow, and command guidance.
+- Use `docs/guides/` for setup, local workflow, deployment, and command guidance.
 - Use `docs/product/` for implemented screen and workflow behavior.
 - Use `docs/design/` for design system guidance.
 

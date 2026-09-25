@@ -26,6 +26,7 @@ The history screen shows match history for the selected player.
 - the page title adapts to the current player selection
 - an empty state prompts for player selection before the feed is shown
 - the feed links into match detail pages
+- each match card has an actions menu with clone, edit, and delete
 
 ### Match Form (`/matches/new`)
 
@@ -46,6 +47,8 @@ Current supported behavior:
 
 The underlying JSON match API also supports update behavior when an ID is supplied, even though the primary documented workflow is new match entry.
 
+Clone opens `/matches/new?cloneFrom=[id]` with the source match's format, date, and players filled in. The slot and scores start from their defaults. If the source match cannot be loaded, the form starts empty and shows a message saying so.
+
 ### Match Detail (`/matches/[id]`)
 
 The detail screen shows a single resolved match.
@@ -58,9 +61,9 @@ It currently displays:
 - winning side
 - side A roster
 - side B roster
-- actions to edit or delete the saved match
+- an actions menu to clone, edit, or delete the saved match
 
-Edit routes to `/matches/[id]/edit` and pre-fills the form with the saved match. When the currently selected player is part of that saved roster, the form keeps that player in the fixed `You` slot; otherwise the editor falls back to neutral `Side A` / `Side B` labels. Delete uses an inline confirmation state on the detail screen. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications. If another tab or device already deleted the match, Delete reports it as already deleted and returns to the match list, and Update returns to the match list without saving.
+Edit routes to `/matches/[id]/edit` and pre-fills the form with the saved match. When the currently selected player is part of that saved roster, the form keeps that player in the fixed `You` slot; otherwise the editor falls back to neutral `Side A` / `Side B` labels. Delete asks for confirmation in a dialog, then returns to the match list. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications. If another tab or device already deleted the match, Delete reports it as already deleted, and Update returns to the match list without saving.
 
 Invalid or missing IDs resolve to the app's not-found behavior.
 
@@ -85,8 +88,9 @@ The product currently supports these main workflows:
 - viewing recent history for the selected player
 - reviewing dashboard and stats-derived player metrics
 - opening a match detail page for a specific saved match
-- editing a saved match from its detail screen
-- deleting a saved match from its detail screen
+- cloning a saved match into a new entry
+- editing a saved match from its detail screen or match card
+- deleting a saved match from its detail screen or match card
 
 ## Current Product Boundaries
 
