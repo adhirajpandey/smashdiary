@@ -60,7 +60,7 @@ It currently displays:
 - side B roster
 - actions to edit or delete the saved match
 
-Edit routes to `/matches/[id]/edit` and pre-fills the form with the saved match. When the currently selected player is part of that saved roster, the form keeps that player in the fixed `You` slot; otherwise the editor falls back to neutral `Side A` / `Side B` labels. Delete uses an inline confirmation state on the detail screen. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications.
+Edit routes to `/matches/[id]/edit` and pre-fills the form with the saved match. When the currently selected player is part of that saved roster, the form keeps that player in the fixed `You` slot; otherwise the editor falls back to neutral `Side A` / `Side B` labels. Delete uses an inline confirmation state on the detail screen. Save, update, delete, and validation-summary outcomes are surfaced through in-app toast notifications. If another tab or device already deleted the match, Delete reports it as already deleted and returns to the match list, and Update returns to the match list without saving.
 
 Invalid or missing IDs resolve to the app's not-found behavior.
 
