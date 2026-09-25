@@ -100,6 +100,7 @@ Playwright uses an isolated local server on `127.0.0.1:3101` by default so it do
 
 - [docs/README.md](docs/README.md)
 - [docs/guides/development.md](docs/guides/development.md)
+- [docs/guides/deployment.md](docs/guides/deployment.md)
 - [docs/architecture/overview.md](docs/architecture/overview.md)
 - [docs/architecture/data-model.md](docs/architecture/data-model.md)
 - [docs/product/walkthrough.md](docs/product/walkthrough.md)
